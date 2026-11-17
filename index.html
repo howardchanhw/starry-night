@@ -1,0 +1,2294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Van Gogh 1889 Impasto Brushstroke Lab — Discrete Flow-Aligned Oil Paint</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Classic Global Three.js r128 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #0b1942;
+            font-family: 'Inter', system-ui, sans-serif;
+            touch-action: none;
+        }
+        #viewport {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        .font-serif-title {
+            font-family: 'Cinzel', Georgia, serif;
+            letter-spacing: 0.04em;
+        }
+        .studio-glass {
+            background: linear-gradient(155deg, rgba(9, 20, 48, 0.90), rgba(17, 36, 80, 0.84));
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(248, 220, 59, 0.38);
+            box-shadow: 0 12px 36px rgba(3, 8, 22, 0.82), inset 0 1px 0 rgba(255, 248, 210, 0.16);
+        }
+        .preset-btn {
+            background: rgba(11, 25, 58, 0.76);
+            border: 1px solid rgba(138, 190, 224, 0.25);
+            transition: all 0.16s ease;
+        }
+        .preset-btn:hover {
+            border-color: rgba(248, 220, 59, 0.72);
+            background: rgba(24, 50, 106, 0.86);
+        }
+        .preset-btn.active {
+            background: linear-gradient(135deg, rgba(248, 220, 59, 0.28), rgba(31, 69, 145, 0.68));
+            border-color: #f8dc3b;
+            color: #fffbe0;
+            box-shadow: 0 0 14px rgba(248, 220, 59, 0.30);
+        }
+        .freeze-active {
+            background: linear-gradient(135deg, rgba(232, 122, 20, 0.36), rgba(248, 220, 59, 0.26)) !important;
+            border-color: #fff394 !important;
+            color: #fffbe0 !important;
+        }
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 5px;
+            border-radius: 999px;
+            background: rgba(8, 18, 44, 0.95);
+            border: 1px solid rgba(136, 188, 216, 0.30);
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #f8dc3b;
+            border: 2px solid #0b1942;
+            box-shadow: 0 0 8px rgba(248, 220, 59, 0.75);
+            cursor: pointer;
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #f8dc3b;
+            border: 2px solid #0b1942;
+            box-shadow: 0 0 8px rgba(248, 220, 59, 0.75);
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="text-amber-50">
+
+    <!-- WebGL Viewport -->
+    <div id="viewport"></div>
+
+    <!-- Safe Diagnostic Banner -->
+    <div id="diag-banner" class="fixed bottom-4 left-4 z-50 hidden max-w-lg studio-glass border-rose-400/80 rounded-2xl p-4 text-xs text-rose-100">
+        <div class="font-bold text-rose-300 mb-1">Impasto Lab Diagnostic</div>
+        <pre id="diag-text" class="whitespace-pre-wrap break-words opacity-90 text-[11px]"></pre>
+    </div>
+
+    <!-- Floating Restore UI Pill when Hidden (H) -->
+    <div id="ui-hidden-pill" class="fixed bottom-4 right-4 z-30 hidden">
+        <button id="btn-show-ui" class="studio-glass rounded-full px-4 py-2 text-xs font-serif-title font-bold text-amber-200 hover:border-amber-200 transition">
+            Show Impasto Lab UI (H)
+        </button>
+    </div>
+
+    <!-- Top Header Bar -->
+    <div id="lab-ui-top" class="fixed top-3 left-3 right-3 sm:top-4 sm:left-4 sm:right-4 z-20 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+        <div class="studio-glass rounded-2xl px-3.5 py-2 sm:px-4 sm:py-2.5 flex items-center gap-3 pointer-events-auto">
+            <div class="w-3 h-3 rounded-sm rotate-45 bg-amber-300 shadow-[0_0_10px_#f8dc3b]"></div>
+            <div>
+                <div class="text-[10px] uppercase tracking-[0.15em] text-cyan-200/90 font-semibold">
+                    ZERO GROUT · 5-LAYER SLENDER OVERLAPPING HOG-BRISTLE SPLATTER
+                </div>
+                <div class="font-serif-title text-xs sm:text-base font-bold text-amber-200">
+                    Van Gogh 1889 Impasto Brushstroke Lab
+                </div>
+            </div>
+            <div class="h-6 w-px bg-amber-200/20 mx-1 hidden sm:block"></div>
+            <div class="hidden sm:flex items-center gap-2 text-xs">
+                <span class="text-cyan-200/75">FPS</span>
+                <span id="fps-readout" class="font-mono font-bold text-amber-300">60</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2 pointer-events-auto">
+            <button id="btn-freeze" class="studio-glass hover:border-amber-300 active:scale-95 transition rounded-xl px-3 py-2 text-xs font-semibold text-amber-100 flex items-center gap-1.5">
+                <span id="freeze-dot" class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span id="freeze-btn-label">Freeze 1889 Still Painting (F)</span>
+            </button>
+            <button id="btn-drawer-toggle" class="studio-glass hover:border-amber-300 active:scale-95 transition rounded-xl px-3 py-2 text-xs font-semibold text-cyan-100">
+                <span id="drawer-toggle-label">Collapse Panel</span>
+            </button>
+            <button id="btn-hide-ui" title="Clean Screenshot View (H)" class="studio-glass hover:border-amber-300 active:scale-95 transition rounded-xl px-3 py-2 text-xs font-semibold text-amber-200">
+                Hide UI (H)
+            </button>
+        </div>
+    </div>
+
+    <!-- Right Collapsible Impasto Control Panel -->
+    <aside id="lab-drawer" class="fixed top-20 right-3 sm:right-4 z-20 w-[308px] sm:w-[348px] max-h-[calc(100vh-6.5rem)] overflow-y-auto studio-glass rounded-2xl p-4 flex flex-col gap-3.5 transition-transform duration-300">
+        <!-- 5 Camera Presets (Keys 1–5) -->
+        <div>
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-[11px] uppercase tracking-wider font-bold text-amber-200">Camera Presets (Keys 1–5)</span>
+                <span class="text-[10px] text-cyan-200/75">WASD + QE / Drag</span>
+            </div>
+            <div class="grid grid-cols-1 gap-1.5 text-xs">
+                <button data-preset="0" class="preset-btn active rounded-xl px-3 py-2 text-left flex items-center justify-between">
+                    <span class="font-semibold">1. 1889 Masterpiece View</span>
+                    <span class="text-[10px] opacity-80">MoMA Canvas</span>
+                </button>
+                <button data-preset="1" class="preset-btn rounded-xl px-3 py-2 text-left flex items-center justify-between">
+                    <span class="font-semibold">2. Village Street Level</span>
+                    <span class="text-[10px] opacity-80">Sketchy Cottages</span>
+                </button>
+                <button data-preset="2" class="preset-btn rounded-xl px-3 py-2 text-left flex items-center justify-between">
+                    <span class="font-semibold">3. Spire &amp; Vortex Look-Up</span>
+                    <span class="text-[10px] opacity-80">Steeple + Swirl</span>
+                </button>
+                <button data-preset="3" class="preset-btn rounded-xl px-3 py-2 text-left flex items-center justify-between">
+                    <span class="font-semibold">4. Cypress Overlook</span>
+                    <span class="text-[10px] opacity-80">Charcoal-Umber Flames</span>
+                </button>
+                <button data-preset="4" class="preset-btn rounded-xl px-3 py-2 text-left flex items-center justify-between">
+                    <span class="font-semibold">5. Moon Ridge</span>
+                    <span class="text-[10px] opacity-80">Alpilles Shadow Crest</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="h-px bg-amber-200/15"></div>
+
+        <!-- Organic Overlapping Brushwork Sliders -->
+        <div class="flex flex-col gap-2.5 text-xs">
+            <div class="flex items-center justify-between">
+                <span class="text-[11px] uppercase tracking-wider font-bold text-amber-200">1889 Brushwork Parameters</span>
+                <button id="btn-reset-params" class="text-[10px] text-cyan-300 hover:text-amber-200 underline">Reset 1889</button>
+            </div>
+
+            <!-- 1. Stroke Thinness / Scale -->
+            <div>
+                <div class="flex justify-between text-[11px] mb-1">
+                    <span class="text-cyan-100">Stroke Thinness / Fineness</span>
+                    <span id="val-thinness" class="font-mono text-amber-300">0.55x</span>
+                </div>
+                <input id="slider-thinness" type="range" min="0.40" max="2.00" step="0.05" value="0.55" />
+            </div>
+
+            <!-- 2. Hand Chaos / Organic Jitter -->
+            <div>
+                <div class="flex justify-between text-[11px] mb-1">
+                    <span class="text-cyan-100">Hand Chaos / Organic Jitter</span>
+                    <span id="val-chaos" class="font-mono text-amber-300">1.75</span>
+                </div>
+                <input id="slider-chaos" type="range" min="0.00" max="2.50" step="0.05" value="1.75" />
+            </div>
+
+            <!-- 3. Black Stroke Intensity -->
+            <div>
+                <div class="flex justify-between text-[11px] mb-1">
+                    <span class="text-cyan-100">Black Stroke Intensity</span>
+                    <span id="val-black" class="font-mono text-amber-300">0.75</span>
+                </div>
+                <input id="slider-black" type="range" min="0.00" max="1.50" step="0.05" value="0.75" />
+            </div>
+
+            <!-- 4. Impasto 3D Bristle Relief -->
+            <div>
+                <div class="flex justify-between text-[11px] mb-1">
+                    <span class="text-cyan-100">Impasto 3D Bristle Relief</span>
+                    <span id="val-relief" class="font-mono text-amber-300">0.65</span>
+                </div>
+                <input id="slider-relief" type="range" min="0.00" max="1.50" step="0.05" value="0.65" />
+            </div>
+
+            <!-- 5. Sky Wind Flow Speed -->
+            <div>
+                <div class="flex justify-between text-[11px] mb-1">
+                    <span class="text-cyan-100">Sky Wind Flow Speed</span>
+                    <span id="val-speed" class="font-mono text-amber-300">0.40x</span>
+                </div>
+                <input id="slider-speed" type="range" min="0.00" max="1.50" step="0.02" value="0.40" />
+            </div>
+        </div>
+
+        <div class="bg-slate-950/65 border border-amber-200/15 rounded-xl p-2.5 text-[11px] text-cyan-100/85 leading-relaxed">
+            <span class="text-amber-300 font-semibold">Shortcuts:</span> Keys <span class="text-amber-200 font-mono">1–5</span> switch presets · <span class="text-amber-200 font-mono">WASD + Q/E</span> fly · Drag orbits · Scroll zooms · <span class="text-amber-200 font-mono">F / Space</span> freeze 1889 still painting · <span class="text-amber-200 font-mono">H</span> hide UI for clean screenshots.
+        </div>
+    </aside>
+
+    <script>
+    // ============================================================================
+    // CRASH-PROOF THREE.JS r128 BOOTLOADER WITH AUTOMATIC FALLBACK CDN
+    // ============================================================================
+    (function () {
+        function reportError(msg) {
+            var banner = document.getElementById('diag-banner');
+            var text = document.getElementById('diag-text');
+            if (banner && text) {
+                text.textContent = msg;
+                banner.classList.remove('hidden');
+            }
+            console.error('[Van Gogh 1889 Impasto Lab]:', msg);
+        }
+
+        window.addEventListener('error', function (e) {
+            if (e && e.message) reportError(e.message);
+        });
+
+        function boot() {
+            if (window.THREE) {
+                try {
+                    startImpastoBrushstrokeLab(window.THREE, reportError);
+                } catch (err) {
+                    reportError('Runtime init error: ' + (err && err.stack ? err.stack : String(err)));
+                }
+                return;
+            }
+            var fallback = document.createElement('script');
+            fallback.src = 'https://unpkg.com/three@0.128.0/build/three.min.js';
+            fallback.onload = function () {
+                if (window.THREE) {
+                    try {
+                        startImpastoBrushstrokeLab(window.THREE, reportError);
+                    } catch (err) {
+                        reportError('Fallback init error: ' + (err && err.message ? err.message : String(err)));
+                    }
+                } else {
+                    reportError('Unable to load Three.js r128.');
+                }
+            };
+            fallback.onerror = function () {
+                reportError('Network blocked Three.js r128 CDNs.');
+            };
+            document.head.appendChild(fallback);
+        }
+
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            setTimeout(boot, 0);
+        } else {
+            window.addEventListener('DOMContentLoaded', boot);
+        }
+    })();
+
+    // ============================================================================
+    // MAIN ENGINE: DISCRETE FLOW-ALIGNED IMPASTO OIL PAINT LAB (ZERO BLUR!)
+    // ============================================================================
+    // MAIN ENGINE: SLENDER OVERLAPPING HOG-BRISTLE IMPASTO LAB (ZERO MOSAIC GROUT)
+    // ============================================================================
+    function startImpastoBrushstrokeLab(THREE, reportError) {
+        var rngState = 18890619;
+        function rand() {
+            rngState = (rngState * 1664525 + 1013904223) % 4294967296;
+            return rngState / 4294967296;
+        }
+
+        var params = {
+            thinness: 0.55,
+            chaos: 1.75,
+            blackInk: 0.75,
+            relief: 0.65,
+            swirlSpeed: 0.40,
+            savedSpeed: 0.40,
+            frozen: false,
+            activePreset: 0,
+            uiHidden: false,
+            drawerCollapsed: false
+        };
+
+        // 5 Camera Presets (Preset 1 frames the exact 1889 MoMA *The Starry Night* composition)
+        var PRESETS = [
+            {
+                name: '1889 Masterpiece View',
+                pos: new THREE.Vector3(0.0, 14.2, 82.0),
+                target: new THREE.Vector3(2.2, 16.3, -42.0),
+                fov: 43.0
+            },
+            {
+                name: 'Village Street Level',
+                pos: new THREE.Vector3(-7.5, -1.2, -3.5),
+                target: new THREE.Vector3(2.5, 6.8, -34.0),
+                fov: 52.0
+            },
+            {
+                name: 'Spire & Vortex Look-Up',
+                pos: new THREE.Vector3(-9.5, 4.2, -8.5),
+                target: new THREE.Vector3(1.5, 29.5, -46.0),
+                fov: 50.0
+            },
+            {
+                name: 'Cypress Overlook',
+                pos: new THREE.Vector3(-37.0, 15.8, 54.0),
+                target: new THREE.Vector3(7.0, 14.5, -34.0),
+                fov: 49.0
+            },
+            {
+                name: 'Moon Ridge',
+                pos: new THREE.Vector3(28.0, 19.5, 34.0),
+                target: new THREE.Vector3(26.0, 27.5, -88.0),
+                fov: 46.0
+            }
+        ];
+
+        var MOON_LIGHT_DIR = new THREE.Vector3(0.56, 0.60, -0.57).normalize();
+
+        // Shared Uniforms across all multi-layer impasto splatting shaders
+        var uFlowPhase = { value: 0.0 };
+        var uThinness  = { value: params.thinness };
+        var uChaos     = { value: params.chaos };
+        var uBlackInk  = { value: params.blackInk };
+        var uRelief    = { value: params.relief };
+
+        // ========================================================================
+        // 1. PROCEDURAL WOVEN LINEN CANVAS TEXTURE
+        // ========================================================================
+        function buildLinenWeaveTexture() {
+            var c = document.createElement('canvas');
+            c.width = 128;
+            c.height = 128;
+            var ctx = c.getContext('2d');
+            var img = ctx.createImageData(128, 128);
+            var d = img.data;
+            for (var y = 0; y < 128; y++) {
+                for (var x = 0; x < 128; x++) {
+                    var threadX = Math.sin((x * 0.90 + (y % 2) * 0.5) * 1.570796);
+                    var threadY = Math.cos((y * 0.90 + (x % 2) * 0.5) * 1.570796);
+                    var weave = (threadX * threadX + threadY * threadY) * 0.5;
+                    var slub = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
+                    slub = slub - Math.floor(slub);
+                    var val = Math.floor((weave * 0.78 + slub * 0.22) * 255);
+                    var idx = (y * 128 + x) * 4;
+                    d[idx] = val; d[idx + 1] = val; d[idx + 2] = val; d[idx + 3] = 255;
+                }
+            }
+            ctx.putImageData(img, 0, 0);
+            var tex = new THREE.CanvasTexture(c);
+            tex.wrapS = THREE.RepeatWrapping;
+            tex.wrapT = THREE.RepeatWrapping;
+            tex.needsUpdate = true;
+            return tex;
+        }
+        var linenTex = buildLinenWeaveTexture();
+
+        // ========================================================================
+        // 2. SHARED GLSL 100 SLENDER OVERLAPPING HOG-BRISTLE SPLATTER LIBRARY
+        //    - ZERO cell-border grout darkening!
+        //    - Elongated 9:1 to 14:1 tapered ribbons with 4-5 internal bristle
+        //      filaments, frayed brush ends, organic curve & angle wobble (`uChaos`),
+        //      and accumulated 3D impasto height stored in alpha (`.a`)!
+        // ========================================================================
+        var GLSL_RIBBON_LIBRARY = [
+            'float hash21(vec2 p) {',
+            '    p = fract(p * vec2(127.1, 311.7));',
+            '    p += dot(p, p + 45.32);',
+            '    return fract(p.x * p.y);',
+            '}',
+            '',
+            'vec2 hash22(vec2 p) {',
+            '    vec3 p3 = fract(vec3(p.xyx) * vec3(0.1031, 0.1030, 0.0973));',
+            '    p3 += dot(p3, p3.yzx + 33.33);',
+            '    return fract((p3.xx + p3.yz) * p3.zy);',
+            '}',
+            '',
+            'vec3 hash23(vec2 p) {',
+            '    vec3 p3 = fract(vec3(p.xyx) * vec3(0.1031, 0.1030, 0.0973));',
+            '    p3 += dot(p3, p3.yxz + 33.33);',
+            '    return fract((p3.xxy + p3.yzz) * p3.zyx);',
+            '}',
+            '',
+            'float vnoise(vec2 p) {',
+            '    vec2 i = floor(p);',
+            '    vec2 f = fract(p);',
+            '    f = f * f * (3.0 - 2.0 * f);',
+            '    float a = hash21(i);',
+            '    float b = hash21(i + vec2(1.0, 0.0));',
+            '    float c = hash21(i + vec2(0.0, 1.0));',
+            '    float d = hash21(i + vec2(1.0, 1.0));',
+            '    return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);',
+            '}',
+            '',
+            '// Evaluates a SLENDER, TAPERED, FRAYED HOG-BRISTLE RIBBON STROKE (ZERO Grout!).',
+            '// relAlong in [-1..1] along stroke length, relAcross in [-1..1] across stroke width.',
+            '// Returns vec3(opaqueAlphaMask, bristlePigmentMod, impastoHeightDelta)',
+            'vec3 evalSlenderBristleStroke(float relAlong, float relAcross, float seed) {',
+            '    if (abs(relAlong) > 1.18 || abs(relAcross) > 1.25) return vec3(0.0);',
+            '',
+            '    // Organic hand-pressure width taper toward both ends + slight S-wobble along stroke',
+            '    float wobbleY = sin(relAlong * 3.6 + seed * 17.3) * 0.12;',
+            '    float y = relAcross + wobbleY;',
+            '',
+            '    // 4 to 5 fine parallel hog-bristle hair filaments running lengthwise',
+            '    float b1 = sin(y * 11.5 + seed * 29.1);',
+            '    float b2 = sin(y * 23.0 - seed * 13.7 + relAlong * 2.2);',
+            '    float bristleWave = b1 * 0.62 + b2 * 0.38;',
+            '',
+            '    // Frayed bristle-split ends: individual bristle hairs extend slightly further at tips!',
+            '    float tipFray = bristleWave * 0.16;',
+            '    float uLen = abs(relAlong) - tipFray;',
+            '',
+            '    // Tapered filbert/flat brush silhouette (pointed/feathered tips, NEVER blunt bricks)',
+            '    float endTaper = clamp(1.0 - pow(max(0.0, abs(relAlong)), 2.2), 0.18, 1.0);',
+            '    float halfWidth = endTaper * (0.88 + 0.12 * sin(seed * 41.0));',
+            '',
+            '    float maskAlong  = 1.0 - smoothstep(0.76, 1.02, uLen);',
+            '    float maskAcross = 1.0 - smoothstep(halfWidth * 0.70, halfWidth * 1.04, abs(y));',
+            '',
+            '    // Split outer hairs slightly so strokes interlock wet-on-wet without blocky borders',
+            '    float hairSplit = smoothstep(-0.82, -0.20, bristleWave + (1.0 - abs(y)) * 0.95);',
+            '    float alpha = clamp(maskAlong * maskAcross * (0.72 + 0.28 * hairSplit), 0.0, 1.0);',
+            '    alpha = smoothstep(0.14, 0.58, alpha);',
+            '',
+            '    // Thick 3mm impasto oil-paint ridge pushed up along bristle crests & outer stroke lip',
+            '    float sideLip = smoothstep(halfWidth * 0.42, halfWidth * 0.86, abs(y)) * maskAlong;',
+            '    float leadLip = smoothstep(0.55, 0.88, abs(relAlong)) * maskAcross * 0.55;',
+            '    float heightVal = 0.35 + max(0.0, bristleWave) * 0.34 + sideLip * 0.36 + leadLip * 0.22;',
+            '',
+            '    return vec3(alpha, bristleWave * 0.085, heightVal);',
+            '}'
+        ].join('\n');
+
+        // ========================================================================
+        // 3. TOPOGRAPHY: UNBLOCKED FOREGROUND FIELDS, SUNKEN VILLAGE VALLEY &
+        //    ROUNDED ALPILLES RIDGES WITH PROMINENT RIGHT-SIDE MASS
+        // ========================================================================
+        var WORLD_HALF = 200;
+        var GRID_RES = 200;
+        var elevGrid = new Float32Array((GRID_RES + 1) * (GRID_RES + 1));
+
+        function evalTerrainHeight(x, z) {
+            var valleyFloor = -5.2;
+            var fgSlope = 0.0;
+            if (z > 14.0) {
+                var tFg = THREE.MathUtils.clamp((z - 14.0) / 76.0, 0.0, 1.25);
+                fgSlope = tFg * tFg * 6.4 + Math.sin(x * 0.055 + 0.4) * 0.42;
+            }
+
+            var dxC = x + 22.0;
+            var dzC = z - 26.0;
+            var cypKnoll = 3.0 * Math.exp(-(dxC * dxC) / 145.0 - (dzC * dzC) / 195.0);
+            var valleyRoll = Math.sin(x * 0.046 + 0.3) * Math.cos(z * 0.040) * 0.62;
+
+            var hills = 0.0;
+            if (z < -42.0) {
+                var z1 = (z + 60.0) / 15.5;
+                var foothill = 9.0 * Math.exp(-z1 * z1) * (
+                    0.72 + 0.28 * Math.cos((x + 15.0) * 0.058) + 0.15 * Math.sin(x * 0.035)
+                );
+                hills = Math.max(hills, foothill);
+            }
+            if (z < -56.0) {
+                var z2 = (z + 85.0) / 20.5;
+                var diagRight = THREE.MathUtils.clamp((x + 74.0) / 130.0, 0.28, 1.38);
+                var dome2 = 0.78 + 0.20 * Math.sin((x - 6.0) * 0.054) + 0.14 * Math.cos((x + 22.0) * 0.088);
+                var midAlpilles = 25.8 * Math.exp(-z2 * z2) * diagRight * dome2;
+                hills = Math.max(hills, midAlpilles);
+            }
+            if (z < -76.0) {
+                var z3 = (z + 112.0) / 25.5;
+                var diagRight3 = THREE.MathUtils.clamp((x + 54.0) / 118.0, 0.24, 1.48);
+                var dome3 = 0.82 + 0.18 * Math.cos((x - 28.0) * 0.048) + 0.11 * Math.sin(x * 0.078);
+                var highAlpilles = 36.2 * Math.exp(-z3 * z3) * diagRight3 * dome3;
+                hills = Math.max(hills, highAlpilles);
+            }
+
+            var rDist = Math.hypot(x, z);
+            var rim = 0.0;
+            if (rDist > 140.0 && z > -68.0) {
+                var rt = (rDist - 140.0) / 60.0;
+                rim = rt * rt * 16.5 * (0.76 + 0.24 * Math.sin(Math.atan2(z, x) * 5.0));
+            }
+
+            return valleyFloor + fgSlope + cypKnoll + valleyRoll + hills + rim;
+        }
+
+        function bakeTerrainGrid() {
+            var step = (WORLD_HALF * 2) / GRID_RES;
+            for (var gz = 0; gz <= GRID_RES; gz++) {
+                var wz = -WORLD_HALF + gz * step;
+                for (var gx = 0; gx <= GRID_RES; gx++) {
+                    var wx = -WORLD_HALF + gx * step;
+                    elevGrid[gz * (GRID_RES + 1) + gx] = evalTerrainHeight(wx, wz);
+                }
+            }
+        }
+
+        function getGroundY(x, z) {
+            var cx = THREE.MathUtils.clamp(x, -WORLD_HALF, WORLD_HALF - 0.01);
+            var cz = THREE.MathUtils.clamp(z, -WORLD_HALF, WORLD_HALF - 0.01);
+            var fx = ((cx + WORLD_HALF) / (WORLD_HALF * 2)) * GRID_RES;
+            var fz = ((cz + WORLD_HALF) / (WORLD_HALF * 2)) * GRID_RES;
+            var ix = Math.min(GRID_RES - 1, Math.max(0, Math.floor(fx)));
+            var iz = Math.min(GRID_RES - 1, Math.max(0, Math.floor(fz)));
+            var tx = fx - ix;
+            var tz = fz - iz;
+            var stride = GRID_RES + 1;
+            var i00 = iz * stride + ix;
+            var h0 = elevGrid[i00] * (1 - tx) + elevGrid[i00 + 1] * tx;
+            var h1 = elevGrid[i00 + stride] * (1 - tx) + elevGrid[i00 + stride + 1] * tx;
+            return h0 * (1 - tz) + h1 * tz;
+        }
+
+        var scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0b1942);
+
+        // ========================================================================
+        // 4. SKY DOME SHADER — 5-LAYER SLENDER OVERLAPPING HOG-BRISTLE SPLATTER
+        //    + WET-ON-WET SOLID STARS/MOON + AUTHENTIC VAN GOGH BLACK STROKES!
+        // ========================================================================
+        function buildOrganicOverlappingSkyDome() {
+            var skyGeo = new THREE.SphereGeometry(435, 96, 64);
+
+            var skyMat = new THREE.ShaderMaterial({
+                side: THREE.BackSide,
+                depthWrite: false,
+                uniforms: {
+                    uFlowPhase: uFlowPhase,
+                    uThinness: uThinness,
+                    uChaos: uChaos,
+                    uBlackInk: uBlackInk
+                },
+                vertexShader: [
+                    'precision highp float;',
+                    'varying vec3 vWorldDir;',
+                    'void main() {',
+                    '    vWorldDir = normalize(position);',
+                    '    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);',
+                    '}'
+                ].join('\n'),
+                fragmentShader: [
+                    'precision highp float;',
+                    'uniform float uFlowPhase;',
+                    'uniform float uThinness;',
+                    'uniform float uChaos;',
+                    'uniform float uBlackInk;',
+                    'varying vec3 vWorldDir;',
+                    '',
+                    GLSL_RIBBON_LIBRARY,
+                    '',
+                    '// 11 Iconic 1889 Stars (idx 0 = bright white-cream Venus right of Cypress)',
+                    'vec2 getStarPos(int idx) {',
+                    '    if (idx == 0)  return vec2(-0.145, 0.228);',
+                    '    if (idx == 1)  return vec2(-0.378, 0.515);',
+                    '    if (idx == 2)  return vec2(-0.262, 0.425);',
+                    '    if (idx == 3)  return vec2(-0.195, 0.535);',
+                    '    if (idx == 4)  return vec2(-0.112, 0.515);',
+                    '    if (idx == 5)  return vec2(-0.042, 0.495);',
+                    '    if (idx == 6)  return vec2( 0.096, 0.502);',
+                    '    if (idx == 7)  return vec2( 0.188, 0.392);',
+                    '    if (idx == 8)  return vec2(-0.165, 0.352);',
+                    '    if (idx == 9)  return vec2(-0.398, 0.285);',
+                    '    return vec2(-0.325, 0.252);',
+                    '}',
+                    '',
+                    'float getStarRadius(int idx) {',
+                    '    if (idx == 0) return 0.075;',
+                    '    if (idx == 1) return 0.052;',
+                    '    if (idx == 6) return 0.055;',
+                    '    if (idx == 7) return 0.049;',
+                    '    if (idx == 2) return 0.046;',
+                    '    return 0.037;',
+                    '}',
+                    '',
+                    'vec2 skyDelta(vec2 p, vec2 c) {',
+                    '    float dx = mod(p.x - c.x + 3.14159265, 6.2831853) - 3.14159265;',
+                    '    return vec2(dx, p.y - c.y);',
+                    '}',
+                    '',
+                    'float getMistCenterY(float az) {',
+                    '    float diag = 0.180 + 0.242 * clamp(az, -0.55, 0.65);',
+                    '    float wave = 0.019 * sin(az * 13.0 + 0.6) + 0.010 * cos(az * 23.0 - 0.8);',
+                    '    return diag + wave;',
+                    '}',
+                    '',
+                    '// Continuous spherical flow field curving smoothly around stars & into the Yin-Yang S-vortex',
+                    'vec2 getSkyFlow(vec2 p) {',
+                    '    float mistSlope = 0.242 + 0.24 * cos(p.x * 13.0 + 0.6);',
+                    '    vec2 v = normalize(vec2(1.0, 0.17 * cos(p.x * 5.4 + 0.7)));',
+                    '',
+                    '    float mistY = getMistCenterY(p.x);',
+                    '    float mistProx = exp(-pow((p.y - mistY) / 0.078, 2.0));',
+                    '    v = mix(v, normalize(vec2(1.0, mistSlope)), mistProx * 0.86);',
+                    '',
+                    '    float riverSpineY = 0.368 + 0.076 * sin(p.x * 7.4 + 1.55);',
+                    '    float riverSlope  = 0.076 * 7.4 * cos(p.x * 7.4 + 1.55);',
+                    '    float inUpperRiver = exp(-pow((p.y - riverSpineY) / 0.090, 2.0)) * smoothstep(0.18, -0.15, p.x);',
+                    '    v = mix(v, normalize(vec2(1.0, riverSlope)), inUpperRiver * 0.88);',
+                    '',
+                    '    // Primary Central Clockwise Spiral Vortex at (-0.015, 0.355)',
+                    '    vec2 dV1 = skyDelta(p, vec2(-0.015, 0.355));',
+                    '    float r1 = length(dV1);',
+                    '    vec2 tangV1 = normalize(vec2(dV1.y, -dV1.x) - dV1 * 0.17 + vec2(0.0001));',
+                    '    vec2 eyeFlow1 = normalize(vec2(0.76, -0.65));',
+                    '    v = mix(v, mix(eyeFlow1, tangV1, smoothstep(0.008, 0.030, r1)), exp(-pow(r1 / 0.145, 2.0)) * 0.95);',
+                    '',
+                    '    // Secondary Interlocking Counter-Spiral Curl at (0.145, 0.278)',
+                    '    vec2 dV2 = skyDelta(p, vec2(0.145, 0.278));',
+                    '    float r2 = length(dV2);',
+                    '    vec2 tangV2 = normalize(vec2(-dV2.y, dV2.x) - dV2 * 0.19 + vec2(0.0001));',
+                    '    vec2 eyeFlow2 = normalize(vec2(0.82, 0.57));',
+                    '    v = mix(v, mix(eyeFlow2, tangV2, smoothstep(0.006, 0.024, r2)), exp(-pow(r2 / 0.086, 2.0)) * 0.95);',
+                    '',
+                    '    // Concentric deflection around Moon & all 11 Stars',
+                    '    vec2 dMoon = skyDelta(p, vec2(0.355, 0.455));',
+                    '    float rMoon = length(dMoon) + 0.0001;',
+                    '    v = mix(v, vec2(-dMoon.y, dMoon.x) / rMoon, exp(-pow(rMoon / 0.174, 2.2)) * 0.95);',
+                    '',
+                    '    for (int i = 0; i < 11; i++) {',
+                    '        vec2 ds = skyDelta(p, getStarPos(i));',
+                    '        float dist = length(ds) + 0.0001;',
+                    '        float sr = getStarRadius(i);',
+                    '        v = mix(v, vec2(-ds.y, ds.x) / dist, exp(-pow(dist / (sr * 1.48), 2.2)) * 0.94);',
+                    '    }',
+                    '',
+                    '    return normalize(v + vec2(0.0001));',
+                    '}',
+                    '',
+                    '// Computes turbulent dark shear zones where Van Gogh wove deliberate BLACK/CHARCOAL strokes!',
+                    'float getSkyBlackShearWeight(vec2 pos) {',
+                    '    // 1. Dark trough right under the central vortex & between Cypress and Venus',
+                    '    vec2 dTrough = skyDelta(pos, vec2(-0.02, 0.235));',
+                    '    float underSwirl = exp(-pow(length(dTrough * vec2(0.65, 1.9)) / 0.11, 2.0)) * 0.85;',
+                    '    // 2. Left-flank dark wave above & around the Cypress monolith',
+                    '    vec2 dLeftWave = skyDelta(pos, vec2(-0.27, 0.34));',
+                    '    float leftShear = exp(-pow(length(dLeftWave * vec2(0.8, 1.2)) / 0.13, 2.0)) * 0.80;',
+                    '    // 3. Upper-sky dark Prussian/charcoal wave troughs',
+                    '    float upperWave = smoothstep(0.38, 0.56, pos.y) * (0.5 + 0.5 * sin(pos.x * 9.5 - pos.y * 11.0)) * 0.65;',
+                    '    // 4. Deep indigo-black band between the mist river and the Alpilles mountain crest',
+                    '    float mistY = getMistCenterY(pos.x);',
+                    '    float belowMist = exp(-pow((pos.y - (mistY - 0.058)) / 0.042, 2.0)) * 0.72;',
+                    '    return clamp(max(max(underSwirl, leftShear), max(upperWave, belowMist)), 0.08, 0.95);',
+                    '}',
+                    '',
+                    '// Selects ONE unblended oil pigment per slender ribbon (including explicit Charcoal-Black strokes!)',
+                    'vec3 pickSkyRibbonPigment(vec2 centerSky, vec3 rnd) {',
+                    '    vec3 charcoalBlk = vec3(0.024, 0.038, 0.082); // #060a15 Van Gogh charcoal-black stroke!',
+                    '    vec3 prussianBlk = vec3(0.038, 0.068, 0.155); // #0a1128 deep Prussian-indigo stroke',
+                    '    vec3 prussian    = vec3(0.052, 0.114, 0.285);',
+                    '    vec3 ultramarine = vec3(0.086, 0.188, 0.465);',
+                    '    vec3 cobalt      = vec3(0.145, 0.310, 0.610);',
+                    '    vec3 violetBlue  = vec3(0.180, 0.225, 0.485);',
+                    '    vec3 cerulean    = vec3(0.320, 0.555, 0.755);',
+                    '    vec3 milkyTurq   = vec3(0.685, 0.845, 0.895);',
+                    '    vec3 milkyWhite  = vec3(0.945, 0.948, 0.875);',
+                    '    vec3 paleSulfur  = vec3(0.965, 0.895, 0.485);',
+                    '',
+                    '    // Evaluate Yin-Yang S-curve vortex & diagonal mist membership',
+                    '    float sSpine = 0.374 + 0.070 * sin(centerSky.x * 7.2 + 1.62);',
+                    '    float riverEnv = exp(-pow((centerSky.y - sSpine) / 0.052, 2.0))',
+                    '                   * smoothstep(0.06, -0.10, centerSky.x) * smoothstep(-0.56, -0.34, centerSky.x);',
+                    '',
+                    '    vec2 dV1 = skyDelta(centerSky, vec2(-0.015, 0.355));',
+                    '    float r1 = length(dV1);',
+                    '    float arm1 = sin(atan(dV1.y, dV1.x) * 2.0 + r1 * 48.0 - uFlowPhase * 1.4);',
+                    '    float swirl1 = max(1.0 - smoothstep(0.0, 0.026, r1), smoothstep(-0.15, 0.48, arm1)) * smoothstep(0.146, 0.018, r1);',
+                    '',
+                    '    vec2 dV2 = skyDelta(centerSky, vec2(0.145, 0.278));',
+                    '    float r2 = length(dV2);',
+                    '    float arm2 = sin(-atan(dV2.y, dV2.x) * 2.0 + r2 * 56.0 - uFlowPhase * 1.4 + 1.2);',
+                    '    float swirl2 = max(1.0 - smoothstep(0.0, 0.020, r2), smoothstep(-0.15, 0.48, arm2)) * smoothstep(0.088, 0.014, r2);',
+                    '',
+                    '    vec2 dBridge = skyDelta(centerSky, vec2(0.068, 0.285));',
+                    '    float bridge = exp(-pow(length(dBridge * vec2(0.8, 1.7)) / 0.050, 2.0)) * 0.82;',
+                    '    float vortexProb = clamp(max(max(riverEnv * 0.86, swirl1), max(swirl2, bridge)), 0.0, 1.0);',
+                    '',
+                    '    float mistY = getMistCenterY(centerSky.x);',
+                    '    float mistProb = exp(-pow((centerSky.y - mistY) / 0.032, 2.0)) * smoothstep(0.68, 0.40, abs(centerSky.x));',
+                    '',
+                    '    // 1. Diagonal Mountain Mist Band strokes (pale yellow-cream, milky white, turquoise)',
+                    '    if (mistProb > 0.28 && rnd.x < mistProb * 1.15) {',
+                    '        if (rnd.y > 0.72) return paleSulfur;',
+                    '        if (rnd.y > 0.28) return milkyWhite;',
+                    '        return milkyTurq;',
+                    '    }',
+                    '',
+                    '    // 2. Central Yin-Yang S-Curve Vortex strokes (interleaved cream-white, milky turquoise, cobalt & dark accent)',
+                    '    if (vortexProb > 0.25 && rnd.x < vortexProb * 1.10) {',
+                    '        if (rnd.z < 0.06 * uBlackInk) return prussianBlk; // Dark accent stroke inside swirl trough!',
+                    '        if (rnd.y > 0.56) return milkyWhite;',
+                    '        if (rnd.y > 0.24) return milkyTurq;',
+                    '        if (rnd.y > 0.08) return cerulean;',
+                    '        return cobalt;',
+                    '    }',
+                    '',
+                    '    // 3. Explicit Charcoal / Prussian-Black Sky Strokes woven between the blue waves!',
+                    '    float blackProb = getSkyBlackShearWeight(centerSky) * 0.24 * uBlackInk;',
+                    '    if (rnd.z < blackProb) {',
+                    '        return (rnd.x > 0.45) ? charcoalBlk : prussianBlk;',
+                    '    }',
+                    '',
+                    '    // 4. Slender Cobalt, Ultramarine, Violet-Blue, Cerulean & Prussian Sky Ribbons',
+                    '    float macroZone = vnoise(centerSky * 5.8);',
+                    '    if (rnd.y > 0.86) return cerulean;',
+                    '    if (rnd.y > 0.54) return cobalt;',
+                    '    if (rnd.y > 0.30) return (macroZone > 0.50) ? violetBlue : ultramarine;',
+                    '    if (rnd.y > 0.12) return ultramarine;',
+                    '    return prussian;',
+                    '}',
+                    '',
+                    '// Splats ONE overlapping layer of slender curved sky ribbons onto (canvasCol, heightAccum)',
+                    'void splatSkyRibbonLayer(vec2 p, float baseFreq, vec2 phaseOff, float layerSeed, inout vec3 canvasCol, inout float heightAccum) {',
+                    '    float gridFreq = baseFreq * uThinness;',
+                    '    vec2 g = p * gridFreq + phaseOff;',
+                    '    vec2 baseCell = floor(g);',
+                    '',
+                    '    // Check 2x2 neighborhood around fract(g) so jittered long slender strokes cross cell boundaries seamlessly!',
+                    '    vec2 quadStart = baseCell + step(vec2(0.5), fract(g)) - vec2(1.0);',
+                    '    for (int dy = 0; dy <= 1; dy++) {',
+                    '        for (int dx = 0; dx <= 1; dx++) {',
+                    '            vec2 cellId = quadStart + vec2(float(dx), float(dy));',
+                    '            vec3 rnd = hash23(cellId + vec2(layerSeed * 17.3, layerSeed * 31.7));',
+                    '',
+                    '            // Heavy organic position jitter breaks any grid alignment!',
+                    '            vec2 jitter = (rnd.xy - 0.5) * (0.62 + 0.36 * uChaos);',
+                    '            vec2 centerSky = (cellId + vec2(0.5) + jitter - phaseOff) / gridFreq;',
+                    '',
+                    '            vec2 T = getSkyFlow(centerSky);',
+                    '            // Hand-angle wobble (`±10 deg * uChaos`) so strokes cross & weave naturally!',
+                    '            float handWobble = (rnd.z - 0.5) * 0.30 * uChaos;',
+                    '            float cw = cos(handWobble); float sw = sin(handWobble);',
+                    '            T = mat2(cw, -sw, sw, cw) * T;',
+                    '            vec2 N = vec2(-T.y, T.x);',
+                    '',
+                    '            // Subtle wind drift along tangent when animated',
+                    '            float drift = sin(uFlowPhase * 2.2 + rnd.x * 6.283) * 0.12;',
+                    '            vec2 rel = skyDelta(p, centerSky);',
+                    '            float sAlong  = dot(rel, T) * gridFreq + drift;',
+                    '            float sAcross = dot(rel, N) * gridFreq;',
+                    '',
+                    '            // Bend ribbon along local flow curvature',
+                    '            vec2 T2 = getSkyFlow(centerSky + T * (0.9 / gridFreq));',
+                    '            float bend = dot(T2 - getSkyFlow(centerSky), N) * 0.52;',
+                    '            sAcross -= bend * sAlong * sAlong;',
+                    '',
+                    '            // SLENDER 10:1 ASPECT RATIO: halfLen ~ 0.95..1.55 cells, halfWid ~ 0.10..0.16 cells!',
+                    '            float halfLen = 0.88 + rnd.x * (0.55 + 0.30 * uChaos);',
+                    '            float halfWid = (0.115 + rnd.y * 0.055);',
+                    '',
+                    '            vec3 stroke = evalSlenderBristleStroke(sAlong / halfLen, sAcross / halfWid, rnd.x + layerSeed);',
+                    '            if (stroke.x > 0.01) {',
+                    '                vec3 pig = pickSkyRibbonPigment(centerSky, rnd) * (1.0 + stroke.y);',
+                    '                canvasCol = mix(canvasCol, pig, stroke.x);',
+                    '                heightAccum = mix(heightAccum, stroke.z, stroke.x * 0.85) + stroke.x * 0.08;',
+                    '            }',
+                    '        }',
+                    '    }',
+                    '}',
+                    '',
+                    '// ====================================================================',
+                    '// WET-ON-WET OVERLAPPING CELESTIAL IMPASTO (STARS, VENUS & MOON)',
+                    '//   - Radius-adaptive constant arc-length subdivisions (~9:1–11:1',
+                    '//     slender ribbons even at uThinness = 0.55x — ZERO fat blocks!)',
+                    '//   - Multi-stop luminous wet-on-wet underpainting (gold -> ivory ->',
+                    '//     celadon -> cerulean -> cobalt) eliminating dark holes at Chaos 1.75',
+                    '//   - Flow-streamline tangent peeling & stochastic outer-fringe',
+                    '//     feathering + sky-ribbon weave-in (ZERO scissor-clipped circles!)',
+                    '// ====================================================================',
+                    'void paintWetOnWetCelestial(vec2 p, vec2 center, float outerR, int celestialType, inout vec3 canvasCol, inout float heightAccum) {',
+                    '    vec2 d = skyDelta(p, center);',
+                    '    float r = length(d);',
+                    '    if (r > outerR * 1.24) return;',
+                    '',
+                    '    float ang = atan(d.y, d.x);',
+                    '    vec3 cadOrange      = vec3(0.925, 0.475, 0.070);',
+                    '    vec3 warmAmber      = vec3(0.965, 0.655, 0.120);',
+                    '    vec3 butterYellow   = vec3(0.980, 0.870, 0.245);',
+                    '    vec3 sulfurCream    = vec3(0.992, 0.948, 0.575);',
+                    '    vec3 warmIvory      = vec3(0.985, 0.968, 0.835);',
+                    '    vec3 venusWhiteGold = vec3(1.000, 0.988, 0.905);',
+                    '    vec3 celadonTurq    = vec3(0.498, 0.710, 0.788); // #7fb5c9 soft celadon-turquoise',
+                    '    vec3 lumCerulean    = vec3(0.239, 0.451, 0.722); // #3d73b8 luminous cerulean',
+                    '    vec3 transCobalt    = vec3(0.122, 0.271, 0.569); // #1f4591 transitional cobalt',
+                    '',
+                    '    // 1. Continuous Multi-Stop Wet-on-Wet Underpainting out to 1.15 * outerR',
+                    '    //    Prevents dark black triangular holes when high Hand Chaos (1.75) shifts strokes!',
+                    '    float uNorm = r / outerR;',
+                    '    float wetMask = 1.0 - smoothstep(0.66, 1.15, uNorm);',
+                    '    if (wetMask > 0.005) {',
+                    '        vec3 innerGlow = (celestialType == 1) ? venusWhiteGold : mix(butterYellow, sulfurCream, 0.50);',
+                    '        vec3 midGlow   = (celestialType == 1) ? mix(warmIvory, celadonTurq, 0.36) : mix(sulfurCream, warmIvory, 0.52);',
+                    '        vec3 outerGlow = mix(celadonTurq, lumCerulean, smoothstep(0.68, 1.04, uNorm));',
+                    '        outerGlow      = mix(outerGlow, transCobalt, smoothstep(0.90, 1.15, uNorm));',
+                    '        vec3 wetCol    = mix(innerGlow, midGlow, smoothstep(0.24, 0.64, uNorm));',
+                    '        wetCol         = mix(wetCol, outerGlow, smoothstep(0.60, 1.02, uNorm));',
+                    '        canvasCol      = mix(canvasCol, wetCol, wetMask * 0.88);',
+                    '        heightAccum    = max(heightAccum, mix(0.56, 0.34, clamp(uNorm, 0.0, 1.0)) * wetMask);',
+                    '    }',
+                    '',
+                    '    // 2. Radius-Adaptive Slender Curved Halo Ribbons (5 staggered passes, constant world arc-length!)',
+                    '    //    Floor-clamped density ensures strokes stay fine & delicate even when uThinness = 0.55x!',
+                    '    float effThin = max(uThinness, 0.86) * (0.72 + 0.28 * uThinness);',
+                    '    float baseRingPitch = ((celestialType == 2) ? 0.0088 : ((celestialType == 1) ? 0.0074 : 0.0064)) / effThin;',
+                    '    float targetArcLen  = baseRingPitch * 4.4;',
+                    '    float maxBands      = floor((outerR * 1.18) / baseRingPitch);',
+                    '',
+                    '    // Local sky-stream tangent so outer halo strokes (>0.74 * outerR) peel seamlessly into the wind!',
+                    '    vec2 streamTan = getSkyFlow(p);',
+                    '',
+                    '    for (int passIdx = 0; passIdx < 5; passIdx++) {',
+                    '        float pf = float(passIdx);',
+                    '        float rCoord = (r / baseRingPitch) + pf * 0.23;',
+                    '        float rBand = floor(rCoord);',
+                    '        if (rBand >= 0.0 && rBand <= maxBands) {',
+                    '            float rRingWorld = max((rBand + 0.5 - pf * 0.23) * baseRingPitch, 0.014);',
+                    '            float rFracNorm  = rRingWorld / outerR;',
+                    '',
+                    '            // Dynamic circumference subdivision: arc_length = 2*pi*r / arcCount stays CONSTANT!',
+                    '            float ringCircum = 6.2831853 * max(rRingWorld, 0.018);',
+                    '            float arcCount   = max(7.0, floor(ringCircum / targetArcLen + 0.5));',
+                    '            float spin       = (mod(rBand + pf, 2.0) < 0.5 ? 1.0 : -1.0) * uFlowPhase * 0.26;',
+                    '',
+                    '            // Check 2 neighboring angular cells so elongated jittered ribbons never scissor-clip!',
+                    '            float aRaw  = ((ang + 3.14159265 + pf * 1.61803 + rBand * 1.3247 + spin) / 6.2831853) * arcCount;',
+                    '            float aBase = floor(aRaw);',
+                    '            float aQuad = aBase + step(0.5, fract(aRaw)) - 1.0;',
+                    '',
+                    '            for (int da = 0; da <= 1; da++) {',
+                    '                float aIdx = aQuad + float(da);',
+                    '                float wrappedA = mod(aIdx, arcCount);',
+                    '                vec3 rnd = hash23(vec2(rBand + pf * 23.0, wrappedA + center.x * 113.0 + center.y * 59.0));',
+                    '',
+                    '                // Stochastic stroke-by-stroke feathering in [0.72..1.18] * outerR (NO hard circle cutoff!)',
+                    '                float featherProb = 1.0 - smoothstep(0.70, 1.17, rFracNorm + (rnd.x - 0.5) * 0.14);',
+                    '                if (rnd.z < featherProb) {',
+                    '                    float cellCenterAng = ((aIdx + 0.5) / arcCount) * 6.2831853 - 3.14159265 - pf * 1.61803 - rBand * 1.3247 - spin;',
+                    '                    vec2 radialDir  = vec2(cos(cellCenterAng), sin(cellCenterAng));',
+                    '                    vec2 polarTan   = vec2(-radialDir.y, radialDir.x);',
+                    '',
+                    '                    // Align stream direction with polar CW/CCW sense so outer strokes peel smoothly',
+                    '                    vec2 alignedStream = (dot(streamTan, polarTan) >= 0.0) ? streamTan : -streamTan;',
+                    '                    float peelBlend = smoothstep(0.74, 1.14, rFracNorm) * 0.62;',
+                    '                    vec2 strokeTan  = normalize(mix(polarTan, alignedStream, peelBlend));',
+                    '',
+                    '                    // Gentle hand-angle wobble (bounded at outer rim so strokes stay sleek, never boxy)',
+                    '                    float wobbleLim = mix(0.24, 0.14, smoothstep(0.65, 1.05, rFracNorm));',
+                    '                    float handTilt  = (rnd.z - 0.5) * wobbleLim * min(uChaos, 2.0);',
+                    '                    float ct = cos(handTilt); float stSin = sin(handTilt);',
+                    '                    strokeTan = mat2(ct, -stSin, stSin, ct) * strokeTan;',
+                    '                    vec2 strokeNorm = vec2(-strokeTan.y, strokeTan.x);',
+                    '',
+                    '                    // World-space anchor with bounded organic jitter so strokes overlap without leaving holes',
+                    '                    float jitCap = min(uChaos, 1.9);',
+                    '                    vec2 anchorOffset = radialDir * rRingWorld',
+                    '                        + polarTan * ((rnd.x - 0.5) * targetArcLen * 0.44 * jitCap)',
+                    '                        + radialDir * ((rnd.y - 0.5) * baseRingPitch * 0.48 * jitCap);',
+                    '                    vec2 relVec = d - anchorOffset;',
+                    '',
+                    '                    float sAlong  = dot(relVec, strokeTan);',
+                    '                    float sAcross = dot(relVec, strokeNorm);',
+                    '                    // Natural concentric curvature along the ribbon length',
+                    '                    sAcross += (sAlong * sAlong) / (2.0 * max(rRingWorld, 0.028)) * (1.0 - peelBlend * 0.75);',
+                    '',
+                    '                    // Outer halo strokes taper finer & more delicate than inner rings (~9.5:1 aspect!)',
+                    '                    float outerTaper = mix(1.0, 0.72, smoothstep(0.65, 1.15, rFracNorm));',
+                    '                    float halfLen = targetArcLen * (0.58 + rnd.x * 0.34);',
+                    '                    float halfWid = baseRingPitch * (0.48 + rnd.y * 0.16) * outerTaper;',
+                    '',
+                    '                    vec3 st = evalSlenderBristleStroke(sAlong / halfLen, sAcross / halfWid, rnd.x + pf * 3.1);',
+                    '                    if (st.x > 0.01) {',
+                    '                        // Nuanced 1889 Van Gogh outer-halo palette (NO dark black holes or flat cyan blocks!)',
+                    '                        vec3 dashCol;',
+                    '                        if (celestialType == 1) {',
+                    '                            if (rFracNorm < 0.44) dashCol = (rnd.y > 0.34) ? venusWhiteGold : warmIvory;',
+                    '                            else if (rFracNorm < 0.74) dashCol = (rnd.y > 0.48) ? venusWhiteGold : ((rnd.y > 0.20) ? sulfurCream : celadonTurq);',
+                    '                            else if (rFracNorm < 0.96) dashCol = (rnd.y > 0.62) ? warmIvory : ((rnd.y > 0.28) ? celadonTurq : lumCerulean);',
+                    '                            else dashCol = (rnd.y > 0.58) ? celadonTurq : ((rnd.y > 0.24) ? lumCerulean : transCobalt);',
+                    '                        } else if (celestialType == 2) {',
+                    '                            if (rFracNorm < 0.46) dashCol = (rnd.y > 0.40) ? butterYellow : ((rnd.y > 0.15) ? sulfurCream : warmAmber);',
+                    '                            else if (rFracNorm < 0.76) dashCol = (rnd.y > 0.45) ? sulfurCream : ((rnd.y > 0.14) ? butterYellow : warmIvory);',
+                    '                            else if (rFracNorm < 0.96) dashCol = (rnd.y > 0.56) ? sulfurCream : ((rnd.y > 0.28) ? warmIvory : celadonTurq);',
+                    '                            else dashCol = (rnd.y > 0.54) ? celadonTurq : ((rnd.y > 0.24) ? lumCerulean : transCobalt);',
+                    '                        } else {',
+                    '                            if (rFracNorm < 0.48) dashCol = (rnd.y > 0.38) ? butterYellow : sulfurCream;',
+                    '                            else if (rFracNorm < 0.78) dashCol = (rnd.y > 0.46) ? sulfurCream : ((rnd.y > 0.20) ? warmIvory : celadonTurq);',
+                    '                            else dashCol = (rnd.y > 0.55) ? celadonTurq : ((rnd.y > 0.25) ? lumCerulean : transCobalt);',
+                    '                        }',
+                    '                        dashCol *= (1.0 + st.y);',
+                    '                        canvasCol = mix(canvasCol, dashCol, st.x);',
+                    '                        // Elevated consistent paint-height .a prevents pothole shadows in the relief pass!',
+                    '                        heightAccum = mix(heightAccum, max(0.50, st.z + 0.16), st.x * 0.90);',
+                    '                    }',
+                    '                }',
+                    '            }',
+                    '        }',
+                    '    }',
+                    '',
+                    '    // 3. Sculpted Cadmium-Orange Crescent Moon or Bright Star Core painted wet-on-wet on top!',
+                    '    if (celestialType == 2 && r < outerR * 0.36) {',
+                    '        vec2 cUv = d / (outerR * 0.34);',
+                    '        float outerD = length(cUv);',
+                    '        float innerCut = length(cUv - vec2(-0.35, 0.23));',
+                    '        float cAng = atan(cUv.y, cUv.x);',
+                    '        float bristle = sin(outerD * 58.0 * effThin + sin(cAng * 6.0) * 1.8) * 0.06;',
+                    '        if (outerD < 0.98 && innerCut > 0.70) {',
+                    '            float band = sin(outerD * 26.0 + cAng * 3.0);',
+                    '            vec3 mCol = mix(cadOrange, warmAmber, smoothstep(-0.4, 0.5, band)) * (1.0 + bristle);',
+                    '            float crescentMask = (1.0 - smoothstep(0.92, 0.99, outerD)) * smoothstep(0.68, 0.75, innerCut);',
+                    '            canvasCol = mix(canvasCol, mCol, crescentMask);',
+                    '            heightAccum = mix(heightAccum, 0.86 + bristle * 1.8, crescentMask);',
+                    '        }',
+                    '    } else if (celestialType != 2 && r < outerR * 0.24) {',
+                    '        float uCore = r / (outerR * 0.24);',
+                    '        float coreMask = 1.0 - smoothstep(0.68, 1.0, uCore);',
+                    '        vec3 coreCol = (celestialType == 1)',
+                    '            ? mix(vec3(1.0, 0.88, 0.36), venusWhiteGold, smoothstep(0.25, 0.75, uCore))',
+                    '            : mix(warmAmber, sulfurCream, 0.65);',
+                    '        canvasCol = mix(canvasCol, coreCol, coreMask);',
+                    '        heightAccum = mix(heightAccum, 0.84, coreMask);',
+                    '    }',
+                    '}',
+                    '',
+                    '// Returns [0..1] protection inside deep star/moon cores while allowing sky flow ribbons',
+                    '// to weave organically inward across the outer halo transition rims (0.74..1.16 * R)!',
+                    'float getCelestialCoreShield(vec2 p) {',
+                    '    float shield = 0.0;',
+                    '    float rm = length(skyDelta(p, vec2(0.355, 0.455))) / 0.134;',
+                    '    shield = max(shield, 1.0 - smoothstep(0.68, 1.06, rm));',
+                    '    for (int i = 0; i < 11; i++) {',
+                    '        float rs = length(skyDelta(p, getStarPos(i))) / getStarRadius(i);',
+                    '        shield = max(shield, 1.0 - smoothstep(0.68, 1.08, rs));',
+                    '    }',
+                    '    return shield;',
+                    '}',
+                    '',
+                    'void main() {',
+                    '    vec3 d = normalize(vWorldDir);',
+                    '    vec2 p = vec2(atan(d.x, -d.z), asin(clamp(d.y, -0.99, 0.99)));',
+                    '',
+                    '    // Continuous wet Prussian-Ultramarine underpainting (NO black void, NO mosaic grout!)',
+                    '    float baseGrad = smoothstep(-0.05, 0.55, p.y);',
+                    '    vec3 canvasCol = mix(vec3(0.065, 0.145, 0.365), vec3(0.042, 0.088, 0.235), baseGrad);',
+                    '    float heightAccum = 0.20;',
+                    '',
+                    '    // Base 4 staggered overlapping layers of slender curved sky hog-bristle ribbons',
+                    '    splatSkyRibbonLayer(p, 58.0, vec2(0.00, 0.00), 1.1, canvasCol, heightAccum);',
+                    '    splatSkyRibbonLayer(p, 68.0, vec2(0.37, 0.61), 2.3, canvasCol, heightAccum);',
+                    '    splatSkyRibbonLayer(p, 76.0, vec2(0.73, 0.29), 3.7, canvasCol, heightAccum);',
+                    '    splatSkyRibbonLayer(p, 86.0, vec2(0.19, 0.83), 5.1, canvasCol, heightAccum);',
+                    '',
+                    '    // Paint Wet-on-Wet Overlapping Crescent Moon & 11 Stars (feathered constant-arc ribbons)',
+                    '    paintWetOnWetCelestial(p, vec2(0.355, 0.455), 0.134, 2, canvasCol, heightAccum);',
+                    '    for (int i = 0; i < 11; i++) {',
+                    '        paintWetOnWetCelestial(p, getStarPos(i), getStarRadius(i), (i == 0) ? 1 : 0, canvasCol, heightAccum);',
+                    '    }',
+                    '',
+                    '    // Top Interleaving Sky Pass: weaves slender cobalt/cerulean/cream flow strokes across',
+                    '    // the outer halo perimeters (where coreShield < 1) so sky & star halos lock stroke-by-stroke!',
+                    '    float coreShield = getCelestialCoreShield(p);',
+                    '    if (coreShield < 0.96) {',
+                    '        vec3 weaveCol = canvasCol;',
+                    '        float weaveHgt = heightAccum;',
+                    '        // Suppress black shear strokes right on halo rims so interleaved sky strokes stay luminous cobalt/cerulean',
+                    '        splatSkyRibbonLayer(p, 94.0, vec2(0.53, 0.41), 6.9, weaveCol, weaveHgt);',
+                    '        float weaveLum = dot(weaveCol, vec3(0.299, 0.587, 0.114));',
+                    '        float rimSafe = (coreShield > 0.05 && weaveLum < 0.08) ? 0.0 : (1.0 - coreShield);',
+                    '        canvasCol = mix(canvasCol, weaveCol, rimSafe);',
+                    '        heightAccum = mix(heightAccum, weaveHgt, rimSafe);',
+                    '    }',
+                    '',
+                    '    gl_FragColor = vec4(clamp(canvasCol, 0.0, 1.0), clamp(heightAccum, 0.0, 1.0));',
+                    '}'
+                ].join('\n')
+            });
+
+            scene.add(new THREE.Mesh(skyGeo, skyMat));
+        }
+
+        // ========================================================================
+        // 5. ALPILLES MOUNTAINS & FOREGROUND FIELDS — SLENDER OVERLAPPING RIBBONS
+        //    + BOLD RIGHT-HAND CHARCOAL-BLACK MOUNTAIN CREST SHADOW MASS!
+        // ========================================================================
+        function buildOrganicMountainsAndFields() {
+            var segs = 200;
+            var geo = new THREE.PlaneGeometry(WORLD_HALF * 2, WORLD_HALF * 2, segs, segs);
+            geo.rotateX(-Math.PI / 2);
+
+            var pos = geo.attributes.position;
+            for (var i = 0; i < pos.count; i++) {
+                var vx = pos.getX(i);
+                var vz = pos.getZ(i);
+                pos.setY(i, getGroundY(vx, vz));
+            }
+            geo.computeVertexNormals();
+
+            var terrainMat = new THREE.ShaderMaterial({
+                uniforms: {
+                    uThinness: uThinness,
+                    uChaos: uChaos,
+                    uBlackInk: uBlackInk,
+                    uMoonDir: { value: MOON_LIGHT_DIR }
+                },
+                vertexShader: [
+                    'precision highp float;',
+                    'varying vec3 vWorldPos;',
+                    'varying vec3 vNormal;',
+                    'void main() {',
+                    '    vec4 wp = modelMatrix * vec4(position, 1.0);',
+                    '    vWorldPos = wp.xyz;',
+                    '    vNormal = normalize(mat3(modelMatrix) * normal);',
+                    '    gl_Position = projectionMatrix * viewMatrix * wp;',
+                    '}'
+                ].join('\n'),
+                fragmentShader: [
+                    'precision highp float;',
+                    'uniform float uThinness;',
+                    'uniform float uChaos;',
+                    'uniform float uBlackInk;',
+                    'uniform vec3 uMoonDir;',
+                    'varying vec3 vWorldPos;',
+                    'varying vec3 vNormal;',
+                    '',
+                    GLSL_RIBBON_LIBRARY,
+                    '',
+                    '// Overlapping slender stroke pass for mountain slopes or valley fields (NO roof-shingle grid!)',
+                    'void splatTerrainPass(vec2 uv, float baseAng, vec2 phaseOff, float seed, bool isMountain, float ndl, float rightDarkMass, inout vec3 col, inout float hgt) {',
+                    '    vec2 g = uv + phaseOff;',
+                    '    vec2 baseCell = floor(g);',
+                    '    vec2 qStart = baseCell + step(vec2(0.5), fract(g)) - vec2(1.0);',
+                    '',
+                    '    for (int dy = 0; dy <= 1; dy++) {',
+                    '        for (int dx = 0; dx <= 1; dx++) {',
+                    '            vec2 cid = qStart + vec2(float(dx), float(dy));',
+                    '            vec3 rnd = hash23(cid + vec2(seed * 13.1, seed * 29.7));',
+                    '            vec2 center = cid + vec2(0.5) + (rnd.xy - 0.5) * (0.65 + 0.35 * uChaos);',
+                    '            vec2 rel = g - center;',
+                    '',
+                    '            float ang = baseAng + (rnd.z - 0.5) * 0.42 * uChaos;',
+                    '            float ca = cos(ang); float sa = sin(ang);',
+                    '            vec2 local = mat2(ca, -sa, sa, ca) * rel;',
+                    '',
+                    '            float hLen = 0.95 + rnd.x * 0.65;',
+                    '            float hWid = 0.12 + rnd.y * 0.055;',
+                    '            vec3 st = evalSlenderBristleStroke(local.x / hLen, local.y / hWid, rnd.x + seed);',
+                    '',
+                    '            if (st.x > 0.01) {',
+                    '                vec3 pig;',
+                    '                if (isMountain) {',
+                    '                    vec3 blkMass  = vec3(0.020, 0.032, 0.072); // Velvety charcoal-indigo black!',
+                    '                    vec3 deepInd  = vec3(0.042, 0.088, 0.225);',
+                    '                    vec3 ultra    = vec3(0.082, 0.185, 0.460);',
+                    '                    vec3 cobalt   = vec3(0.148, 0.325, 0.635);',
+                    '                    vec3 paleBlue = vec3(0.335, 0.565, 0.775);',
+                    '',
+                    '                    // Heavy charcoal-black strokes on the right-hand Alpilles crest & diagonal ravines!',
+                    '                    float blkProb = (0.18 + rightDarkMass * 0.68) * uBlackInk;',
+                    '                    if (rnd.z < blkProb) pig = blkMass;',
+                    '                    else if (rnd.y * 0.65 + ndl * 0.35 > 0.74) pig = paleBlue;',
+                    '                    else if (rnd.y > 0.44) pig = cobalt;',
+                    '                    else if (rnd.y > 0.20) pig = ultra;',
+                    '                    else pig = deepInd;',
+                    '                } else {',
+                    '                    vec3 blkStroke = vec3(0.025, 0.042, 0.088);',
+                    '                    vec3 prussian  = vec3(0.048, 0.098, 0.220);',
+                    '                    vec3 cobalt    = vec3(0.115, 0.230, 0.435);',
+                    '                    vec3 olive     = vec3(0.155, 0.250, 0.180);',
+                    '                    vec3 ochre     = vec3(0.465, 0.385, 0.175);',
+                    '                    vec3 wheatGold = vec3(0.665, 0.545, 0.215);',
+                    '                    if (rnd.z < 0.22 * uBlackInk) pig = blkStroke;',
+                    '                    else if (rnd.y > 0.80) pig = (rnd.x > 0.55) ? wheatGold : ochre;',
+                    '                    else if (rnd.y > 0.48) pig = olive;',
+                    '                    else if (rnd.y > 0.22) pig = cobalt;',
+                    '                    else pig = prussian;',
+                    '                }',
+                    '                pig *= (1.0 + st.y);',
+                    '                col = mix(col, pig, st.x);',
+                    '                hgt = mix(hgt, st.z, st.x * 0.85);',
+                    '            }',
+                    '        }',
+                    '    }',
+                    '}',
+                    '',
+                    'void main() {',
+                    '    vec3 N = normalize(vNormal);',
+                    '    vec3 V = normalize(cameraPosition - vWorldPos);',
+                    '    float ndl = dot(N, uMoonDir) * 0.5 + 0.5;',
+                    '    float isMtn = smoothstep(-40.0, -52.0, vWorldPos.z);',
+                    '',
+                    '    // 1. ALPILLES MOUNTAINS: Sweeping diagonal curved strokes + dark right-hand charcoal shadow mass!',
+                    '    // Right-hand upper mountain mass (x > 16, high elevation) has the iconic 1889 velvety black cap!',
+                    '    float rightCap = smoothstep(8.0, 46.0, vWorldPos.x) * smoothstep(4.0, 18.0, vWorldPos.y);',
+                    '    vec3 mCol = mix(vec3(0.055, 0.125, 0.325), vec3(0.020, 0.032, 0.075), clamp(rightCap * 0.85 * uBlackInk, 0.0, 0.95));',
+                    '    float mHgt = 0.22;',
+                    '',
+                    '    // Curved mountain coordinates following slope undulation',
+                    '    float slopeCurve = 0.54 + 0.24 * sin(vWorldPos.x * 0.042 + vWorldPos.y * 0.05);',
+                    '    vec2 mUv = vec2(vWorldPos.x * 0.36, vWorldPos.y * 0.58 + sin(vWorldPos.x * 0.05) * 1.8) * uThinness;',
+                    '    splatTerrainPass(mUv, slopeCurve, vec2(0.00, 0.00), 1.4, true, ndl, rightCap, mCol, mHgt);',
+                    '    splatTerrainPass(mUv * 1.22, slopeCurve - 0.12, vec2(0.41, 0.63), 2.8, true, ndl, rightCap, mCol, mHgt);',
+                    '    splatTerrainPass(mUv * 1.45, slopeCurve + 0.14, vec2(0.77, 0.23), 4.2, true, ndl, rightCap, mCol, mHgt);',
+                    '    splatTerrainPass(mUv * 1.68, slopeCurve - 0.05, vec2(0.19, 0.81), 5.9, true, ndl, rightCap, mCol, mHgt);',
+                    '',
+                    '    // Ragged hand-brushed charcoal-black ridge & ravine contour strokes on mountains',
+                    '    float nv = abs(dot(N, V));',
+                    '    float bristleWob = (vnoise(vWorldPos.xy * 0.85) - 0.5) * 0.22;',
+                    '    float crestBlack = (1.0 - smoothstep(0.10, 0.36 + bristleWob, nv)) * clamp(uBlackInk, 0.25, 1.8);',
+                    '    float diagRavine = exp(-pow(sin(vWorldPos.x * 0.054 + vWorldPos.y * 0.095 + bristleWob) / 0.085, 2.0)) * 0.65 * clamp(uBlackInk, 0.2, 1.6);',
+                    '    float inkMask = clamp(crestBlack + diagRavine + rightCap * 0.52 * uBlackInk, 0.0, 0.94);',
+                    '    mCol = mix(mCol, vec3(0.018, 0.028, 0.068), inkMask);',
+                    '    mHgt = mix(mHgt, 0.78, inkMask * 0.6);',
+                    '',
+                    '    // 2. FOREGROUND & VALLEY PARCELS: Slender overlapping strokes with organic angle shifts',
+                    '    vec3 fCol = vec3(0.052, 0.105, 0.225);',
+                    '    float fHgt = 0.20;',
+                    '    float parcelAng = (vnoise(vWorldPos.xz * 0.045) > 0.5) ? 0.34 : -0.16;',
+                    '    vec2 fUv = vWorldPos.xz * 0.82 * uThinness;',
+                    '    splatTerrainPass(fUv, parcelAng, vec2(0.00, 0.00), 7.1, false, ndl, 0.0, fCol, fHgt);',
+                    '    splatTerrainPass(fUv * 1.25, parcelAng + 0.15, vec2(0.39, 0.57), 8.5, false, ndl, 0.0, fCol, fHgt);',
+                    '    splatTerrainPass(fUv * 1.50, parcelAng - 0.12, vec2(0.71, 0.31), 9.9, false, ndl, 0.0, fCol, fHgt);',
+                    '',
+                    '    gl_FragColor = vec4(mix(fCol, mCol, isMtn), mix(fHgt, mHgt, isMtn));',
+                    '}'
+                ].join('\n')
+            });
+
+            scene.add(new THREE.Mesh(geo, terrainMat));
+
+            // Irregular, ragged charcoal-black contour brush ribbons crowning the Alpilles horizons
+            var crestInkMat = new THREE.ShaderMaterial({
+                uniforms: { uBlackInk: uBlackInk },
+                vertexShader: 'precision highp float; void main() { gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+                fragmentShader: 'precision highp float; uniform float uBlackInk; void main() { gl_FragColor = vec4(vec3(0.020, 0.032, 0.074), clamp(0.75 * uBlackInk, 0.2, 1.0)); }'
+            });
+            [-60.0, -85.0, -112.0].forEach(function (cz, layerIdx) {
+                var pts = [];
+                var xMin = layerIdx === 2 ? -35 : -96;
+                for (var x = xMin; x <= 116; x += 2.4) {
+                    var wob = Math.sin(x * 0.48 + layerIdx * 2.1) * 0.26 + Math.cos(x * 1.1) * 0.12;
+                    pts.push(new THREE.Vector3(x, getGroundY(x, cz) + 0.26 + wob, cz));
+                }
+                var curve = new THREE.CatmullRomCurve3(pts);
+                var tubeGeo = new THREE.TubeGeometry(curve, 115, 0.34 + layerIdx * 0.14, 6, false);
+                var tPos = tubeGeo.attributes.position;
+                var cPt = new THREE.Vector3();
+                for (var vi = 0; vi < tPos.count; vi++) {
+                    var u = THREE.MathUtils.clamp(Math.floor(vi / 7) / 115, 0, 1);
+                    curve.getPointAt(u, cPt);
+                    // Extra-thick velvety black cap on the right side (`u > 0.55`) matching the 1889 canvas!
+                    var rightWeight = u > 0.55 ? (1.0 + (u - 0.55) * 2.4) : 0.85;
+                    var pressure = (0.55 + 0.65 * Math.abs(Math.sin(u * 33.0 + layerIdx))) * rightWeight;
+                    tPos.setXYZ(
+                        vi,
+                        cPt.x + (tPos.getX(vi) - cPt.x) * pressure,
+                        cPt.y + (tPos.getY(vi) - cPt.y) * pressure,
+                        cPt.z + (tPos.getZ(vi) - cPt.z) * pressure
+                    );
+                }
+                scene.add(new THREE.Mesh(tubeGeo, crestInkMat));
+            });
+        }
+
+        // ========================================================================
+        // 6. OLIVE GROVES — LOOSE CHAOTIC C-CURVED DARK GREEN, SLATE & BLACK
+        //    STROKES (ZERO Fish-Scale Concentric Arches!)
+        // ========================================================================
+        function buildTurbulentOliveGroves() {
+            var oliveMat = new THREE.ShaderMaterial({
+                uniforms: {
+                    uThinness: uThinness,
+                    uChaos: uChaos,
+                    uBlackInk: uBlackInk,
+                    uMoonDir: { value: MOON_LIGHT_DIR }
+                },
+                vertexShader: [
+                    'precision highp float;',
+                    'varying vec3 vLocalPos;',
+                    'varying vec3 vWorldPos;',
+                    'varying vec3 vNormal;',
+                    'void main() {',
+                    '    vLocalPos = position;',
+                    '    vec4 wp = modelMatrix * vec4(position, 1.0);',
+                    '    vWorldPos = wp.xyz;',
+                    '    vNormal = normalize(mat3(modelMatrix) * normal);',
+                    '    gl_Position = projectionMatrix * viewMatrix * wp;',
+                    '}'
+                ].join('\n'),
+                fragmentShader: [
+                    'precision highp float;',
+                    'uniform float uThinness;',
+                    'uniform float uChaos;',
+                    'uniform float uBlackInk;',
+                    'uniform vec3 uMoonDir;',
+                    'varying vec3 vLocalPos;',
+                    'varying vec3 vWorldPos;',
+                    'varying vec3 vNormal;',
+                    '',
+                    GLSL_RIBBON_LIBRARY,
+                    '',
+                    'void main() {',
+                    '    vec3 N = normalize(vNormal);',
+                    '    vec3 V = normalize(cameraPosition - vWorldPos);',
+                    '    float ndl = dot(N, uMoonDir) * 0.5 + 0.5;',
+                    '',
+                    '    // Deep shadowed viridian-charcoal wet base (zero fish-scale grout!)',
+                    '    vec3 col = vec3(0.035, 0.072, 0.125);',
+                    '    float hgt = 0.24;',
+                    '',
+                    '    // Turbulent curl-warped world+local coordinates so adjacent bushes flow together organically!',
+                    '    vec2 baseUv = (vWorldPos.xy * 0.72 + vec2(vWorldPos.z * 0.25, 0.0)) * uThinness;',
+                    '    for (int k = 0; k < 4; k++) {',
+                    '        float fk = float(k);',
+                    '        vec2 g = baseUv * (1.0 + fk * 0.22) + vec2(fk * 0.37, fk * 0.61);',
+                    '        vec2 bCell = floor(g);',
+                    '        vec2 qStart = bCell + step(vec2(0.5), fract(g)) - vec2(1.0);',
+                    '',
+                    '        for (int dy = 0; dy <= 1; dy++) {',
+                    '            for (int dx = 0; dx <= 1; dx++) {',
+                    '                vec2 cid = qStart + vec2(float(dx), float(dy));',
+                    '                vec3 rnd = hash23(cid + vec2(fk * 19.3, 41.7));',
+                    '                vec2 center = cid + vec2(0.5) + (rnd.xy - 0.5) * (0.72 + 0.35 * uChaos);',
+                    '                vec2 rel = g - center;',
+                    '',
+                    '                // C-curved billowing foliage tangent driven by bush normal + curl noise!',
+                    '                float curlAng = atan(N.x, N.y) + sin(cid.x * 0.8 + cid.y * 0.7) * 0.85 + (rnd.z - 0.5) * 0.65 * uChaos;',
+                    '                float ca = cos(curlAng); float sa = sin(curlAng);',
+                    '                vec2 loc = mat2(ca, -sa, sa, ca) * rel;',
+                    '                // Strong C-bend along each foliage stroke!',
+                    '                loc.y -= 0.28 * loc.x * loc.x * (rnd.x > 0.5 ? 1.0 : -1.0);',
+                    '',
+                    '                vec3 st = evalSlenderBristleStroke(loc.x / (0.85 + rnd.x * 0.55), loc.y / 0.145, rnd.y + fk);',
+                    '                if (st.x > 0.01) {',
+                    '                    vec3 charcoal = vec3(0.020, 0.034, 0.072);',
+                    '                    vec3 deepTeal = vec3(0.055, 0.130, 0.205);',
+                    '                    vec3 forestGr = vec3(0.135, 0.255, 0.205);',
+                    '                    vec3 slateBlu = vec3(0.175, 0.325, 0.465);',
+                    '                    vec3 paleSage = vec3(0.465, 0.645, 0.645);',
+                    '',
+                    '                    // Heavy charcoal-black strokes in bush hollows & lower undersides!',
+                    '                    float hollowBlack = (0.28 + (1.0 - ndl) * 0.32) * uBlackInk;',
+                    '                    vec3 pig;',
+                    '                    if (rnd.z < hollowBlack) pig = charcoal;',
+                    '                    else if (ndl * 0.58 + rnd.y * 0.42 > 0.74) pig = paleSage;',
+                    '                    else if (rnd.y > 0.50) pig = slateBlu;',
+                    '                    else if (rnd.y > 0.22) pig = forestGr;',
+                    '                    else pig = deepTeal;',
+                    '',
+                    '                    col = mix(col, pig * (1.0 + st.y), st.x);',
+                    '                    hgt = mix(hgt, st.z + 0.10, st.x * 0.85);',
+                    '                }',
+                    '            }',
+                    '        }',
+                    '    }',
+                    '',
+                    '    // Broken charcoal-black silhouette brush licks around puff hollows',
+                    '    float fresnel = 1.0 - max(0.0, dot(N, V));',
+                    '    float wob = (vnoise(vWorldPos.xy * 2.1) - 0.5) * 0.28;',
+                    '    float rimBlk = smoothstep(0.66 + wob, 0.92, fresnel) * clamp(0.85 * uBlackInk, 0.2, 1.0);',
+                    '    col = mix(col, vec3(0.020, 0.032, 0.072), rimBlk);',
+                    '',
+                    '    gl_FragColor = vec4(col, clamp(hgt, 0.0, 1.0));',
+                    '}'
+                ].join('\n')
+            });
+
+            var puffGeo = new THREE.SphereGeometry(1.0, 18, 14);
+            var groveClusters = [
+                [-16, -42, 4.4], [-9, -44, 4.8], [-2, -45, 4.6], [6, -44, 5.0],
+                [14, -42, 5.4],  [22, -40, 5.6], [30, -38, 5.8], [38, -36, 5.8],
+                [46, -34, 6.2],  [54, -31, 6.2],
+                [16, -29, 4.4],  [24, -27, 4.8], [32, -25, 5.0], [40, -23, 5.2],
+                [48, -21, 5.2],  [24, -15, 3.9], [33, -14, 4.4], [42, -13, 4.6],
+                [-22, -33, 4.3], [-28, -28, 4.4], [-19, -19, 3.7]
+            ];
+
+            groveClusters.forEach(function (gc) {
+                var cx = gc[0], cz = gc[1], baseR = gc[2];
+                var gy = getGroundY(cx, cz);
+                for (var s = 0; s < 3; s++) {
+                    var ox = (s - 1) * baseR * 0.54 + (rand() - 0.5) * 0.95;
+                    var oz = (rand() - 0.5) * 1.65;
+                    var rs = baseR * (s === 1 ? 1.08 : 0.84);
+                    var p = new THREE.Mesh(puffGeo, oliveMat);
+                    p.position.set(cx + ox, gy + rs * 0.45, cz + oz);
+                    p.scale.set(rs * 1.22, rs * 0.78, rs * 0.92);
+                    scene.add(p);
+                }
+            });
+        }
+
+        // ========================================================================
+        // 7. SKETCHY SAINT-RÉMY VILLAGE & NEEDLE CHURCH SPIRE
+        //    - Grout-free slender roof/wall strokes + broken hand-drawn black-indigo
+        //      outlines + glowing wet-impasto yellow window dabs!
+        // ========================================================================
+        function createPainterlyArchMaterial(colDarkHex, colMidHex, colLightHex, strokeAngle, scaleFreq) {
+            return new THREE.ShaderMaterial({
+                uniforms: {
+                    uDark: { value: new THREE.Color(colDarkHex) },
+                    uMid: { value: new THREE.Color(colMidHex) },
+                    uLight: { value: new THREE.Color(colLightHex) },
+                    uAng: { value: strokeAngle },
+                    uFreq: { value: scaleFreq || 2.1 },
+                    uThinness: uThinness,
+                    uChaos: uChaos,
+                    uBlackInk: uBlackInk,
+                    uMoonDir: { value: MOON_LIGHT_DIR }
+                },
+                vertexShader: [
+                    'precision highp float;',
+                    'varying vec3 vWorldPos;',
+                    'varying vec3 vNormal;',
+                    'void main() {',
+                    '    vec4 wp = modelMatrix * vec4(position, 1.0);',
+                    '    vWorldPos = wp.xyz;',
+                    '    vNormal = normalize(mat3(modelMatrix) * normal);',
+                    '    gl_Position = projectionMatrix * viewMatrix * wp;',
+                    '}'
+                ].join('\n'),
+                fragmentShader: [
+                    'precision highp float;',
+                    'uniform vec3 uDark;',
+                    'uniform vec3 uMid;',
+                    'uniform vec3 uLight;',
+                    'uniform float uAng;',
+                    'uniform float uFreq;',
+                    'uniform float uThinness;',
+                    'uniform float uChaos;',
+                    'uniform float uBlackInk;',
+                    'uniform vec3 uMoonDir;',
+                    'varying vec3 vWorldPos;',
+                    'varying vec3 vNormal;',
+                    '',
+                    GLSL_RIBBON_LIBRARY,
+                    '',
+                    'void main() {',
+                    '    vec3 N = normalize(vNormal);',
+                    '    float ndl = dot(N, uMoonDir) * 0.5 + 0.5;',
+                    '    vec2 base = abs(N.y) > 0.48 ? vWorldPos.xz : (abs(N.x) > abs(N.z) ? vWorldPos.zy : vWorldPos.xy);',
+                    '',
+                    '    vec3 col = mix(uDark, uMid, ndl * 0.55);',
+                    '    float hgt = 0.25;',
+                    '',
+                    '    for (int k = 0; k < 3; k++) {',
+                    '        float fk = float(k);',
+                    '        vec2 g = base * uFreq * uThinness * (1.0 + fk * 0.24) + vec2(fk * 0.41, fk * 0.67);',
+                    '        vec2 bCell = floor(g);',
+                    '        vec2 qStart = bCell + step(vec2(0.5), fract(g)) - vec2(1.0);',
+                    '        for (int dy = 0; dy <= 1; dy++) {',
+                    '            for (int dx = 0; dx <= 1; dx++) {',
+                    '                vec2 cid = qStart + vec2(float(dx), float(dy));',
+                    '                vec3 rnd = hash23(cid + vec2(fk * 11.7, 29.3));',
+                    '                vec2 center = cid + vec2(0.5) + (rnd.xy - 0.5) * (0.65 + 0.30 * uChaos);',
+                    '                float a = uAng + (rnd.z - 0.5) * 0.28 * uChaos;',
+                    '                vec2 loc = mat2(cos(a), -sin(a), sin(a), cos(a)) * (g - center);',
+                    '                vec3 st = evalSlenderBristleStroke(loc.x / (0.90 + rnd.x * 0.5), loc.y / 0.15, rnd.y + fk);',
+                    '                if (st.x > 0.01) {',
+                    '                    float sc = ndl * 0.55 + rnd.y * 0.45;',
+                    '                    vec3 pig = (rnd.z < 0.16 * uBlackInk) ? vec3(0.025, 0.038, 0.082)',
+                    '                             : ((sc > 0.68) ? uLight : ((sc > 0.34) ? uMid : uDark));',
+                    '                    col = mix(col, pig * (1.0 + st.y), st.x);',
+                    '                    hgt = mix(hgt, st.z, st.x * 0.85);',
+                    '                }',
+                    '            }',
+                    '        }',
+                    '    }',
+                    '    gl_FragColor = vec4(col, clamp(hgt, 0.0, 1.0));',
+                    '}'
+                ].join('\n')
+            });
+        }
+
+        function addBrokenSketchBrushLine(parent, p1Arr, p2Arr, baseRad, mat, seed) {
+            var v1 = new THREE.Vector3(p1Arr[0], p1Arr[1], p1Arr[2]);
+            var v2 = new THREE.Vector3(p2Arr[0], p2Arr[1], p2Arr[2]);
+            var mid1 = v1.clone().lerp(v2, 0.32);
+            var mid2 = v1.clone().lerp(v2, 0.68);
+            mid1.x += Math.sin(seed * 7.3) * 0.16;
+            mid1.y += Math.cos(seed * 5.1) * 0.14;
+            mid2.z += Math.sin(seed * 11.7) * 0.16;
+            mid2.y -= Math.sin(seed * 3.9) * 0.12;
+
+            var curve = new THREE.CatmullRomCurve3([v1, mid1, mid2, v2]);
+            var geo = new THREE.TubeGeometry(curve, 10, baseRad, 5, false);
+            var pos = geo.attributes.position;
+            var cpt = new THREE.Vector3();
+            for (var i = 0; i < pos.count; i++) {
+                var u = THREE.MathUtils.clamp(Math.floor(i / 6) / 10, 0, 1);
+                curve.getPointAt(u, cpt);
+                // Broken reed-brush pressure variation so lines feel hand-drawn, never mechanical!
+                var taper = Math.max(0.12, Math.sin(u * Math.PI) * (0.55 + 0.60 * Math.sin(u * 15.0 + seed)));
+                pos.setXYZ(
+                    i,
+                    cpt.x + (pos.getX(i) - cpt.x) * taper,
+                    cpt.y + (pos.getY(i) - cpt.y) * taper,
+                    cpt.z + (pos.getZ(i) - cpt.z) * taper
+                );
+            }
+            parent.add(new THREE.Mesh(geo, mat));
+        }
+
+        function createSketchyCottage(w, h, d, roofRise, wallMat, roofMat, sketchInkMat, winMat, litCount, seed) {
+            var g = new THREE.Group();
+
+            var wallGeo = new THREE.BoxGeometry(w, h, d, 2, 2, 2);
+            var wPos = wallGeo.attributes.position;
+            for (var i = 0; i < wPos.count; i++) {
+                if (wPos.getY(i) > -h * 0.45) {
+                    wPos.setX(i, wPos.getX(i) + Math.sin(i * 1.9 + seed) * 0.10);
+                    wPos.setZ(i, wPos.getZ(i) + Math.cos(i * 2.3 + seed) * 0.10);
+                }
+            }
+            wallGeo.computeVertexNormals();
+            var walls = new THREE.Mesh(wallGeo, wallMat);
+            walls.position.y = h * 0.5;
+            g.add(walls);
+
+            var roofShape = new THREE.Shape();
+            var overW = w * 0.55;
+            roofShape.moveTo(-overW, 0);
+            roofShape.lineTo(0, roofRise);
+            roofShape.lineTo(overW, 0);
+            roofShape.closePath();
+
+            var roofGeo = new THREE.ExtrudeGeometry(roofShape, { depth: d * 1.08, bevelEnabled: false });
+            roofGeo.translate(0, h, -d * 0.54);
+            g.add(new THREE.Mesh(roofGeo, roofMat));
+
+            var rd = d * 0.54;
+            var hw = w * 0.5 + 0.02;
+            var hd = d * 0.5 + 0.02;
+            addBrokenSketchBrushLine(g, [0, h + roofRise, -rd], [0, h + roofRise, rd], 0.15, sketchInkMat, seed + 1.1);
+            addBrokenSketchBrushLine(g, [-overW, h, -rd], [-overW, h, rd], 0.13, sketchInkMat, seed + 2.2);
+            addBrokenSketchBrushLine(g, [ overW, h, -rd], [ overW, h, rd], 0.13, sketchInkMat, seed + 3.3);
+            addBrokenSketchBrushLine(g, [-overW, h,  rd], [0, h + roofRise,  rd], 0.14, sketchInkMat, seed + 4.4);
+            addBrokenSketchBrushLine(g, [ overW, h,  rd], [0, h + roofRise,  rd], 0.14, sketchInkMat, seed + 5.5);
+            addBrokenSketchBrushLine(g, [-hw, 0.2, hd], [-hw, h, hd], 0.12, sketchInkMat, seed + 6.6);
+            addBrokenSketchBrushLine(g, [ hw, 0.2, hd], [ hw, h, hd], 0.12, sketchInkMat, seed + 7.7);
+
+            // Loose glowing impasto yellow window brush dabs
+            var winGeo = new THREE.PlaneGeometry(0.86, 1.08);
+            if (litCount >= 1) {
+                var w1 = new THREE.Mesh(winGeo, winMat);
+                w1.position.set(-w * 0.19 + (rand() - 0.5) * 0.22, h * 0.52, d * 0.5 + 0.11);
+                w1.rotation.z = (rand() - 0.5) * 0.10;
+                g.add(w1);
+            }
+            if (litCount >= 2) {
+                var w2 = new THREE.Mesh(winGeo, winMat);
+                w2.position.set(w * 0.23, h * 0.50, d * 0.5 + 0.11);
+                w2.rotation.z = (rand() - 0.5) * 0.10;
+                g.add(w2);
+            }
+
+            return g;
+        }
+
+        function buildSaintRemyVillageAndNeedleSpire() {
+            var sketchInkMat = new THREE.ShaderMaterial({
+                uniforms: { uBlackInk: uBlackInk },
+                vertexShader: 'precision highp float; void main() { gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+                fragmentShader: 'precision highp float; uniform float uBlackInk; void main() { gl_FragColor = vec4(vec3(0.022, 0.036, 0.082), clamp(0.72 * uBlackInk, 0.2, 1.0)); }'
+            });
+
+            var winDabMat = new THREE.ShaderMaterial({
+                vertexShader: 'precision highp float; varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+                fragmentShader: [
+                    'precision highp float;',
+                    'varying vec2 vUv;',
+                    'void main() {',
+                    '    float bristle = sin(vUv.x * 22.0 + sin(vUv.y * 6.0)) * 0.06;',
+                    '    float mullion = smoothstep(0.03, 0.08, abs(vUv.x - 0.5));',
+                    '    vec3 glow = mix(vec3(0.95, 0.68, 0.14), vec3(1.0, 0.92, 0.38), vUv.y + bristle);',
+                    '    vec3 col = mix(vec3(0.03, 0.06, 0.15), glow, mullion);',
+                    '    gl_FragColor = vec4(col, 0.85 * mullion);',
+                    '}'
+                ].join('\n')
+            });
+
+            var wallBlue  = createPainterlyArchMaterial(0x112246, 0x29497c, 0x6791bd, 0.08, 2.2);
+            var wallOchre = createPainterlyArchMaterial(0x1e2022, 0x584d33, 0x937e50, -0.06, 2.2);
+            var wallOlive = createPainterlyArchMaterial(0x102133, 0x26465d, 0x5d889c, 0.05, 2.2);
+
+            var roofSlate = createPainterlyArchMaterial(0x0a1632, 0x213f6e, 0x5783b8, 0.96, 2.6);
+            var roofTerra = createPainterlyArchMaterial(0x261310, 0x703b22, 0xa86339, 0.92, 2.6);
+            var roofOlive = createPainterlyArchMaterial(0x0f1c28, 0x324643, 0x62786b, 0.88, 2.6);
+            var roofOchre = createPainterlyArchMaterial(0x211b12, 0x615026, 0x998042, 0.90, 2.6);
+
+            // Tall Saint-Rémy Needle Church Spire
+            var chX = -1.8, chZ = -31.0;
+            var chY = getGroundY(chX, chZ);
+            var church = new THREE.Group();
+            church.position.set(chX, chY - 0.3, chZ);
+
+            var churchWallMat = createPainterlyArchMaterial(0x152a54, 0x3e6294, 0x91b5d4, 0.04, 2.0);
+            var spireMat      = createPainterlyArchMaterial(0x12244a, 0x426799, 0xa2c8de, 1.50, 2.8);
+
+            var nave = createSketchyCottage(6.8, 5.6, 11.0, 3.6, churchWallMat, roofSlate, sketchInkMat, winDabMat, 1, 10.5);
+            nave.position.set(-0.9, 0, 3.4);
+            church.add(nave);
+
+            var towerW = 4.3, towerH = 15.2;
+            var tower = new THREE.Mesh(new THREE.BoxGeometry(towerW, towerH, towerW), churchWallMat);
+            tower.position.set(0, towerH * 0.5, -2.6);
+            church.add(tower);
+
+            var thw = towerW * 0.5 + 0.04;
+            addBrokenSketchBrushLine(church, [-thw, 0, -2.6 + thw], [-thw, towerH, -2.6 + thw], 0.15, sketchInkMat, 21.1);
+            addBrokenSketchBrushLine(church, [ thw, 0, -2.6 + thw], [ thw, towerH, -2.6 + thw], 0.15, sketchInkMat, 22.2);
+            addBrokenSketchBrushLine(church, [-thw, towerH, -2.6 + thw], [thw, towerH, -2.6 + thw], 0.16, sketchInkMat, 23.3);
+
+            var lancet = new THREE.Mesh(new THREE.PlaneGeometry(0.82, 2.2), sketchInkMat);
+            lancet.position.set(0, towerH - 2.7, -2.6 + thw + 0.04);
+            church.add(lancet);
+
+            var spireH = 25.8, spireR = 2.38;
+            var spireGeo = new THREE.ConeGeometry(spireR, spireH, 4);
+            spireGeo.rotateY(Math.PI * 0.25);
+            var spire = new THREE.Mesh(spireGeo, spireMat);
+            spire.position.set(0, towerH + spireH * 0.5, -2.6);
+            church.add(spire);
+
+            for (var sr = 0; sr < 4; sr++) {
+                var ang = (sr / 4) * Math.PI * 2.0 + Math.PI * 0.25;
+                addBrokenSketchBrushLine(
+                    church,
+                    [Math.cos(ang) * spireR, towerH, -2.6 + Math.sin(ang) * spireR],
+                    [0, towerH + spireH + 0.35, -2.6],
+                    0.11,
+                    sketchInkMat,
+                    30.0 + sr * 3.1
+                );
+            }
+            scene.add(church);
+
+            var wallsList = [wallBlue, wallOchre, wallOlive];
+            var roofsList = [roofSlate, roofTerra, roofOlive, roofOchre];
+            var cottages = [
+                [-12.5, -18.5,  0.34, 5.4, 3.6, 5.8, 2.5, 0, 1, 1],
+                [ -4.8, -15.5, -0.22, 5.8, 3.8, 6.0, 2.7, 1, 0, 1],
+                [  4.2, -16.8,  0.28, 6.0, 4.0, 6.2, 2.8, 0, 2, 2],
+                [ 12.8, -19.2, -0.31, 5.5, 3.7, 5.8, 2.6, 2, 3, 1],
+                [ 21.5, -21.5,  0.19, 6.2, 4.1, 6.4, 2.9, 1, 0, 1],
+                [ 30.5, -23.0, -0.26, 5.6, 3.9, 6.0, 2.6, 0, 1, 1],
+                [  2.2,  -9.5,  0.42, 5.8, 3.3, 5.4, 2.4, 1, 2, 1],
+                [ 11.8, -11.0, -0.35, 6.0, 3.5, 5.6, 2.5, 0, 3, 1],
+                [ 20.8, -12.5,  0.24, 5.6, 3.4, 5.5, 2.4, 2, 0, 2],
+                [ -8.2, -11.8, -0.40, 5.2, 3.3, 5.2, 2.3, 0, 2, 0],
+                [-16.5, -27.5,  0.29, 5.6, 4.0, 6.0, 2.7, 2, 0, 1],
+                [  7.2, -26.8, -0.18, 5.8, 4.2, 6.4, 2.8, 0, 0, 2],
+                [ 16.2, -28.5,  0.22, 5.4, 4.0, 5.8, 2.6, 1, 1, 0],
+                [ 36.5, -29.5, -0.24, 6.0, 4.1, 6.2, 2.7, 0, 2, 1],
+                [ -9.5, -36.5,  0.15, 5.4, 3.9, 5.8, 2.6, 1, 3, 1],
+                [ 10.2, -36.0, -0.14, 5.6, 4.1, 6.0, 2.7, 2, 0, 1],
+                [ 25.5, -34.5,  0.21, 5.8, 4.0, 6.0, 2.6, 0, 2, 0]
+            ];
+
+            cottages.forEach(function (c, idx) {
+                var hy = getGroundY(c[0], c[1]);
+                var mesh = createSketchyCottage(
+                    c[3], c[4], c[5], c[6],
+                    wallsList[c[7] % wallsList.length],
+                    roofsList[c[8] % roofsList.length],
+                    sketchInkMat, winDabMat,
+                    c[9], idx * 4.7 + 1.3
+                );
+                mesh.position.set(c[0], hy - 0.45, c[1]);
+                mesh.rotation.y = c[2];
+                scene.add(mesh);
+            });
+
+            var bushGeo = new THREE.SphereGeometry(1.0, 12, 10);
+            var bushMat = createPainterlyArchMaterial(0x081526, 0x162f3a, 0x395954, 0.45, 2.8);
+            [[-1.2, -9.0, 2.1], [7.2, -10.5, 2.4], [16.4, -11.5, 2.3], [-5.0, -13.5, 2.0], [26.0, -16.5, 2.6]].forEach(function (b) {
+                var bm = new THREE.Mesh(bushGeo, bushMat);
+                bm.position.set(b[0], getGroundY(b[0], b[1]) + b[2] * 0.35, b[1]);
+                bm.scale.set(b[2] * 1.25, b[2] * 0.72, b[2]);
+                scene.add(bm);
+            });
+        }
+
+        // ========================================================================
+        // 8. FOREGROUND CYPRESS MONOLITH — 80% DEEP CHARCOAL / PRUSSIAN-BLACK /
+        //    DARK VIRIDIAN + 20% SUBTLE RAW UMBER & BURNT-SIENNA FLAME LICKS!
+        //    (Slender 12:1 sinuous S-curving upward bristle ribbons—ZERO brown bricks!)
+        // ========================================================================
+        var cypressMainGroup = null;
+        var cypressMatShared = null;
+
+        function getDarkFlameCypressMaterial() {
+            if (cypressMatShared) return cypressMatShared;
+            cypressMatShared = new THREE.ShaderMaterial({
+                side: THREE.DoubleSide,
+                uniforms: {
+                    uThinness: uThinness,
+                    uChaos: uChaos,
+                    uBlackInk: uBlackInk,
+                    uMoonDir: { value: MOON_LIGHT_DIR }
+                },
+                vertexShader: [
+                    'precision highp float;',
+                    'varying vec3 vWorldPos;',
+                    'varying vec3 vNormal;',
+                    'void main() {',
+                    '    vec4 wp = modelMatrix * vec4(position, 1.0);',
+                    '    vWorldPos = wp.xyz;',
+                    '    vNormal = normalize(mat3(modelMatrix) * normal);',
+                    '    gl_Position = projectionMatrix * viewMatrix * wp;',
+                    '}'
+                ].join('\n'),
+                fragmentShader: [
+                    'precision highp float;',
+                    'uniform float uThinness;',
+                    'uniform float uChaos;',
+                    'uniform float uBlackInk;',
+                    'uniform vec3 uMoonDir;',
+                    'varying vec3 vWorldPos;',
+                    'varying vec3 vNormal;',
+                    '',
+                    GLSL_RIBBON_LIBRARY,
+                    '',
+                    'void main() {',
+                    '    vec3 N = normalize(vNormal);',
+                    '    float ndl = dot(N, uMoonDir) * 0.5 + 0.5;',
+                    '',
+                    '    // Deep velvety charcoal-viridian underpainting',
+                    '    vec3 col = vec3(0.024, 0.042, 0.062);',
+                    '    float hgt = 0.28;',
+                    '',
+                    '    // Long sinuous S-curving vertical flame coordinates (12:1 slender upward brush pulls!)',
+                    '    float snake = sin(vWorldPos.y * 0.34 + vWorldPos.x * 0.45) * 0.65;',
+                    '    vec2 fUv = vec2(vWorldPos.y * 0.36, (vWorldPos.x + vWorldPos.z * 0.62) * 1.45 + snake) * uThinness;',
+                    '',
+                    '    for (int k = 0; k < 4; k++) {',
+                    '        float fk = float(k);',
+                    '        vec2 g = fUv * (1.0 + fk * 0.22) + vec2(fk * 0.33, fk * 0.59);',
+                    '        vec2 bCell = floor(g);',
+                    '        vec2 qStart = bCell + step(vec2(0.5), fract(g)) - vec2(1.0);',
+                    '',
+                    '        for (int dy = 0; dy <= 1; dy++) {',
+                    '            for (int dx = 0; dx <= 1; dx++) {',
+                    '                vec2 cid = qStart + vec2(float(dx), float(dy));',
+                    '                vec3 rnd = hash23(cid + vec2(fk * 23.1, 53.7));',
+                    '                vec2 center = cid + vec2(0.5) + (rnd.xy - 0.5) * (0.68 + 0.32 * uChaos);',
+                    '                vec2 rel = g - center;',
+                    '',
+                    '                float tilt = (rnd.z - 0.5) * 0.24 * uChaos;',
+                    '                vec2 loc = mat2(cos(tilt), -sin(tilt), sin(tilt), cos(tilt)) * rel;',
+                    '                loc.y -= sin(loc.x * 2.2 + rnd.x * 6.0) * 0.08;',
+                    '',
+                    '                // Very long, thin upward flame strokes (halfLen ~ 1.35, halfWid ~ 0.12)',
+                    '                vec3 st = evalSlenderBristleStroke(loc.x / (1.15 + rnd.x * 0.60), loc.y / 0.125, rnd.y + fk);',
+                    '                if (st.x > 0.01) {',
+                    '                    // 80% Deep Charcoal-Black, Prussian-Black, Dark Viridian & Raw Umber + 20% subtle Bronze/Sienna!',
+                    '                    vec3 charcoalBlk = vec3(0.018, 0.028, 0.048);',
+                    '                    vec3 prussianBlk = vec3(0.032, 0.056, 0.098);',
+                    '                    vec3 deepVirid   = vec3(0.052, 0.118, 0.086);',
+                    '                    vec3 rawUmber    = vec3(0.115, 0.086, 0.052);',
+                    '                    vec3 oliveBronze = vec3(0.185, 0.158, 0.078);',
+                    '                    vec3 burntSienna = vec3(0.285, 0.165, 0.072);',
+                    '',
+                    '                    vec3 pig;',
+                    '                    float darkWeight = clamp(0.38 * uBlackInk, 0.12, 0.68);',
+                    '                    if (rnd.z < darkWeight) pig = charcoalBlk;',
+                    '                    else if (rnd.y < 0.34) pig = prussianBlk;',
+                    '                    else if (rnd.y < 0.62) pig = deepVirid;',
+                    '                    else if (rnd.y < 0.81) pig = rawUmber;',
+                    '                    else if (rnd.y < 0.93) pig = mix(rawUmber, oliveBronze, step(0.42, ndl));',
+                    '                    else pig = mix(oliveBronze, burntSienna, step(0.48, ndl));',
+                    '',
+                    '                    col = mix(col, pig * (1.0 + st.y * 1.2), st.x);',
+                    '                    hgt = mix(hgt, st.z + 0.14, st.x * 0.88);',
+                    '                }',
+                    '            }',
+                    '        }',
+                    '    }',
+                    '',
+                    '    gl_FragColor = vec4(clamp(col, 0.0, 1.0), clamp(hgt, 0.0, 1.0));',
+                    '}'
+                ].join('\n')
+            });
+            return cypressMatShared;
+        }
+
+        function createSinuousDarkCypress(overallScale, withFlameLicks) {
+            var group = new THREE.Group();
+            var cypMat = getDarkFlameCypressMaterial();
+
+            function addSinuousFlameTongue(ctrlPts, baseRadius, tipRadius, seedOffset) {
+                var scaledPts = ctrlPts.map(function (pt) {
+                    return new THREE.Vector3(pt[0] * overallScale, pt[1] * overallScale, pt[2] * overallScale);
+                });
+                var curve = new THREE.CatmullRomCurve3(scaledPts);
+                var tubularSegs = 60;
+                var radialSegs = 12;
+                var tubeGeo = new THREE.TubeGeometry(curve, tubularSegs, 1.0, radialSegs, false);
+
+                var pos = tubeGeo.attributes.position;
+                var centerPt = new THREE.Vector3();
+                for (var i = 0; i < pos.count; i++) {
+                    var ringIdx = Math.floor(i / (radialSegs + 1));
+                    var radIdx  = i % (radialSegs + 1);
+                    var u = THREE.MathUtils.clamp(ringIdx / tubularSegs, 0.0, 1.0);
+                    curve.getPointAt(u, centerPt);
+
+                    var ang = (radIdx / radialSegs) * Math.PI * 2.0;
+                    // Smoothly sinuous longitudinal bark-flame fluting (avoids jagged horizontal sawtooth shards!)
+                    var flute = 0.82 + 0.28 * Math.sin(ang * 4.0 + u * 9.0 + seedOffset)
+                              + 0.14 * Math.cos(ang * 7.0 - u * 13.0);
+                    var taper = Math.pow(1.0 - u, 0.90) * flute;
+                    var rNow = Math.max(tipRadius * overallScale, baseRadius * overallScale * taper);
+
+                    var vx = pos.getX(i) - centerPt.x;
+                    var vy = pos.getY(i) - centerPt.y;
+                    var vz = pos.getZ(i) - centerPt.z;
+                    pos.setXYZ(i, centerPt.x + vx * rNow, centerPt.y + vy * rNow, centerPt.z + vz * rNow);
+                }
+                tubeGeo.computeVertexNormals();
+                group.add(new THREE.Mesh(tubeGeo, cypMat));
+            }
+
+            // Sinuous S-curving flame tongues reaching high into the upper-left sky (matching 1889 silhouette)
+            addSinuousFlameTongue([[0,0,0], [-0.9,9.5,0.4], [0.8,19.5,-0.3], [-1.3,29.8,0.2], [-0.3,38.2,0.0], [-1.1,44.8,0.1]], 3.1, 0.06, 1.1);
+            addSinuousFlameTongue([[-1.5,0,0.5], [-2.5,9.0,0.7], [-1.8,18.2,0.3], [-2.9,27.0,0.2], [-2.0,34.5,0.1]], 2.4, 0.06, 2.3);
+            addSinuousFlameTongue([[2.2,0,0.4], [3.5,7.6,0.6], [2.4,15.2,0.2], [3.7,22.0,0.1], [2.4,27.4,0.0]], 2.5, 0.06, 3.7);
+            addSinuousFlameTongue([[3.8,0,-0.3], [5.2,6.4,0.2], [4.2,13.0,-0.1], [5.4,18.6,0.0]], 2.1, 0.06, 4.9);
+            addSinuousFlameTongue([[5.0,0,0.8], [6.7,4.8,0.9], [5.9,9.8,0.4], [7.3,13.8,0.2]], 1.9, 0.07, 6.1);
+            addSinuousFlameTongue([[-3.3,0,-0.4], [-4.7,7.2,-0.2], [-3.8,15.4,-0.4], [-5.1,23.2,-0.2]], 2.2, 0.06, 7.4);
+            addSinuousFlameTongue([[-4.9,0,0.9], [-6.5,5.6,1.1], [-5.7,11.8,0.6], [-7.0,16.5,0.3]], 2.0, 0.07, 8.8);
+            addSinuousFlameTongue([[0.4,0,2.1], [-0.4,8.6,2.4], [0.6,17.8,1.6], [-0.2,26.4,0.8]], 2.3, 0.06, 9.5);
+            addSinuousFlameTongue([[-0.4,0,-2.1], [0.5,9.0,-2.3], [-0.5,18.6,-1.5], [0.2,27.6,-0.8]], 2.3, 0.06, 10.9);
+
+            // Slender upward-curling outer brush-tip tongues along the Cypress silhouette
+            if (withFlameLicks) {
+                for (var k = 0; k < 24; k++) {
+                    var u0 = 0.06 + (k / 24) * 0.78;
+                    var y0 = u0 * 39.0;
+                    var side = (k % 2 === 0) ? 1 : -1;
+                    var r0 = (1.0 - u0 * 0.82) * 4.6 * side;
+                    var z0 = ((k % 3) - 1) * 1.1;
+                    addSinuousFlameTongue([
+                        [r0 * 0.72, y0 - 2.0, z0],
+                        [r0 * 1.05, y0 + 1.8, z0 * 0.8],
+                        [r0 * 0.88 + side * 0.55, y0 + 5.2, z0 * 0.5],
+                        [r0 * 1.08 + side * 0.35, y0 + 7.8, z0 * 0.3]
+                    ], 0.58, 0.04, 20.0 + k * 1.7);
+                }
+            }
+
+            return group;
+        }
+
+        function buildCypressMonolithAndAccents() {
+            var monoX = -19.2, monoZ = 27.5;
+            cypressMainGroup = createSinuousDarkCypress(1.05, true);
+            cypressMainGroup.position.set(monoX, getGroundY(monoX, monoZ) - 5.0, monoZ);
+            scene.add(cypressMainGroup);
+
+            [[-24, -22, 0.28], [28, -25, 0.25], [44, -18, 0.29]].forEach(function (sp) {
+                var c = createSinuousDarkCypress(sp[2], false);
+                c.position.set(sp[0], getGroundY(sp[0], sp[1]) - 1.0, sp[1]);
+                scene.add(c);
+            });
+        }
+
+        // ========================================================================
+        // 9. NATIVE-DPR IMPASTO 3D HEIGHT-DERIVATIVE SPECULAR RELIEF + LINEN PASS
+        //    - Reads true accumulated paint height from `tScene.a` + luminance!
+        //    - Computes screen-space surface normal via neighbor texel height
+        //      differencing (WebGL 1.0 safe `dFdx`/`dFdy` equivalent) for crisp
+        //      raking gallery light highlights on overlapping slender bristles!
+        // ========================================================================
+        var renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+        var viewportEl = document.getElementById('viewport');
+        viewportEl.appendChild(renderer.domElement);
+
+        var camera = new THREE.PerspectiveCamera(
+            PRESETS[0].fov,
+            window.innerWidth / window.innerHeight,
+            0.4,
+            950
+        );
+
+        var postCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+        var postScene = new THREE.Scene();
+        var sceneRT = null;
+
+        var crispCanvasMat = new THREE.ShaderMaterial({
+            depthTest: false,
+            depthWrite: false,
+            uniforms: {
+                tScene: { value: null },
+                tLinen: { value: linenTex },
+                uResolution: { value: new THREE.Vector2(1280, 720) },
+                uRelief: uRelief
+            },
+            vertexShader: [
+                'precision highp float;',
+                'varying vec2 vUv;',
+                'void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }'
+            ].join('\n'),
+            fragmentShader: [
+                'precision highp float;',
+                'uniform sampler2D tScene;',
+                'uniform sampler2D tLinen;',
+                'uniform vec2 uResolution;',
+                'uniform float uRelief;',
+                'varying vec2 vUv;',
+                '',
+                'float samplePaintHeight(vec2 uv, float weaveTooth) {',
+                '    vec4 s = texture2D(tScene, uv);',
+                '    float lum = dot(s.rgb, vec3(0.299, 0.587, 0.114));',
+                '    return s.a * 0.78 + lum * 0.22 + weaveTooth * 0.05;',
+                '}',
+                '',
+                'void main() {',
+                '    vec4 centerSample = texture2D(tScene, vUv);',
+                '    vec3 col = centerSample.rgb;',
+                '    vec2 texel = 1.0 / uResolution;',
+                '',
+                '    float weave = texture2D(tLinen, vUv * (uResolution / 92.0)).r - 0.5;',
+                '',
+                '    // WebGL 1.0 finite-difference screen-space height derivatives (dx, dy) from stroke alpha!',
+                '    float hL = samplePaintHeight(vUv - vec2(texel.x, 0.0), weave);',
+                '    float hR = samplePaintHeight(vUv + vec2(texel.x, 0.0), weave);',
+                '    float hD = samplePaintHeight(vUv - vec2(0.0, texel.y), weave);',
+                '    float hU = samplePaintHeight(vUv + vec2(0.0, texel.y), weave);',
+                '',
+                '    float dHdX = (hR - hL) * 2.35 * uRelief;',
+                '    float dHdY = (hU - hD) * 2.35 * uRelief;',
+                '    vec3 paintNormal = normalize(vec3(-dHdX, -dHdY, 1.0));',
+                '',
+                '    // Upper-right gallery raking light (matches Moon side) + wet-linseed-oil specular sheen',
+                '    vec3 lightDir = normalize(vec3(0.52, 0.58, 0.63));',
+                '    vec3 halfVec  = normalize(lightDir + vec3(0.0, 0.0, 1.0));',
+                '    float diffDelta = dot(paintNormal, lightDir) - 0.63;',
+                '    float wetSpec   = pow(max(0.0, dot(paintNormal, halfVec)), 28.0) * 0.22 * clamp(uRelief, 0.0, 2.0);',
+                '',
+                '    col += col * clamp(diffDelta * 0.55, -0.22, 0.28);',
+                '    col += vec3(1.0, 0.97, 0.88) * (max(0.0, diffDelta) * 0.16 + wetSpec);',
+                '',
+                '    // Subtle raw linen canvas grain in thin/dark passages',
+                '    float lum = dot(col, vec3(0.299, 0.587, 0.114));',
+                '    col += weave * 0.032 * (1.0 - smoothstep(0.45, 0.90, lum));',
+                '',
+                '    gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);',
+                '}'
+            ].join('\n')
+        });
+        postScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), crispCanvasMat));
+
+        function resizeRenderTarget() {
+            var dpr = Math.min(window.devicePixelRatio || 1, 2);
+            renderer.setPixelRatio(dpr);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+
+            var rtW = Math.max(2, Math.floor(window.innerWidth * dpr));
+            var rtH = Math.max(2, Math.floor(window.innerHeight * dpr));
+
+            if (sceneRT) sceneRT.dispose();
+            sceneRT = new THREE.WebGLRenderTarget(rtW, rtH, {
+                minFilter: THREE.LinearFilter,
+                magFilter: THREE.LinearFilter,
+                format: THREE.RGBAFormat,
+                depthBuffer: true,
+                stencilBuffer: false
+            });
+            crispCanvasMat.uniforms.uResolution.value.set(rtW, rtH);
+        }
+
+        // ========================================================================
+        // 10. CAMERA CONTROLLER (Presets 1-5 + WASD/QE + Orbit + Scroll Zoom)
+        // ========================================================================
+        var camCtrl = {
+            pos: PRESETS[0].pos.clone(),
+            target: PRESETS[0].target.clone(),
+            desiredPos: PRESETS[0].pos.clone(),
+            desiredTarget: PRESETS[0].target.clone(),
+            fov: PRESETS[0].fov,
+            desiredFov: PRESETS[0].fov,
+            orbiting: false,
+            panning: false,
+            prevX: 0,
+            prevY: 0,
+            pinchDist: 0
+        };
+
+        var keys = { w: false, a: false, s: false, d: false, q: false, e: false, shift: false };
+
+        function selectPreset(idx) {
+            params.activePreset = idx;
+            var p = PRESETS[idx];
+            camCtrl.desiredPos.copy(p.pos);
+            camCtrl.desiredTarget.copy(p.target);
+            camCtrl.desiredFov = p.fov;
+
+            var btns = document.querySelectorAll('.preset-btn');
+            for (var i = 0; i < btns.length; i++) {
+                btns[i].classList.toggle('active', i === idx);
+            }
+        }
+
+        function orbitCamera(dYaw, dPitch) {
+            var offset = new THREE.Vector3().subVectors(camCtrl.desiredPos, camCtrl.desiredTarget);
+            var r = Math.max(4.0, offset.length());
+            var theta = Math.atan2(offset.x, offset.z) + dYaw;
+            var phi = Math.acos(THREE.MathUtils.clamp(offset.y / r, -0.99, 0.99)) + dPitch;
+            phi = THREE.MathUtils.clamp(phi, 0.12, Math.PI * 0.85);
+
+            offset.set(
+                r * Math.sin(phi) * Math.sin(theta),
+                r * Math.cos(phi),
+                r * Math.sin(phi) * Math.cos(theta)
+            );
+            camCtrl.desiredPos.copy(camCtrl.desiredTarget).add(offset);
+
+            var floorY = getGroundY(camCtrl.desiredPos.x, camCtrl.desiredPos.z) + 1.3;
+            if (camCtrl.desiredPos.y < floorY) camCtrl.desiredPos.y = floorY;
+        }
+
+        function panCamera(dx, dy) {
+            var fwd = new THREE.Vector3().subVectors(camCtrl.desiredTarget, camCtrl.desiredPos).normalize();
+            var right = new THREE.Vector3().crossVectors(fwd, new THREE.Vector3(0, 1, 0)).normalize();
+            var up = new THREE.Vector3().crossVectors(right, fwd).normalize();
+            var scale = Math.max(0.03, camCtrl.desiredPos.distanceTo(camCtrl.desiredTarget) * 0.0014);
+            var move = right.multiplyScalar(-dx * scale).addScaledVector(up, dy * scale);
+            camCtrl.desiredPos.add(move);
+            camCtrl.desiredTarget.add(move);
+        }
+
+        function zoomCamera(factor) {
+            var offset = new THREE.Vector3().subVectors(camCtrl.desiredPos, camCtrl.desiredTarget);
+            offset.setLength(THREE.MathUtils.clamp(offset.length() * factor, 4.5, 225.0));
+            camCtrl.desiredPos.copy(camCtrl.desiredTarget).add(offset);
+        }
+
+        function stepCamera(dt) {
+            var mf = (keys.w ? 1 : 0) - (keys.s ? 1 : 0);
+            var ms = (keys.d ? 1 : 0) - (keys.a ? 1 : 0);
+            var mv = (keys.e ? 1 : 0) - (keys.q ? 1 : 0);
+
+            if (mf !== 0 || ms !== 0 || mv !== 0) {
+                var spd = (keys.shift ? 50.0 : 22.0) * dt;
+                var fwd = new THREE.Vector3().subVectors(camCtrl.desiredTarget, camCtrl.desiredPos).normalize();
+                var right = new THREE.Vector3().crossVectors(fwd, new THREE.Vector3(0, 1, 0)).normalize();
+                var move = new THREE.Vector3()
+                    .addScaledVector(fwd, mf * spd)
+                    .addScaledVector(right, ms * spd);
+                move.y += mv * spd;
+                camCtrl.desiredPos.add(move);
+                camCtrl.desiredTarget.add(move);
+
+                var minH = getGroundY(camCtrl.desiredPos.x, camCtrl.desiredPos.z) + 1.3;
+                if (camCtrl.desiredPos.y < minH) {
+                    var lift = minH - camCtrl.desiredPos.y;
+                    camCtrl.desiredPos.y += lift;
+                    camCtrl.desiredTarget.y += lift;
+                }
+            }
+
+            var k = Math.min(1.0, dt * 6.8);
+            camCtrl.pos.lerp(camCtrl.desiredPos, k);
+            camCtrl.target.lerp(camCtrl.desiredTarget, k);
+
+            if (Math.abs(camCtrl.fov - camCtrl.desiredFov) > 0.02) {
+                camCtrl.fov += (camCtrl.desiredFov - camCtrl.fov) * k;
+                camera.fov = camCtrl.fov;
+                camera.updateProjectionMatrix();
+            }
+
+            camera.position.copy(camCtrl.pos);
+            camera.lookAt(camCtrl.target);
+        }
+
+        // ========================================================================
+        // 11. UI CONTROLS, FREEZE 1889 PAINTING TOGGLE & KEYBOARD SHORTCUTS
+        // ========================================================================
+        function updateFreezeUI() {
+            var btn = document.getElementById('btn-freeze');
+            var dot = document.getElementById('freeze-dot');
+            var lbl = document.getElementById('freeze-btn-label');
+            btn.classList.toggle('freeze-active', params.frozen);
+            dot.className = params.frozen
+                ? 'w-2 h-2 rounded-full bg-amber-300'
+                : 'w-2 h-2 rounded-full bg-emerald-400';
+            lbl.textContent = params.frozen
+                ? 'Frozen 1889 Still · Click to Flow (F)'
+                : 'Freeze 1889 Still Painting (F)';
+            document.getElementById('slider-speed').value = params.swirlSpeed;
+            document.getElementById('val-speed').textContent = params.swirlSpeed === 0
+                ? '0.00x (Still)'
+                : params.swirlSpeed.toFixed(2) + 'x';
+        }
+
+        function toggleFreezeStillPainting() {
+            params.frozen = !params.frozen;
+            if (params.frozen) {
+                if (params.swirlSpeed > 0.001) params.savedSpeed = params.swirlSpeed;
+                params.swirlSpeed = 0.0;
+            } else {
+                params.swirlSpeed = params.savedSpeed > 0.01 ? params.savedSpeed : 0.40;
+            }
+            updateFreezeUI();
+        }
+
+        function toggleCleanUI() {
+            params.uiHidden = !params.uiHidden;
+            document.getElementById('lab-ui-top').classList.toggle('hidden', params.uiHidden);
+            document.getElementById('lab-drawer').classList.toggle('hidden', params.uiHidden);
+            document.getElementById('ui-hidden-pill').classList.toggle('hidden', !params.uiHidden);
+        }
+
+        function bindControls() {
+            document.querySelectorAll('.preset-btn').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    selectPreset(parseInt(btn.getAttribute('data-preset'), 10));
+                });
+            });
+
+            document.getElementById('slider-thinness').addEventListener('input', function (e) {
+                params.thinness = parseFloat(e.target.value);
+                uThinness.value = params.thinness;
+                document.getElementById('val-thinness').textContent = params.thinness.toFixed(2) + 'x';
+            });
+
+            document.getElementById('slider-chaos').addEventListener('input', function (e) {
+                params.chaos = parseFloat(e.target.value);
+                uChaos.value = params.chaos;
+                document.getElementById('val-chaos').textContent = params.chaos.toFixed(2);
+            });
+
+            document.getElementById('slider-black').addEventListener('input', function (e) {
+                params.blackInk = parseFloat(e.target.value);
+                uBlackInk.value = params.blackInk;
+                document.getElementById('val-black').textContent = params.blackInk.toFixed(2);
+            });
+
+            document.getElementById('slider-relief').addEventListener('input', function (e) {
+                params.relief = parseFloat(e.target.value);
+                uRelief.value = params.relief;
+                document.getElementById('val-relief').textContent = params.relief.toFixed(2);
+            });
+
+            document.getElementById('slider-speed').addEventListener('input', function (e) {
+                params.swirlSpeed = parseFloat(e.target.value);
+                params.frozen = (params.swirlSpeed === 0.0);
+                if (!params.frozen) params.savedSpeed = params.swirlSpeed;
+                updateFreezeUI();
+            });
+
+            document.getElementById('btn-freeze').addEventListener('click', toggleFreezeStillPainting);
+
+            document.getElementById('btn-reset-params').addEventListener('click', function () {
+                params.thinness = 0.55;
+                params.chaos = 1.75;
+                params.blackInk = 0.75;
+                params.relief = 0.65;
+                params.swirlSpeed = 0.40;
+                params.savedSpeed = 0.40;
+                params.frozen = false;
+
+                uThinness.value = params.thinness;
+                uChaos.value = params.chaos;
+                uBlackInk.value = params.blackInk;
+                uRelief.value = params.relief;
+
+                document.getElementById('slider-thinness').value = 0.55;
+                document.getElementById('val-thinness').textContent = '0.55x';
+                document.getElementById('slider-chaos').value = 1.75;
+                document.getElementById('val-chaos').textContent = '1.75';
+                document.getElementById('slider-black').value = 0.75;
+                document.getElementById('val-black').textContent = '0.75';
+                document.getElementById('slider-relief').value = 0.65;
+                document.getElementById('val-relief').textContent = '0.65';
+                updateFreezeUI();
+                selectPreset(0);
+            });
+
+            document.getElementById('btn-drawer-toggle').addEventListener('click', function () {
+                params.drawerCollapsed = !params.drawerCollapsed;
+                document.getElementById('lab-drawer').style.transform = params.drawerCollapsed ? 'translateX(380px)' : 'translateX(0)';
+                document.getElementById('drawer-toggle-label').textContent = params.drawerCollapsed ? 'Open Panel' : 'Collapse Panel';
+            });
+
+            document.getElementById('btn-hide-ui').addEventListener('click', toggleCleanUI);
+            document.getElementById('btn-show-ui').addEventListener('click', toggleCleanUI);
+
+            viewportEl.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+            viewportEl.addEventListener('mousedown', function (e) {
+                if (e.button === 2 || e.shiftKey) camCtrl.panning = true;
+                else camCtrl.orbiting = true;
+                camCtrl.prevX = e.clientX;
+                camCtrl.prevY = e.clientY;
+            });
+
+            window.addEventListener('mousemove', function (e) {
+                if (!camCtrl.orbiting && !camCtrl.panning) return;
+                var dx = e.clientX - camCtrl.prevX;
+                var dy = e.clientY - camCtrl.prevY;
+                camCtrl.prevX = e.clientX;
+                camCtrl.prevY = e.clientY;
+                if (camCtrl.orbiting) orbitCamera(-dx * 0.005, -dy * 0.0045);
+                else panCamera(dx, dy);
+            });
+
+            window.addEventListener('mouseup', function () {
+                camCtrl.orbiting = false;
+                camCtrl.panning = false;
+            });
+
+            viewportEl.addEventListener('wheel', function (e) {
+                e.preventDefault();
+                zoomCamera(e.deltaY > 0 ? 1.08 : 0.92);
+            }, { passive: false });
+
+            viewportEl.addEventListener('touchstart', function (e) {
+                if (e.touches.length === 1) {
+                    camCtrl.orbiting = true;
+                    camCtrl.prevX = e.touches[0].clientX;
+                    camCtrl.prevY = e.touches[0].clientY;
+                } else if (e.touches.length === 2) {
+                    camCtrl.orbiting = false;
+                    camCtrl.pinchDist = Math.hypot(
+                        e.touches[0].clientX - e.touches[1].clientX,
+                        e.touches[0].clientY - e.touches[1].clientY
+                    );
+                }
+            }, { passive: false });
+
+            window.addEventListener('touchmove', function (e) {
+                if (e.touches.length === 1 && camCtrl.orbiting) {
+                    var dx = e.touches[0].clientX - camCtrl.prevX;
+                    var dy = e.touches[0].clientY - camCtrl.prevY;
+                    camCtrl.prevX = e.touches[0].clientX;
+                    camCtrl.prevY = e.touches[0].clientY;
+                    orbitCamera(-dx * 0.0055, -dy * 0.005);
+                } else if (e.touches.length === 2) {
+                    var d = Math.hypot(
+                        e.touches[0].clientX - e.touches[1].clientX,
+                        e.touches[0].clientY - e.touches[1].clientY
+                    );
+                    if (camCtrl.pinchDist > 8) zoomCamera(camCtrl.pinchDist / Math.max(8, d));
+                    camCtrl.pinchDist = d;
+                }
+            }, { passive: true });
+
+            window.addEventListener('touchend', function () {
+                camCtrl.orbiting = false;
+            });
+
+            window.addEventListener('keydown', function (e) {
+                switch (e.code) {
+                    case 'Digit1': selectPreset(0); break;
+                    case 'Digit2': selectPreset(1); break;
+                    case 'Digit3': selectPreset(2); break;
+                    case 'Digit4': selectPreset(3); break;
+                    case 'Digit5': selectPreset(4); break;
+                    case 'KeyW': case 'ArrowUp': keys.w = true; break;
+                    case 'KeyS': case 'ArrowDown': keys.s = true; break;
+                    case 'KeyA': case 'ArrowLeft': keys.a = true; break;
+                    case 'KeyD': case 'ArrowRight': keys.d = true; break;
+                    case 'KeyQ': keys.q = true; break;
+                    case 'KeyE': keys.e = true; break;
+                    case 'ShiftLeft': case 'ShiftRight': keys.shift = true; break;
+                    case 'KeyH': toggleCleanUI(); break;
+                    case 'KeyF':
+                    case 'Space':
+                        e.preventDefault();
+                        toggleFreezeStillPainting();
+                        break;
+                }
+            });
+
+            window.addEventListener('keyup', function (e) {
+                switch (e.code) {
+                    case 'KeyW': case 'ArrowUp': keys.w = false; break;
+                    case 'KeyS': case 'ArrowDown': keys.s = false; break;
+                    case 'KeyA': case 'ArrowLeft': keys.a = false; break;
+                    case 'KeyD': case 'ArrowRight': keys.d = false; break;
+                    case 'KeyQ': keys.q = false; break;
+                    case 'KeyE': keys.e = false; break;
+                    case 'ShiftLeft': case 'ShiftRight': keys.shift = false; break;
+                }
+            });
+
+            window.addEventListener('resize', function () {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                resizeRenderTarget();
+            });
+        }
+
+        // ========================================================================
+        // 12. BUILD SCENE & START RENDER LOOP
+        // ========================================================================
+        bakeTerrainGrid();
+        buildOrganicOverlappingSkyDome();
+        buildOrganicMountainsAndFields();
+        buildTurbulentOliveGroves();
+        buildSaintRemyVillageAndNeedleSpire();
+        buildCypressMonolithAndAccents();
+
+        resizeRenderTarget();
+        camera.position.copy(camCtrl.pos);
+        camera.lookAt(camCtrl.target);
+        bindControls();
+
+        var clock = new THREE.Clock();
+        var frames = 0, accTime = 0;
+        var fpsEl = document.getElementById('fps-readout');
+
+        function animate() {
+            requestAnimationFrame(animate);
+            var dt = Math.min(clock.getDelta(), 0.05);
+
+            if (params.swirlSpeed > 0.0001) {
+                uFlowPhase.value += dt * params.swirlSpeed;
+                if (cypressMainGroup) {
+                    cypressMainGroup.rotation.z = Math.sin(uFlowPhase.value * 1.4) * 0.009;
+                    cypressMainGroup.rotation.x = Math.cos(uFlowPhase.value * 1.0) * 0.006;
+                }
+            }
+
+            stepCamera(dt);
+
+            renderer.setRenderTarget(sceneRT);
+            renderer.setClearColor(0x0b1942, 0.2);
+            renderer.clear();
+            renderer.render(scene, camera);
+
+            crispCanvasMat.uniforms.tScene.value = sceneRT.texture;
+            renderer.setRenderTarget(null);
+            renderer.render(postScene, postCam);
+
+            frames++;
+            accTime += dt;
+            if (accTime >= 0.5) {
+                fpsEl.textContent = Math.round(frames / accTime);
+                frames = 0;
+                accTime = 0;
+            }
+        }
+
+        animate();
+    }
+    </script>
+</body>
+</html>
