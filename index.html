@@ -436,17 +436,29 @@
                         Play (V)
                     </button>
                 </div>
-                <div class="flex items-center justify-between gap-1.5 pt-1 border-t border-amber-200/10">
+                <div class="flex flex-col gap-1 pt-0.5">
+                    <div class="flex items-center justify-between text-[10px]">
+                        <span id="music-engine-badge" class="text-amber-300/95 font-medium truncate">Original Acoustic Recording</span>
+                        <span id="music-time-readout" class="font-mono text-cyan-200/90 shrink-0">0:00 / 3:04</span>
+                    </div>
+                    <input id="slider-music-seek" type="range" min="0" max="1000" step="1" value="0" title="Scrub Classical Performance Timeline" />
+                </div>
+                <div class="flex items-center justify-between gap-1 pt-1 border-t border-amber-200/10">
                     <button id="btn-music-prev" class="mode-pill rounded-lg px-2 py-1 text-[10px] font-semibold text-cyan-100">&larr; Prev</button>
-                    <button id="btn-music-cycle" class="mode-pill active rounded-lg px-2.5 py-1 text-[10px] font-semibold text-amber-100 flex-1 text-center">Cycle All 3</button>
+                    <button id="btn-music-sig" title="Jump to the most famous signature passage of this piece" class="mode-pill rounded-lg px-2 py-1 text-[10px] font-semibold text-amber-200">&starf; Signature</button>
+                    <button id="btn-music-cycle" class="mode-pill active rounded-lg px-2 py-1 text-[10px] font-semibold text-amber-100 flex-1 text-center">Cycle All 3</button>
                     <button id="btn-music-next" class="mode-pill rounded-lg px-2 py-1 text-[10px] font-semibold text-cyan-100">Next (N) &rarr;</button>
+                </div>
+                <div class="flex items-center justify-between text-[9px] text-cyan-200/70">
+                    <span id="music-sig-caption" class="truncate">Full uncut solo grand piano recording</span>
+                    <a id="music-source-link" href="https://commons.wikimedia.org/wiki/File:Erik_Satie_-_gymnopedies_-_la_1_ere._lent_et_douloureux.ogg" target="_blank" rel="noopener noreferrer" class="text-amber-300/90 hover:text-amber-200 underline shrink-0 ml-1.5">Source &nearr;</a>
                 </div>
             </div>
 
             <div>
                 <div class="flex items-center justify-between mb-1.5">
                     <span class="text-[10px] uppercase tracking-wider font-bold text-amber-200">Select Classical Piece</span>
-                    <span class="text-[10px] text-cyan-200/75">Web Audio Concert Synth</span>
+                    <span class="text-[10px] text-cyan-200/75">Original Instruments</span>
                 </div>
                 <div class="grid grid-cols-1 gap-1.5 text-xs">
                     <button data-track="0" class="music-track-btn preset-btn active rounded-xl px-2.5 py-1.5 text-left flex items-center justify-between">
@@ -969,6 +981,39 @@
         // ========================================================================
         var circleColliders = []; // { x, z, r }
         var boxColliders    = []; // { x, z, cosR, sinR, hw, hd }
+        // Priority #1 Spatial Tree Canopy Registry: Van Gogh's 30 Deep-Green Sharp Cypresses are locked FIRST!
+        var CYPRESS_SURROUND_SPECS = [
+            [-30.2, -24.6, 0.31, false], [37.2, -29.8, 0.25, false], [44.8, -13.8, 0.33, true],
+            [-35.2, 92.5, 0.58, true],   [-31.4, 96.8, 0.39, false], [ 34.6, 94.8, 0.51, true],
+            [-34.4, 123.5, 0.62, true],  [ 32.8, 126.4, 0.49, true], [ 36.5, 121.2, 0.36, false],
+            [ 99.2, 39.5, 0.61, true],   [101.8, 45.2, 0.41, false], [ 98.4, 56.8, 0.55, true],
+            [102.4, 62.5, 0.37, false],  [ 98.8, 74.6, 0.52, true],  [100.6, 83.8, 0.44, false],
+            [-95.5, -18.2, 0.54, true],  [-89.2, -15.8, 0.36, false],[-77.4, -17.9, 0.58, true],
+            [-71.8, -15.6, 0.41, false], [-59.2, -18.4, 0.49, true], [-48.5, -16.2, 0.35, false],
+            [-90.5, 62.4, 0.56, true],   [-84.2, 59.6, 0.38, false], [-71.5, 63.2, 0.53, true],
+            [-63.8, 59.8, 0.42, false],  [-50.6, 61.8, 0.48, true],
+            [ 55.4, -31.8, 0.47, true],  [ 61.8, -29.4, 0.34, false],[ 75.6, -32.6, 0.55, true],
+            [ 84.5, -29.8, 0.41, false], [ 93.8, -31.9, 0.50, true]
+        ];
+        var placedTreeEnvelopes = [{ x: -19.2, z: 27.5, r: 8.6 * 1.05, kind: 'cypress' }];
+        for (var cpi0 = 0; cpi0 < CYPRESS_SURROUND_SPECS.length; cpi0++) {
+            var cs0 = CYPRESS_SURROUND_SPECS[cpi0];
+            placedTreeEnvelopes.push({ x: cs0[0], z: cs0[1], r: Math.max(2.6, 8.2 * cs0[2]), kind: 'cypress' });
+        }
+        window.__vgTreeEnvelopes = placedTreeEnvelopes;
+
+        function hasTreeCanopyOverlap(cx, cz, canopyR, extraPad) {
+            var pad = (extraPad !== undefined) ? extraPad : 1.0;
+            for (var ti = 0; ti < placedTreeEnvelopes.length; ti++) {
+                var te = placedTreeEnvelopes[ti];
+                var minD = te.r + canopyR + (te.kind === 'cypress' ? Math.max(pad, 1.8) : pad);
+                if (Math.hypot(cx - te.x, cz - te.z) < minD) return true;
+            }
+            return false;
+        }
+        function registerTreeEnvelope(cx, cz, canopyR, kind) {
+            placedTreeEnvelopes.push({ x: cx, z: cz, r: canopyR, kind: kind });
+        }
 
         function addCircleCollider(x, z, r) {
             circleColliders.push({ x: x, z: z, r: r });
@@ -1741,16 +1786,18 @@
                             vy2 += ((-0.6 + (tyE + 0.6) * sE) - vy2) * wE;
                         }
 
-                        var dxS = wrapAzDelta(px, 2.820), dyS = py - 0.385;
+                        var dxS = wrapAzDelta(px, -3.040) * 0.825, dyS = py - 0.605;
                         var radS = hypot2(dxS, dyS);
-                        if (radS < 0.40) {
-                            var txS = -dyS - dxS * 0.16 + 0.0001, tyS = dxS - dyS * 0.16 + 0.0001;
+                        if (radS < 0.50) {
+                            var txS = dyS - dxS * 0.15 + 0.0001, tyS = -dxS - dyS * 0.15 + 0.0001;
                             var tlS = hypot2(txS, tyS) || 1.0;
                             txS /= tlS; tyS /= tlS;
-                            var sS = smoothstepJS(0.008, 0.032, radS);
-                            var wS = Math.exp(-(radS / 0.155) * (radS / 0.155)) * 0.92;
-                            vx2 += ((0.8 + (txS - 0.8) * sS) - vx2) * wS;
-                            vy2 += ((0.6 + (tyS - 0.6) * sS) - vy2) * wS;
+                            var sS = smoothstepJS(0.018, 0.062, radS);
+                            var mxS = 0.78 + (txS - 0.78) * sS;
+                            var myS = -0.62 + (tyS + 0.62) * sS;
+                            var wS = Math.exp(-(radS / 0.215) * (radS / 0.215)) * 0.92 * smoothstepJS(0.50, 0.14, radS);
+                            vx2 += (mxS - vx2) * wS;
+                            vy2 += (myS - vy2) * wS;
                         }
 
                         var dxW = wrapAzDelta(px, -1.460), dyW = py - 0.365;
@@ -1778,52 +1825,43 @@
                     var lowVy = vy2 * celP;
                     var lowVz = vx2 * sazP + vy2 * ( cazP * selP);
 
-                    // --- B. Seamless Trans-Zenith Canopy Flow (Great-Circle Milky Way + Overhead Yin-Yang Swirls!) ---
+                    // --- B. Seamless 360°-Coherent Trans-Zenith Canopy Flow (Zero North-South 180° Collision!) ---
                     var qDen = Math.sqrt(Math.max(0.15, (1.0 + dy3) * 0.5));
                     var qx = dx3 / qDen, qy = dz3 / qDen;
 
-                    var thF = 0.42 + 0.34 * Math.sin(qx * 2.8 - qy * 1.9 + 0.4) + 0.18 * Math.cos(qy * 3.5 + 0.6);
-                    var zvX = Math.cos(thF), zvY = Math.sin(thF);
+                    // Circumferential +e_az tangent in q-disk is (-qy, +qx)/rq -> aligns 100% with lowV around ALL 360°!
+                    var cdxZ = qx - (-0.06), cdyZ = qy - 0.03;
+                    var crZ  = hypot2(cdxZ, cdyZ);
+                    var invCrZ = crZ > 0.0002 ? (1.0 / crZ) : 0.0;
+                    var inSpiral = 0.12 * smoothstepJS(0.55, 0.08, crZ);
+                    var baseCircX = crZ > 0.0002 ? (-cdyZ * invCrZ - cdxZ * invCrZ * inSpiral) : 0.82;
+                    var baseCircY = crZ > 0.0002 ? ( cdxZ * invCrZ - cdyZ * invCrZ * inSpiral) : 0.57;
+                    var bCircLen = hypot2(baseCircX, baseCircY) || 1.0;
+                    baseCircX /= bCircLen; baseCircY /= bCircLen;
 
-                    var mwSpineY = 0.08 - 0.18 * qx + 0.13 * Math.sin(qx * 3.4 + 0.3);
-                    var mwSlope  = -0.18 + 0.13 * 3.4 * Math.cos(qx * 3.4 + 0.3);
-                    var mwl = hypot2(1.0, mwSlope);
-                    var dmw = (qy - mwSpineY) / 0.19;
-                    if (Math.abs(dmw) < 3.0) {
-                        var wMW = Math.exp(-dmw * dmw) * 0.76;
-                        zvX += (1.0 / mwl - zvX) * wMW;
-                        zvY += (mwSlope / mwl - zvY) * wMW;
-                    }
+                    var waveAng = 0.18 * Math.sin(qx * 2.6 - qy * 2.1 + 0.5) + 0.11 * Math.cos(qx * 1.9 + qy * 3.1 - 0.4);
+                    var cwA = Math.cos(waveAng), swA = Math.sin(waveAng);
+                    var coreBlend = smoothstepJS(0.016, 0.065, crZ);
+                    var zvX = 0.82 + ((baseCircX * cwA - baseCircY * swA) - 0.82) * coreBlend;
+                    var zvY = 0.57 + ((baseCircX * swA + baseCircY * cwA) - 0.57) * coreBlend;
 
-                    // Overhead Yin-Yang Vortex 1 at (-0.09, 0.04)
-                    var zv1x = qx - (-0.09), zv1y = qy - 0.04;
-                    var zr1 = hypot2(zv1x, zv1y);
-                    if (zr1 < 0.48) {
-                        var zt1x = zv1y - zv1x * 0.17 + 0.0001, zt1y = -zv1x - zv1y * 0.17 + 0.0001;
-                        var ztl1 = hypot2(zt1x, zt1y) || 1.0;
-                        zt1x /= ztl1; zt1y /= ztl1;
-                        var zs1 = smoothstepJS(0.010, 0.038, zr1);
-                        var zm1x = v1CoreX + (zt1x - v1CoreX) * zs1;
-                        var zm1y = v1CoreY + (zt1y - v1CoreY) * zs1;
-                        var zw1 = Math.exp(-(zr1 / 0.195) * (zr1 / 0.195)) * 0.94;
-                        zvX += (zm1x - zvX) * zw1;
-                        zvY += (zm1y - zvY) * zw1;
-                    }
-
-                    // Companion Overhead Vortex 2 at (0.18, 0.15)
-                    var zv2x = qx - 0.18, zv2y = qy - 0.15;
+                    // Companion Overhead Eddy 2 at (0.19, -0.14) (strictly high zenith rq < 0.28)
+                    var zv2x = qx - 0.19, zv2y = qy - (-0.14);
                     var zr2 = hypot2(zv2x, zv2y);
-                    if (zr2 < 0.36) {
-                        var zt2x = -zv2y - zv2x * 0.18 + 0.0001, zt2y = zv2x - zv2y * 0.18 + 0.0001;
+                    if (zr2 < 0.28) {
+                        var zt2x = -zv2y - zv2x * 0.15 + 0.0001, zt2y = zv2x - zv2y * 0.15 + 0.0001;
                         var ztl2 = hypot2(zt2x, zt2y) || 1.0;
                         zt2x /= ztl2; zt2y /= ztl2;
-                        var zs2 = smoothstepJS(0.008, 0.032, zr2);
-                        var zm2x = v2CoreX + (zt2x - v2CoreX) * zs2;
-                        var zm2y = v2CoreY + (zt2y - v2CoreY) * zs2;
-                        var zw2 = Math.exp(-(zr2 / 0.130) * (zr2 / 0.130)) * 0.92;
+                        var zs2 = smoothstepJS(0.015, 0.048, zr2);
+                        var zm2x = 0.78 + (zt2x - 0.78) * zs2;
+                        var zm2y = 0.62 + (zt2y - 0.62) * zs2;
+                        var zw2 = Math.exp(-(zr2 / 0.105) * (zr2 / 0.105)) * 0.80 * smoothstepJS(0.28, 0.06, zr2);
                         zvX += (zm2x - zvX) * zw2;
                         zvY += (zm2y - zvY) * zw2;
                     }
+
+                    var zvLen = hypot2(zvX, zvY) || 1.0;
+                    zvX /= zvLen; zvY /= zvLen;
 
                     // Lift 2D dome-cap tangent (zvX, zvY) onto exact sphere tangent via dome-disk Jacobian:
                     var r2j = Math.min(1.32, dkX2 * dkX2 + dkY2 * dkY2);
@@ -1838,8 +1876,8 @@
                     var hiLen = hypot3(hiVx, hiVy, hiVz) || 1.0;
                     hiVx /= hiLen; hiVy /= hiLen; hiVz /= hiLen;
 
-                    // Blend strictly above el = 0.54 (MoMA 1889 frame is el <= 0.52 -> 0% modified!)
-                    var zMix = smoothstepJS(0.54, 0.88, py);
+                    // Blend strictly above el = 0.74 (MoMA 1889 frame el <= 0.52 & South Swirl at 0.605 stay 100% crisp!)
+                    var zMix = smoothstepJS(0.74, 1.06, py);
                     var ux = lowVx + (hiVx - lowVx) * zMix;
                     var uy = lowVy + (hiVy - lowVy) * zMix;
                     var uz = lowVz + (hiVz - lowVz) * zMix;
@@ -1853,12 +1891,13 @@
                     flowVZ[fIdx] = uz / uLen;
 
                     // Pre-bake overhead Milky Way + Yin-Yang ceiling swirl pigment probability!
-                    var capGate = smoothstepJS(0.50, 0.68, py);
-                    var mwEnvZ = Math.exp(-((qy - mwSpineY) / 0.135) * ((qy - mwSpineY) / 0.135)) * 0.78 * capGate;
-                    var armZ1 = Math.sin(Math.atan2(zv1y, zv1x + 1e-5) * 2.0 + zr1 * 42.0);
-                    var swZ1  = Math.max(1.0 - smoothstepJS(0.0, 0.030, zr1), smoothstepJS(-0.15, 0.48, armZ1)) * smoothstepJS(0.205, 0.020, zr1) * capGate;
-                    var armZ2 = Math.sin(-Math.atan2(zv2y, zv2x + 1e-5) * 2.0 + zr2 * 48.0 + 1.1);
-                    var swZ2  = Math.max(1.0 - smoothstepJS(0.0, 0.022, zr2), smoothstepJS(-0.15, 0.48, armZ2)) * smoothstepJS(0.135, 0.016, zr2) * capGate;
+                    var mwSpineY = 0.08 - 0.18 * qx + 0.13 * Math.sin(qx * 3.4 + 0.3);
+                    var capGate = smoothstepJS(0.62, 0.82, py);
+                    var mwEnvZ = Math.exp(-((qy - mwSpineY) / 0.135) * ((qy - mwSpineY) / 0.135)) * 0.74 * capGate;
+                    var armZ1 = Math.sin(-Math.atan2(cdyZ, cdxZ + 1e-5) * 2.0 + crZ * 38.0);
+                    var swZ1  = Math.max(1.0 - smoothstepJS(0.0, 0.030, crZ), smoothstepJS(-0.15, 0.48, armZ1)) * smoothstepJS(0.24, 0.025, crZ) * capGate;
+                    var armZ2 = Math.sin(-Math.atan2(zv2y, zv2x + 1e-5) * 2.0 + zr2 * 46.0 + 1.1);
+                    var swZ2  = Math.max(1.0 - smoothstepJS(0.0, 0.022, zr2), smoothstepJS(-0.15, 0.48, armZ2)) * smoothstepJS(0.14, 0.016, zr2) * capGate;
                     flowZW[fIdx] = Math.min(1.0, Math.max(mwEnvZ, Math.max(swZ1, swZ2)));
                 }
             }
@@ -2160,9 +2199,9 @@
                 '    float rE = length(dVE);',
                 '    float swirlE = smoothstep(-0.15, 0.48, sin(atan(dVE.y, dVE.x + 0.00001) * 2.0 + rE * 46.0)) * smoothstep(0.145, 0.016, rE) * lowMask;',
                 '',
-                '    vec2 dVS = skyDelta(centerSky, vec2(2.820, 0.385));',
+                '    vec2 dVS = skyDelta(centerSky, vec2(-3.040, 0.605)) * vec2(0.825, 1.0);',
                 '    float rS = length(dVS);',
-                '    float swirlS = smoothstep(-0.15, 0.48, sin(-atan(dVS.y, dVS.x + 0.00001) * 2.0 + rS * 46.0)) * smoothstep(0.155, 0.016, rS) * lowMask;',
+                '    float swirlS = max(1.0 - smoothstep(0.0, 0.028, rS), smoothstep(-0.14, 0.48, sin(atan(dVS.y, dVS.x + 0.00001) * 2.0 + rS * 38.0))) * smoothstep(0.210, 0.022, rS);',
                 '',
                 '    vec2 dVW = skyDelta(centerSky, vec2(-1.460, 0.365));',
                 '    float rW = length(dVW);',
@@ -2230,7 +2269,7 @@
                 '        float azFreq = circumCells / 6.2831853;',
                 '        float gx = (p.x + 3.14159265) * azFreq + phaseOff.x + rawRow * 0.37;',
                 '        float baseCol = floor(gx);',
-                '        float keepCyl = 1.0 - smoothstep(0.64, 0.98, rowEl);',
+                '        float keepCyl = 1.0 - smoothstep(0.76, 1.08, rowEl);',
                 '',
                 '#ifdef SAFE_MODE',
                 '        float dxStart = baseCol + step(0.5, fract(gx)) - 1.0;',
@@ -2260,7 +2299,7 @@
                 '            vec3 T2 = sampleBaseSkyFlow3D(aheadDir).xyz;',
                 '#endif',
                 '',
-                '            bool keepStroke = (rnd.z < keepCyl) || (layerSeed < 0.8 && rowEl < 0.86);',
+                '            bool keepStroke = (rnd.z < keepCyl) || (layerSeed < 0.8 && rowEl < 0.94);',
                 '            if (keepStroke && p.y < 1.08) {',
                 '                float life = fract(uFlowPhase * 0.28 + rnd.x * 0.93 + rnd.y * 0.37 + layerSeed * 0.21);',
                 '                float travel = isBaseBed ? (sin(uFlowPhase * 1.5 + rnd.x * 6.2831853) * 0.20) : ((life - 0.5) * 0.74);',
@@ -2271,11 +2310,12 @@
                 '                float sAcross = dot(rel3, N);',
                 '                if (abs(sAlong) <= 1.48 && abs(sAcross) <= 0.65) {',
                 '#ifndef SAFE_MODE',
-                '                    float bend = dot(T2 - rawT, N) * 0.48 * step(0.55, uQuality);',
+                '                    float rawBend = dot(T2 - rawT, N) * 0.48 * step(0.55, uQuality);',
+                '                    float bend = (rowEl > 0.54) ? clamp(rawBend, -0.26, 0.26) : rawBend;',
                 '                    sAcross -= bend * sAlong * sAlong;',
                 '#endif',
                 '',
-                '                    bool isComma = (!isBaseBed && rnd.y > 0.86 && layerSeed > 3.0);',
+                '                    bool isComma = (!isBaseBed && rnd.y > 0.86 && layerSeed > 3.0 && rowEl < 0.54);',
                 '                    float halfLen = (layerSeed < 0.8) ? (0.94 + rnd.x * 0.26) : (isComma ? (0.48 + rnd.x * 0.20) : (0.68 + rnd.x * 0.22));',
                 '                    float halfWid = (isComma ? 0.165 : (0.120 + rnd.y * 0.048)) * widthScale;',
                 '',
@@ -2294,45 +2334,8 @@
                 '    }',
                 '}',
                 '',
-                '// Analytic Zero-Texture Zenith Flow & Swirl Weight (100% ANGLE D3D11 safe inside d.y > 0.50!)',
-                'vec4 evalAnalyticZenithFlow3D(vec3 cDir, vec2 cq, vec4 localBrush) {',
-                '    float thF = 0.42 + 0.34 * sin(cq.x * 2.8 - cq.y * 1.9 + 0.4) + 0.18 * cos(cq.y * 3.5 + 0.6);',
-                '    vec2 zv = vec2(cos(thF), sin(thF));',
-                '    float mwSpineY = 0.08 - 0.18 * cq.x + 0.13 * sin(cq.x * 3.4 + 0.3);',
-                '    float mwSlope  = -0.18 + 0.442 * cos(cq.x * 3.4 + 0.3);',
-                '    vec2 mwDir = normalize(vec2(1.0, mwSlope));',
-                '    float wMW = exp(-sqf((cq.y - mwSpineY) / 0.19)) * 0.76;',
-                '    zv = mix(zv, mwDir, wMW);',
-                '',
-                '    vec2 zv1 = cq - vec2(-0.09, 0.04);',
-                '    float zr1 = length(zv1);',
-                '    if (zr1 < 0.48) {',
-                '        vec2 zt1 = normalize(vec2(zv1.y - zv1.x * 0.17 + 0.0001, -zv1.x - zv1.y * 0.17 + 0.0001));',
-                '        vec2 zm1 = mix(vec2(0.7599, -0.6500), zt1, smoothstep(0.010, 0.038, zr1));',
-                '        zv = mix(zv, zm1, exp(-sqf(zr1 / 0.195)) * 0.94);',
-                '    }',
-                '    vec2 zv2 = cq - vec2(0.18, 0.15);',
-                '    float zr2 = length(zv2);',
-                '    if (zr2 < 0.36) {',
-                '        vec2 zt2 = normalize(vec2(-zv2.y - zv2.x * 0.18 + 0.0001, zv2.x - zv2.y * 0.18 + 0.0001));',
-                '        vec2 zm2 = mix(vec2(0.8211, 0.5708), zt2, smoothstep(0.008, 0.032, zr2));',
-                '        zv = mix(zv, zm2, exp(-sqf(zr2 / 0.130)) * 0.92);',
-                '    }',
-                '    vec3 v3 = liftDiskTangentToSphere(cDir, normalize(zv + vec2(0.0001)));',
-                '    if (localBrush.z > 0.01) {',
-                '        vec3 b3 = liftDiskTangentToSphere(cDir, localBrush.xy);',
-                '        v3 = normalize(mix(v3, b3, clamp(localBrush.z * 0.90, 0.0, 0.94)) + vec3(0.00001));',
-                '    }',
-                '    float mwEnvZ = exp(-sqf((cq.y - mwSpineY) / 0.135)) * 0.78;',
-                '    float armZ1 = sin(atan(zv1.y, zv1.x + 0.00001) * 2.0 + zr1 * 42.0);',
-                '    float swZ1  = max(1.0 - smoothstep(0.0, 0.030, zr1), smoothstep(-0.15, 0.48, armZ1)) * smoothstep(0.205, 0.020, zr1);',
-                '    float armZ2 = sin(-atan(zv2.y, zv2.x + 0.00001) * 2.0 + zr2 * 48.0 + 1.1);',
-                '    float swZ2  = max(1.0 - smoothstep(0.0, 0.022, zr2), smoothstep(-0.15, 0.48, armZ2)) * smoothstep(0.135, 0.016, zr2);',
-                '    return vec4(v3, clamp(max(mwEnvZ, max(swZ1, swZ2)), 0.0, 1.0));',
-                '}',
-                '',
-                '// Part B: Seamless Planar Lambert-Azimuthal Zenith Canopy (zero pole singularity & zero texture2D inside loop!)',
-                'void splatZenithCapLayer(vec3 d, vec2 q, vec4 localBrush, float baseFreq, vec2 phaseOff, float layerSeed, inout vec3 canvasCol, inout float heightAccum) {',
+                '// Part B: Seamless Planar Lambert-Azimuthal Zenith Canopy (100% unified with getSkyFlow3D & star whirlpools!)',
+                'void splatZenithCapLayer(vec3 d, vec2 q, float baseFreq, vec2 phaseOff, float layerSeed, inout vec3 canvasCol, inout float heightAccum) {',
                 '    float gridFreq = baseFreq * uThinness;',
                 '    vec2 g = q * gridFreq + phaseOff + vec2(0.41, 0.29);',
                 '    vec2 baseCell = floor(g);',
@@ -2358,21 +2361,21 @@
                 '            float csEl = atan(cDir.y, max(length(cDir.xz), 0.00001));',
                 '            float csAz = atan(cDir.x, -cDir.z + 0.00001);',
                 '',
-                '            vec4 flowSample = evalAnalyticZenithFlow3D(cDir, cq, localBrush);',
+                '            // Unconditional O(1) 3D flow texture taps keep HLSL quad derivatives 100% uniform AND include all star whirlpools!',
+                '            vec4 flowSample = getSkyFlow3D(cDir);',
                 '            vec3 rawT = flowSample.xyz;',
                 '            vec3 rawN = normalize(cross(cDir, rawT));',
-                '            float handWobble = (rnd.z - 0.5) * (isBaseBed ? 0.14 : 0.24) * min(uChaos, 2.2);',
+                '            float handWobble = (rnd.z - 0.5) * (isBaseBed ? 0.12 : 0.20) * min(uChaos, 2.0);',
                 '            vec3 T = rawT * cos(handWobble) + rawN * sin(handWobble);',
                 '            vec3 N = cross(cDir, T);',
                 '#ifndef SAFE_MODE',
                 '            vec3 aheadDir = normalize(cDir + T * (0.82 / gridFreq));',
-                '            vec2 aheadQ = aheadDir.xz / sqrt(max(0.15, (1.0 + aheadDir.y) * 0.5));',
-                '            vec3 T2 = evalAnalyticZenithFlow3D(aheadDir, aheadQ, localBrush).xyz;',
+                '            vec3 T2 = sampleBaseSkyFlow3D(aheadDir).xyz;',
                 '#endif',
                 '',
-                '            float keepZen = smoothstep(0.62, 0.96, csEl);',
-                '            bool keepStroke = (rnd.z < keepZen) || (layerSeed < 0.8 && csEl >= 0.82);',
-                '            if (keepStroke && d.y > 0.52) {',
+                '            float keepZen = smoothstep(0.76, 1.08, csEl);',
+                '            bool keepStroke = (rnd.z < keepZen) || (layerSeed < 0.8 && csEl >= 0.92);',
+                '            if (keepStroke && d.y > 0.65) {',
                 '                float life = fract(uFlowPhase * 0.28 + rnd.x * 0.93 + rnd.y * 0.37 + layerSeed * 0.21);',
                 '                float travel = isBaseBed ? (sin(uFlowPhase * 1.5 + rnd.x * 6.2831853) * 0.20) : ((life - 0.5) * 0.74);',
                 '                float lifeEnv = isBaseBed ? 1.0 : (smoothstep(0.0, 0.22, life) * (1.0 - smoothstep(0.78, 1.0, life)));',
@@ -2382,13 +2385,12 @@
                 '                float sAcross = dot(rel3, N);',
                 '                if (abs(sAlong) <= 1.48 && abs(sAcross) <= 0.65) {',
                 '#ifndef SAFE_MODE',
-                '                    float bend = dot(T2 - rawT, N) * 0.48 * step(0.55, uQuality);',
+                '                    float bend = clamp(dot(T2 - rawT, N) * 0.42, -0.26, 0.26) * step(0.55, uQuality);',
                 '                    sAcross -= bend * sAlong * sAlong;',
                 '#endif',
                 '',
-                '                    bool isComma = (!isBaseBed && rnd.y > 0.86 && layerSeed > 3.0);',
-                '                    float halfLen = (layerSeed < 0.8) ? (0.94 + rnd.x * 0.26) : (isComma ? (0.48 + rnd.x * 0.20) : (0.68 + rnd.x * 0.22));',
-                '                    float halfWid = (isComma ? 0.165 : (0.120 + rnd.y * 0.048)) * widthScale;',
+                '                    float halfLen = (layerSeed < 0.8) ? (0.94 + rnd.x * 0.26) : (0.72 + rnd.x * 0.22);',
+                '                    float halfWid = (0.120 + rnd.y * 0.048) * widthScale;',
                 '',
                 '                    vec4 stroke = evalSlenderBristleStroke(sAlong / halfLen, sAcross / halfWid, rnd.x + layerSeed + 9.0);',
                 '                    float finalAlpha = stroke.x * lifeEnv;',
@@ -2824,7 +2826,6 @@
                 '    float star0Excite = texture2D(tBrushMap, dirToDomeUv(skyAzElToDir(star0.xy))).b * bAct;',
                 '    float star1Excite = texture2D(tBrushMap, dirToDomeUv(skyAzElToDir(star1.xy))).b * bAct;',
                 '',
-                '    vec4 localBrushTop = sampleBrushField3D(d);',
                 '    float baseGrad = smoothstep(-0.05, 0.72, p.y);',
                 '    vec3 canvasCol = mix(vec3(0.062, 0.142, 0.355), vec3(0.032, 0.074, 0.210), baseGrad);',
                 '    float heightAccum = 0.34;',
@@ -2833,26 +2834,26 @@
                 '    // Interleave Cylindrical + Zero-Texture Planar Zenith Canopy (zero cost below d.y=0.50!)',
                 '#ifdef SAFE_MODE',
                 '    splatSkyRibbonLayer(d, p, 44.0, vec2(0.11, 0.47), 0.4, canvasCol, heightAccum);',
-                '    if (d.y > 0.50) { splatZenithCapLayer(d, q, localBrushTop, 44.0, vec2(0.11, 0.47), 0.4, canvasCol, heightAccum); }',
+                '    splatZenithCapLayer(d, q, 44.0, vec2(0.11, 0.47), 0.4, canvasCol, heightAccum);',
                 '    splatSkyRibbonLayer(d, p, 64.0, vec2(0.37, 0.61), 2.3, canvasCol, heightAccum);',
-                '    if (d.y > 0.50) { splatZenithCapLayer(d, q, localBrushTop, 64.0, vec2(0.37, 0.61), 2.3, canvasCol, heightAccum); }',
+                '    splatZenithCapLayer(d, q, 64.0, vec2(0.37, 0.61), 2.3, canvasCol, heightAccum);',
                 '#else',
                 '    splatSkyRibbonLayer(d, p, 44.0, vec2(0.11, 0.47), 0.4, canvasCol, heightAccum);',
-                '    if (d.y > 0.50) { splatZenithCapLayer(d, q, localBrushTop, 44.0, vec2(0.11, 0.47), 0.4, canvasCol, heightAccum); }',
+                '    splatZenithCapLayer(d, q, 44.0, vec2(0.11, 0.47), 0.4, canvasCol, heightAccum);',
                 '',
                 '    splatSkyRibbonLayer(d, p, 58.0, vec2(0.00, 0.00), 1.1, canvasCol, heightAccum);',
-                '    if (d.y > 0.50) { splatZenithCapLayer(d, q, localBrushTop, 58.0, vec2(0.00, 0.00), 1.1, canvasCol, heightAccum); }',
+                '    splatZenithCapLayer(d, q, 58.0, vec2(0.00, 0.00), 1.1, canvasCol, heightAccum);',
                 '',
                 '    splatSkyRibbonLayer(d, p, 70.0, vec2(0.37, 0.61), 2.3, canvasCol, heightAccum);',
-                '    if (d.y > 0.50) { splatZenithCapLayer(d, q, localBrushTop, 70.0, vec2(0.37, 0.61), 2.3, canvasCol, heightAccum); }',
+                '    splatZenithCapLayer(d, q, 70.0, vec2(0.37, 0.61), 2.3, canvasCol, heightAccum);',
                 '',
                 '    if (uQuality > 0.45) {',
                 '        splatSkyRibbonLayer(d, p, 78.0, vec2(0.73, 0.29), 3.7, canvasCol, heightAccum);',
-                '        if (d.y > 0.50) { splatZenithCapLayer(d, q, localBrushTop, 78.0, vec2(0.73, 0.29), 3.7, canvasCol, heightAccum); }',
+                '        splatZenithCapLayer(d, q, 78.0, vec2(0.73, 0.29), 3.7, canvasCol, heightAccum);',
                 '    }',
                 '    if (uQuality > 0.80) {',
                 '        splatSkyRibbonLayer(d, p, 86.0, vec2(0.19, 0.83), 5.1, canvasCol, heightAccum);',
-                '        if (d.y > 0.50) { splatZenithCapLayer(d, q, localBrushTop, 86.0, vec2(0.19, 0.83), 5.1, canvasCol, heightAccum); }',
+                '        splatZenithCapLayer(d, q, 86.0, vec2(0.19, 0.83), 5.1, canvasCol, heightAccum);',
                 '    }',
                 '#endif',
                 '',
@@ -2890,7 +2891,7 @@
                 '        vec3 weaveCol = canvasCol;',
                 '        float weaveHgt = heightAccum;',
                 '        splatSkyRibbonLayer(d, p, 94.0, vec2(0.53, 0.41), 6.9, weaveCol, weaveHgt);',
-                '        if (d.y > 0.50) { splatZenithCapLayer(d, q, localBrushTop, 94.0, vec2(0.53, 0.41), 6.9, weaveCol, weaveHgt); }',
+                '        splatZenithCapLayer(d, q, 94.0, vec2(0.53, 0.41), 6.9, weaveCol, weaveHgt);',
                 '        float weaveLum = dot(weaveCol, vec3(0.299, 0.587, 0.114));',
                 '        float rimSafe = (coreShield >= 0.96 || (coreShield > 0.05 && weaveLum < 0.09)) ? 0.0 : (1.0 - coreShield);',
                 '        canvasCol = mix(canvasCol, weaveCol, rimSafe);',
@@ -3872,11 +3873,13 @@
                     if (lx < bc.hw + clearRad && lz < bc.hd + clearRad) return false;
                 }
 
-                // Check all circle colliders (umbrella pines, cypresses, plane trees, wheat sheaves, easels, lanterns)
+                // Check all tree canopy envelopes FIRST (prioritizing Van Gogh cypresses, pines, plane trees, groves & placed olives!)
+                if (hasTreeCanopyOverlap(cx, cz, 3.45, 1.35)) return false;
+
+                // Check all circle colliders (wheat sheaves, easels, lanterns, wells)
                 for (var ci = 0; ci < circleColliders.length; ci++) {
                     var cc = circleColliders[ci];
-                    // Give tall umbrella pines & cypresses extra generous canopy room (>= 8.5m) so trunks never poke through!
-                    var minSep = (cc.r >= 0.72 ? 9.2 : 5.4);
+                    var minSep = (cc.r >= 0.72 ? 9.5 : 5.4);
                     if (Math.hypot(cx - cc.x, cz - cc.z) < minSep) return false;
                 }
                 return true;
@@ -3888,7 +3891,7 @@
             var foothillGroves = [
                 [-27.5, -43.5, 3.8], [-19.5, -45.2, 4.1], [-11.5, -46.2, 4.0], [ -3.5, -46.0, 4.2],
                 [  4.5, -46.2, 4.3], [ 12.8, -45.8, 4.4], [ 21.5, -45.0, 4.5], [ 30.0, -42.5, 4.6],
-                [ 38.2, -41.5, 4.5], [ 55.8, -38.5, 4.6], [ 64.5, -38.0, 4.4], [ 74.0, -39.0, 4.2],
+                [ 38.2, -43.8, 4.4], [ 55.8, -47.2, 4.4], [ 65.2, -46.8, 4.3], [ 75.2, -47.8, 4.2],
                 [-56.0, -46.5, 4.1], [-66.5, -48.0, 4.2]
             ];
 
@@ -3896,6 +3899,7 @@
                 var cx = fg[0], cz = fg[1], baseR = fg[2];
                 var gy = getGroundY(cx, cz);
                 addCircleCollider(cx, cz, 1.45);
+                registerTreeEnvelope(cx, cz, baseR * 1.45, 'foothill');
 
                 // 2-3 sturdy gnarled woodland trunks rising cleanly from ground to elevated crown
                 var stemCount = 2 + (fIdx % 2);
@@ -4064,13 +4068,14 @@
                 // For the 5 easel trees, verify road/building/pine clearance with 2.4m radius (skipping only the broad vineyard-box check)
                 if (allowEasel) {
                     if (getSurfaceMaterialAt(oc[0], oc[1]) !== 'grass') return;
-                    // Keep >= 3.2m from the z = 26 + sin(x*0.05)*2.5 dirt lane centerline!
                     var laneZ = 26.0 + Math.sin(oc[0] * 0.05) * 2.5;
                     if (Math.abs(oc[1] - laneZ) < 3.4) return;
+                    if (hasTreeCanopyOverlap(oc[0], oc[1], 3.35 * oc[2], 1.2)) return;
                 } else if (!isClearForOrchardTree(oc[0], oc[1], 4.2, false)) {
                     return;
                 }
                 addSculptedProvencalOliveTree(oc[0], oc[1], oc[2], oIdx);
+                registerTreeEnvelope(oc[0], oc[1], 3.35 * oc[2], 'olive');
                 placedOrchardCount++;
             });
             window.__vgOrchardTreeCount = placedOrchardCount;
@@ -5981,7 +5986,7 @@
                 [-43.5, -24.0, -0.15, 6.2, 4.8, 5.8, 2.6, 2, 1, 1, 1, 2, false],
                 [ 46.5, -34.0, -0.22, 6.0, 4.6, 5.8, 2.5, 2, 0, 0, 2, 2, false],
                 [-82.0,  20.0,  0.12, 6.8, 5.2, 6.0, 2.7, 2, 1, 0, 0, 2, true],
-                [-76.0,  68.0, -0.24, 6.4, 4.8, 5.8, 2.6, 2, 0, 1, 2, 1, false],
+                [-79.5,  73.5, -0.24, 6.4, 4.8, 5.8, 2.6, 2, 0, 1, 2, 1, false],
                 [-52.0,  96.0,  0.18, 6.2, 4.6, 5.6, 2.5, 2, 4, 0, 1, 2, false],
                 [ 84.0,  25.0, -0.18, 6.6, 5.0, 6.0, 2.6, 2, 1, 1, 0, 2, false],
                 [ 74.0, 104.0,  0.22, 6.4, 4.9, 5.8, 2.6, 2, 0, 0, 1, 2, false],
@@ -6031,7 +6036,10 @@
                 [ -4.8, -16.8, 0.96], [ 5.2, -22.2, 0.98]
             ];
             boulevardTrees.forEach(function (bt, bIdx) {
-                addRoadMendersPlaneTree(bt[0], bt[1], bt[2], planeBarkMat, planeCanopyMat, sketchInkMat, 300.0 + bIdx * 7.3);
+                if (!hasTreeCanopyOverlap(bt[0], bt[1], 4.4 * bt[2], 1.0)) {
+                    addRoadMendersPlaneTree(bt[0], bt[1], bt[2], planeBarkMat, planeCanopyMat, sketchInkMat, 300.0 + bIdx * 7.3);
+                    registerTreeEnvelope(bt[0], bt[1], 4.4 * bt[2], 'plane');
+                }
             });
 
             var benchMat = createPainterlyArchMaterial(0x1c1814, 0x5c4728, 0xa88948, 0.05, 2.5, false, false);
@@ -6960,7 +6968,9 @@
                     [ 20.0, 94.2, 1.25, true]
                 ];
                 borderShrubSpots.forEach(function (bs) {
-                    addSculptedBotanicalCluster(bs[0], bs[1], bs[2], 0.58, bs[3] ? lavenderShrubMat : garrigueShrubMat, 3, true);
+                    if (!hasTreeCanopyOverlap(bs[0], bs[1], bs[2] * 0.8, 0.4)) {
+                        addSculptedBotanicalCluster(bs[0], bs[1], bs[2], 0.58, bs[3] ? lavenderShrubMat : garrigueShrubMat, 3, true);
+                    }
                 });
 
                 // 2) 155 Organic 360° Countryside Lavender Mounds & Garrigue Shrubs across meadows, orchards & foothills!
@@ -6983,6 +6993,7 @@
                         if (Math.abs(sx - bc.x) < bc.hw + 2.2 && Math.abs(sz - bc.z) < bc.hd + 2.2) { hitBldg = true; break; }
                     }
                     if (hitBldg) continue;
+                    if (hasTreeCanopyOverlap(sx, sz, 1.2, 0.5)) continue;
 
                     var isLavMound = (rS > 96.0) ? (rand() > 0.35) : (rand() > 0.55);
                     var radS = 0.85 + rand() * 0.78;
@@ -7055,7 +7066,6 @@
                 var wxP = px + jx, wzP = pz + jz;
                 var py = getGroundY(wxP, wzP);
                 var effScale = scaleP * (0.82 + hC * 0.38);
-                addCircleCollider(wxP, wzP, 0.88 * effScale);
                 var pGrp = new THREE.Group();
                 pGrp.position.set(wxP, py - 0.25, wzP);
 
@@ -7063,6 +7073,12 @@
                 var leanDist = (0.85 + hA * 1.65) * effScale;
                 var lx = Math.cos(yawAng) * leanDist;
                 var lz = Math.sin(yawAng) * leanDist;
+                var pineCrownSpan = 6.1 * (0.84 + hB * 0.38) * effScale;
+                if (hasTreeCanopyOverlap(wxP + lx, wzP + lz, pineCrownSpan, 1.0) || hasTreeCanopyOverlap(wxP, wzP, pineCrownSpan * 0.75, 1.0)) {
+                    return;
+                }
+                registerTreeEnvelope(wxP + lx, wzP + lz, pineCrownSpan, 'pine');
+                addCircleCollider(wxP, wzP, 0.88 * effScale);
                 var sBendX = -Math.sin(yawAng) * (hB - 0.5) * 1.35 * effScale;
                 var sBendZ =  Math.cos(yawAng) * (hB - 0.5) * 1.35 * effScale;
                 var hTop = (6.8 + hD * 3.1) * effScale;
@@ -7136,17 +7152,19 @@
                 scene.add(pGrp);
             }
 
+            // Curated Provençal Umbrella Pine Stands — 100% clear of all 30 Van Gogh Cypresses, buildings, roads & each other!
             var pineCoords = [
-                // Flanking Saint-Paul-de-Mausole & Via Domitia pine avenue (all z >= 88 -> behind Preset 0!)
-                [-42, 89, 1.02, 0.4], [-43, 104, 1.08, -0.3], [-42, 118, 1.05, 0.6], [-43, 131, 0.98, 0.2],
-                [-28, 131, 1.04, -0.5], [-16, 131, 0.96, 0.3], [-24, 143, 1.10, 0.1], [-8, 143, 1.06, -0.4],
-                // Framing Les Antiques at Glanum (x = 4..38, z = 128..146)
-                [-1, 134, 1.04, -0.2], [4, 145, 1.08, 0.5], [16, 147, 1.12, -0.3], [28, 144, 1.05, 0.4],
-                [33, 133, 1.02, -0.6], [39, 114, 1.06, 0.3], [40, 98, 1.00, -0.4],
-                // Outer East, West & South Alpilles Pine Stands (all well outside Preset 0 frustum!)
-                [-106, -24, 1.05, 0.3], [-114, 8, 1.10, -0.4], [-108, 44, 1.04, 0.5], [-92, 88, 1.08, -0.2],
-                [-74, 118, 1.06, 0.4],  [106, -12, 1.04, -0.3], [112, 24, 1.08, 0.2], [104, 64, 1.06, -0.5],
-                [ 92, 102, 1.05, 0.3],  [ 62, 136, 1.08, -0.2]
+                // West & South-West Monastery & Glanum Outer Stands (clear of West Cloister Cypresses!)
+                [-55,  78, 0.98,  0.3], [-56, 112, 1.00, -0.3], [-44, 145, 0.98,  0.2], [-22, 149, 1.02, -0.4],
+                [ -2, 151, 1.00,  0.2], [ 18, 153, 1.02, -0.3], [ 36, 149, 0.98,  0.4],
+                // South-East Meadow & Glanum Eastern Stands (100% clear of East Cloister Cypresses #5, #7, #8!)
+                [ 54, 108, 1.00,  0.3], [ 62, 126, 1.02, -0.3], [ 62, 145, 1.00,  0.2], [ 84, 124, 1.02, -0.2],
+                [ 92, 104, 1.00,  0.3],
+                // Outer West & North-West Stands (clear of Cypress#15 & Preset 0 frustum!)
+                [-118, -14, 1.00, 0.3], [-116, 12, 1.02, -0.4], [-112, 42, 1.00,  0.5], [-104, 84, 1.02, -0.2],
+                [ -92, 114, 1.00, 0.4], [ -76, 136, 0.98, -0.2],
+                // Outer East Stands (clear of Wheat Field Mistral Cypress Cluster #9..#14!)
+                [110, -14, 1.00, -0.3], [116,  20, 1.02,  0.2], [118,  98, 1.00, -0.4], [108, 122, 1.00,  0.2]
             ];
             pineCoords.forEach(function (pc, pIdx) {
                 addProvencalUmbrellaPine(pc[0], pc[1], pc[2], pc[3], 500.0 + pIdx * 9.7);
@@ -7761,28 +7779,7 @@
             scene.add(cypressMainGroup);
 
             // Natural Provençal Irregular Cypress Groupings & Staggered Windbreaks (ZERO picket-fence clones!):
-            var surroundCypresses = [
-                [-30.2, -24.6, 0.31, false], [37.2, -29.8, 0.25, false], [44.8, -13.8, 0.33, true],
-                // Saint-Paul Asylum Garden Guardians (varied heights, pairings & depths)
-                [-35.2, 92.5, 0.58, true],  [-31.4, 96.8, 0.39, false], [ 34.6, 94.8, 0.51, true],
-                [-34.4, 123.5, 0.62, true], [ 32.8, 126.4, 0.49, true], [ 36.5, 121.2, 0.36, false],
-
-                // 1. East Enclosed Wheat Field Mistral Cluster (organic groupings instead of uniform 8m fence!)
-                [ 99.2, 39.5, 0.61, true],  [101.8, 45.2, 0.41, false], [ 98.4, 56.8, 0.55, true],
-                [102.4, 62.5, 0.37, false], [ 98.8, 74.6, 0.52, true],  [100.6, 83.8, 0.44, false],
-
-                // 2. West Vineyard Northern Windbreak (irregular pairs & gaps, staggered Z & varied heights!)
-                [-95.5, -18.2, 0.54, true], [-89.2, -15.8, 0.36, false], [-77.4, -17.9, 0.58, true],
-                [-71.8, -15.6, 0.41, false],[-59.2, -18.4, 0.49, true],  [-48.5, -16.2, 0.35, false],
-
-                // 3. Southwest Orchard Windbreak Clusters (natural Provençal spacing & staggered depth!)
-                [-90.5, 62.4, 0.56, true],  [-84.2, 59.6, 0.38, false], [-71.5, 63.2, 0.53, true],
-                [-63.8, 59.8, 0.42, false], [-50.6, 61.8, 0.48, true],
-
-                // 4. Far-East Vineyard Northern Stands (staggered outside Preset 0!)
-                [ 55.4, -31.8, 0.47, true], [ 61.8, -29.4, 0.34, false], [ 75.6, -32.6, 0.55, true],
-                [ 84.5, -29.8, 0.41, false],[ 93.8, -31.9, 0.50, true]
-            ];
+            var surroundCypresses = CYPRESS_SURROUND_SPECS;
             surroundCypresses.forEach(function (sp, idx) {
                 var sy = getGroundY(sp[0], sp[1]) - 1.2;
                 addCircleCollider(sp[0], sp[1], 3.8 * sp[2]);
@@ -8690,113 +8687,150 @@
         // ========================================================================
         var CLASSICAL_REPERTOIRE = (function () {
             function buildGymnopedieNo1() {
-                // Erik Satie — Gymnopédie No. 1 (Paris, 1888) · 3/4 Lent et douloureux (D Major / Gmaj7-Dmaj7)
+                // Erik Satie — Complete 78-Bar Gymnopédie No. 1 (Paris, 1888) · Pure Solo Grand Piano (Original Instrument!)
                 var ev = [];
-                var beat = 0.88; // ~68 BPM
+                var beat = 0.78; // ~77 BPM flowing Lent et douloureux (~3 min 02 sec complete 78-bar performance!)
                 function barTime(b, bt) { return ((b - 1) * 3.0 + bt) * beat; }
-                function addLH(bar, bassMidi, chordMidis, celloMidi) {
+                function addLH(bar, bassMidi, chordMidis) {
                     var t0 = barTime(bar, 0.0);
                     ev.push({ t: t0, m: bassMidi, d: 2.85 * beat, v: 0.42, k: 'bass' });
                     var t1 = barTime(bar, 1.0);
                     for (var i = 0; i < chordMidis.length; i++) {
-                        ev.push({ t: t1 + i * 0.026, m: chordMidis[i], d: 1.95 * beat, v: 0.28, k: 'chord' });
-                    }
-                    if (celloMidi) {
-                        ev.push({ t: t0 + 0.06, m: celloMidi, d: 2.90 * beat, v: 0.22, k: 'str' });
+                        ev.push({ t: t1 + i * 0.024, m: chordMidis[i], d: 1.95 * beat, v: 0.28, k: 'chord' });
                     }
                 }
                 function addMel(bar, bt, midi, durBeats, vel) {
                     ev.push({ t: barTime(bar, bt), m: midi, d: durBeats * beat, v: vel || 0.56, k: 'mel' });
                 }
 
-                // Bars 1..16: Alternating Gmaj7 (G2 + B3-D4-F#4) & Dmaj7 (D2 + A3-C#4-F#4)
-                for (var b = 1; b <= 16; b++) {
-                    if (b % 2 === 1) addLH(b, 43, [59, 62, 66], (b >= 5 && b % 4 === 1) ? 55 : 0);
-                    else             addLH(b, 38, [57, 61, 66], (b >= 6 && b % 4 === 2) ? 50 : 0);
+                // Helper to emit Section I (Bars 1..39 in D Major) or Section II Recapitulation (Bars 40..78 with minor/modal cadence!)
+                function emitHalf(bOff, isSecondHalf) {
+                    for (var b = 1; b <= 16; b++) {
+                        if (b % 2 === 1) addLH(bOff + b, 43, [59, 62, 66]);
+                        else             addLH(bOff + b, 38, [57, 61, 66]);
+                    }
+                    // Signature Lent et douloureux Theme Phrase 1 (Bars 5..12)
+                    addMel(bOff + 5, 1.0, 78, 1.05, 0.55); addMel(bOff + 5, 2.0, 81, 1.05, 0.61);
+                    addMel(bOff + 6, 0.0, 79, 1.05, 0.58); addMel(bOff + 6, 1.0, 78, 1.05, 0.54); addMel(bOff + 6, 2.0, 73, 1.05, 0.51);
+                    addMel(bOff + 7, 0.0, 71, 1.05, 0.50); addMel(bOff + 7, 1.0, 73, 1.05, 0.53); addMel(bOff + 7, 2.0, 74, 1.05, 0.56);
+                    addMel(bOff + 8, 0.0, 69, 3.10, 0.52);
+                    addMel(bOff + 9, 0.0, 66, 9.20, 0.48);
+
+                    // Signature Theme Phrase 2 (Bars 13..21)
+                    addMel(bOff + 13, 1.0, 78, 1.05, 0.56); addMel(bOff + 13, 2.0, 81, 1.05, 0.63);
+                    addMel(bOff + 14, 0.0, 79, 1.05, 0.59); addMel(bOff + 14, 1.0, 78, 1.05, 0.55); addMel(bOff + 14, 2.0, 73, 1.05, 0.51);
+                    addMel(bOff + 15, 0.0, 71, 1.05, 0.52); addMel(bOff + 15, 1.0, 73, 1.05, 0.54); addMel(bOff + 15, 2.0, 74, 1.05, 0.57);
+                    addMel(bOff + 16, 0.0, 69, 3.05, 0.53);
+
+                    addLH(bOff + 17, 42, [57, 61, 66]); addMel(bOff + 17, 0.0, 73, 3.05, 0.56);
+                    addLH(bOff + 18, 35, [59, 62, 66]); addMel(bOff + 18, 0.0, 78, 3.05, 0.60);
+                    addLH(bOff + 19, 40, [55, 59, 64]); addMel(bOff + 19, 0.0, 64, 9.10, 0.50);
+                    addLH(bOff + 20, 40, [55, 59, 64]);
+                    addLH(bOff + 21, 40, [57, 61, 64]);
+
+                    // Modal wandering episode (Bars 22..39)
+                    addLH(bOff + 22, 38, [57, 60, 64, 67]); addMel(bOff + 22, 0.0, 69, 1.05, 0.51); addMel(bOff + 22, 1.0, 71, 1.05, 0.54); addMel(bOff + 22, 2.0, 72, 1.05, 0.56);
+                    addLH(bOff + 23, 38, [54, 57, 60, 64]); addMel(bOff + 23, 0.0, 76, 1.05, 0.60); addMel(bOff + 23, 1.0, 74, 1.05, 0.55); addMel(bOff + 23, 2.0, 71, 1.05, 0.52);
+                    addLH(bOff + 24, 38, [53, 57, 60, 62]); addMel(bOff + 24, 0.0, 74, 1.05, 0.55); addMel(bOff + 24, 1.0, 72, 1.05, 0.52); addMel(bOff + 24, 2.0, 71, 1.05, 0.49);
+                    addLH(bOff + 25, 38, [54, 57, 60, 62]); addMel(bOff + 25, 0.0, 74, 5.05, 0.54);
+                    addLH(bOff + 26, 38, [55, 59, 62, 67]); addMel(bOff + 26, 2.0, 74, 1.05, 0.51);
+                    addLH(bOff + 27, 40, [57, 60, 64, 67]); addMel(bOff + 27, 0.0, 76, 1.05, 0.56); addMel(bOff + 27, 1.0, 77, 1.05, 0.58); addMel(bOff + 27, 2.0, 79, 1.05, 0.61);
+                    addLH(bOff + 28, 41, [57, 60, 65, 69]); addMel(bOff + 28, 0.0, 81, 1.05, 0.63); addMel(bOff + 28, 1.0, 72, 1.05, 0.52); addMel(bOff + 28, 2.0, 74, 1.05, 0.54);
+                    addLH(bOff + 29, 40, [55, 60, 64, 67]); addMel(bOff + 29, 0.0, 76, 1.05, 0.57); addMel(bOff + 29, 1.0, 74, 1.05, 0.54); addMel(bOff + 29, 2.0, 71, 1.05, 0.50);
+                    addLH(bOff + 30, 38, [54, 57, 60, 62]); addMel(bOff + 30, 0.0, 74, 5.05, 0.53);
+                    addLH(bOff + 31, 38, [54, 57, 60, 64]); addMel(bOff + 31, 2.0, 74, 1.05, 0.51);
+                    addLH(bOff + 32, 43, [59, 62, 67]);     addMel(bOff + 32, 0.0, 79, 3.05, 0.60);
+                    addLH(bOff + 33, 42, [57, 59, 66]);     addMel(bOff + 33, 0.0, 78, 3.05, 0.57);
+                    if (!isSecondHalf) {
+                        addLH(bOff + 34, 35, [54, 59, 62]); addMel(bOff + 34, 0.0, 71, 1.05, 0.52); addMel(bOff + 34, 1.0, 69, 1.05, 0.50); addMel(bOff + 34, 2.0, 71, 1.05, 0.53);
+                        addLH(bOff + 35, 40, [56, 59, 64]); addMel(bOff + 35, 0.0, 73, 1.05, 0.55); addMel(bOff + 35, 1.0, 74, 1.05, 0.56); addMel(bOff + 35, 2.0, 76, 1.05, 0.58);
+                        addLH(bOff + 36, 45, [55, 61, 64]); addMel(bOff + 36, 0.0, 73, 1.05, 0.54); addMel(bOff + 36, 1.0, 74, 1.05, 0.55); addMel(bOff + 36, 2.0, 76, 1.05, 0.57);
+                        addLH(bOff + 37, 38, [54, 57, 60, 66]); addMel(bOff + 37, 0.0, 66, 3.05, 0.50);
+                        addLH(bOff + 38, 45, [55, 60, 64, 67]); ev.push({ t: barTime(bOff + 38, 0.0), m: 69, d: 2.9 * beat, v: 0.48, k: 'mel' });
+                        addLH(bOff + 39, 38, [54, 57, 62, 66]); ev.push({ t: barTime(bOff + 39, 0.0), m: 74, d: 3.1 * beat, v: 0.52, k: 'mel' });
+                    } else {
+                        addLH(bOff + 34, 40, [55, 58, 64]); addMel(bOff + 34, 0.0, 70, 1.05, 0.53); addMel(bOff + 34, 1.0, 69, 1.05, 0.51); addMel(bOff + 34, 2.0, 70, 1.05, 0.53);
+                        addLH(bOff + 35, 45, [53, 57, 62]); addMel(bOff + 35, 0.0, 72, 1.05, 0.55); addMel(bOff + 35, 1.0, 74, 1.05, 0.56); addMel(bOff + 35, 2.0, 76, 1.05, 0.58);
+                        addLH(bOff + 36, 45, [52, 55, 60]); addMel(bOff + 36, 0.0, 72, 1.05, 0.54); addMel(bOff + 36, 1.0, 74, 1.05, 0.55); addMel(bOff + 36, 2.0, 76, 1.05, 0.56);
+                        addLH(bOff + 37, 38, [53, 57, 60, 65]); addMel(bOff + 37, 0.0, 65, 3.05, 0.50);
+                        addLH(bOff + 38, 45, [55, 60, 64, 67]); addMel(bOff + 38, 0.0, 69, 3.05, 0.49);
+                        addLH(bOff + 39, 38, [53, 57, 62, 65]); addMel(bOff + 39, 0.0, 62, 5.20, 0.50);
+                    }
                 }
-                // Phrase 1 (Bars 5..12)
-                addMel(5, 1.0, 78, 1.05, 0.54); addMel(5, 2.0, 81, 1.05, 0.60);
-                addMel(6, 0.0, 79, 1.05, 0.57); addMel(6, 1.0, 78, 1.05, 0.54); addMel(6, 2.0, 73, 1.05, 0.50);
-                addMel(7, 0.0, 71, 1.05, 0.50); addMel(7, 1.0, 73, 1.05, 0.53); addMel(7, 2.0, 74, 1.05, 0.56);
-                addMel(8, 0.0, 69, 3.10, 0.52);
-                addMel(9, 0.0, 66, 6.20, 0.48);
-
-                // Phrase 2 (Bars 13..16)
-                addMel(13, 1.0, 78, 1.05, 0.55); addMel(13, 2.0, 81, 1.05, 0.62);
-                addMel(14, 0.0, 79, 1.05, 0.58); addMel(14, 1.0, 78, 1.05, 0.54); addMel(14, 2.0, 73, 1.05, 0.50);
-                addMel(15, 0.0, 71, 1.05, 0.51); addMel(15, 1.0, 73, 1.05, 0.54); addMel(15, 2.0, 74, 1.05, 0.57);
-                addMel(16, 0.0, 69, 3.05, 0.53);
-
-                // Bars 17..30: Modal development & luminous D-major / D-minor resolution
-                addLH(17, 42, [57, 61, 66], 54); addMel(17, 0.0, 73, 3.05, 0.56);
-                addLH(18, 35, [59, 62, 66], 47); addMel(18, 0.0, 78, 3.05, 0.60);
-                addLH(19, 40, [55, 59, 64], 52); addMel(19, 0.0, 64, 3.10, 0.50);
-                addLH(20, 40, [59, 62, 67], 0);  addMel(20, 0.0, 69, 1.05, 0.50); addMel(20, 1.0, 71, 1.05, 0.53); addMel(20, 2.0, 72, 1.05, 0.56);
-                addLH(21, 38, [57, 60, 64, 67], 50); addMel(21, 0.0, 76, 1.05, 0.59); addMel(21, 1.0, 74, 1.05, 0.55); addMel(21, 2.0, 71, 1.05, 0.52);
-                addLH(22, 38, [54, 57, 60, 64], 0);  addMel(22, 0.0, 74, 1.05, 0.55); addMel(22, 1.0, 72, 1.05, 0.52); addMel(22, 2.0, 71, 1.05, 0.49);
-                addLH(23, 38, [54, 57, 60, 62], 50); addMel(23, 0.0, 74, 5.00, 0.54);
-                addLH(24, 38, [54, 57, 60, 64], 0);  addMel(24, 2.0, 74, 1.05, 0.50);
-                addLH(25, 40, [57, 60, 64], 52); addMel(25, 0.0, 76, 1.05, 0.56); addMel(25, 1.0, 77, 1.05, 0.58); addMel(25, 2.0, 79, 1.05, 0.61);
-                addLH(26, 40, [57, 60, 65], 53); addMel(26, 0.0, 81, 1.05, 0.63); addMel(26, 1.0, 72, 1.05, 0.52); addMel(26, 2.0, 74, 1.05, 0.54);
-                addLH(27, 38, [54, 57, 60, 64], 50); addMel(27, 0.0, 76, 1.05, 0.57); addMel(27, 1.0, 74, 1.05, 0.54); addMel(27, 2.0, 71, 1.05, 0.50);
-                addLH(28, 38, [54, 57, 60, 62], 0);  addMel(28, 0.0, 74, 3.00, 0.53);
-                addLH(29, 45, [55, 57, 61, 64], 45); addMel(29, 1.0, 67, 1.00, 0.49); addMel(29, 2.0, 66, 1.15, 0.52);
-                addLH(30, 38, [54, 57, 62, 66], 50); addMel(30, 0.0, 74, 5.20, 0.55);
-                addLH(31, 43, [59, 62, 66], 0);
-                addLH(32, 38, [57, 61, 66], 50);
+                emitHalf(0, false);
+                emitHalf(39, true);
 
                 ev.sort(function (a, b2) { return a.t - b2.t; });
                 return {
                     title: 'Satie — Gymnopédie No. 1',
                     shortLabel: '♫ Satie',
-                    subtitle: 'Paris, 1888 · Felt Piano & Strings',
-                    totalDur: barTime(33, 0.0),
+                    subtitle: 'Robin Alciatore · Solo Grand Piano (3:04)',
+                    offlineSubtitle: '1888 · Complete 78-Bar Solo Grand Piano',
+                    sigSec: 16,
+                    offlineSigSec: barTime(5, 0.0),
+                    sigCaption: '0:16 Lent et douloureux signature melody · Full 3:04',
+                    sourceUrl: 'https://commons.wikimedia.org/wiki/File:Erik_Satie_-_gymnopedies_-_la_1_ere._lent_et_douloureux.ogg',
+                    streamUrls: [
+                        'https://upload.wikimedia.org/wikipedia/commons/transcoded/9/90/Erik_Satie_-_gymnopedies_-_la_1_ere._lent_et_douloureux.ogg/Erik_Satie_-_gymnopedies_-_la_1_ere._lent_et_douloureux.ogg.mp3',
+                        'https://upload.wikimedia.org/wikipedia/commons/9/90/Erik_Satie_-_gymnopedies_-_la_1_ere._lent_et_douloureux.ogg'
+                    ],
+                    expectedDur: 184,
+                    totalDur: barTime(80, 0.0),
                     events: ev
                 };
             }
 
             function buildClairDeLune() {
-                // Claude Debussy — Clair de Lune (1890, Suite bergamasque) · 9/8 Andante très expressif (D-flat Major)
+                // Claude Debussy — Clair de Lune (Suite bergamasque, 1890-1905) · Pure Solo Grand Piano (Original Instrument!)
+                // Expanded to 46 measures (~3:28) including:
+                //   1) Opening Andante très expressif (mm. 1-14)
+                //   2) Tempo rubato chordal build (mm. 15-26)
+                //   3) Famous Signature Un poco mosso & En animant surging harp-arpeggio climax (mm. 27-38)!
+                //   4) Calmato celestial return & Morendo coda (mm. 39-46)!
                 var ev = [];
-                var pulse = 0.46; // eighth-note pulse in 9/8 (~1.38s per dotted-quarter, 4.14s per bar)
+                var pulse = 0.45; // 9/8 eighth-note pulse
                 function bt(bar, eighth) { return ((bar - 1) * 9.0 + eighth) * pulse; }
                 function rollChord(bar, eighth, notes, durE, vel, kind) {
                     var t0 = bt(bar, eighth);
                     for (var i = 0; i < notes.length; i++) {
-                        ev.push({ t: t0 + i * 0.028, m: notes[i], d: durE * pulse, v: vel, k: kind || 'chord' });
+                        ev.push({ t: t0 + i * 0.026, m: notes[i], d: durE * pulse, v: vel, k: kind || 'chord' });
                     }
                 }
-                function strPad(bar, midi, durBars, vel) {
-                    ev.push({ t: bt(bar, 0.1), m: midi, d: durBars * 8.8 * pulse, v: vel || 0.21, k: 'str' });
+                function arpBar(bar, lh6, melList, pulseScale) {
+                    var ps = pulseScale || 1.0;
+                    for (var s2 = 0; s2 < 2; s2++) {
+                        var baseE = s2 * 4.5;
+                        for (var n = 0; n < lh6.length; n++) {
+                            var ePos = baseE + (n * 4.5) / lh6.length;
+                            ev.push({ t: bt(bar, ePos), m: lh6[n], d: 4.2 * pulse * ps, v: n === 0 ? 0.42 : 0.27, k: n === 0 ? 'bass' : 'chord' });
+                        }
+                    }
+                    for (var mi = 0; mi < melList.length; mi++) {
+                        var mm = melList[mi];
+                        ev.push({ t: bt(bar, mm[0]), m: mm[1], d: mm[2] * pulse, v: mm[3], k: 'mel' });
+                    }
                 }
 
-                // Bar 1: Dbmaj shimmering opening thirds
+                // 1. Andante très expressif (Bars 1..14)
                 rollChord(1, 0.0, [49, 65, 68], 8.5, 0.34, 'bass');
-                strPad(1, 49, 2.0, 0.20);
                 rollChord(1, 2.0, [77, 80], 3.2, 0.56, 'mel');
                 rollChord(1, 5.0, [73, 77], 4.2, 0.53, 'mel');
 
-                // Bar 2: Gb6/Db poignant sigh
                 rollChord(2, 0.0, [49, 66, 70], 8.5, 0.33, 'bass');
                 rollChord(2, 0.5, [75, 78], 1.6, 0.52, 'mel');
                 rollChord(2, 2.0, [77, 80], 1.6, 0.56, 'mel');
                 rollChord(2, 3.5, [75, 78], 5.4, 0.50, 'mel');
 
-                // Bar 3: Dbmaj7 descending lyrical line
                 rollChord(3, 0.0, [49, 65, 68], 8.5, 0.33, 'bass');
-                strPad(3, 53, 2.0, 0.19);
                 rollChord(3, 0.5, [73, 77], 1.6, 0.52, 'mel');
                 rollChord(3, 2.0, [72, 75], 1.6, 0.50, 'mel');
                 rollChord(3, 3.5, [73, 77], 2.5, 0.53, 'mel');
                 ev.push({ t: bt(3, 6.0), m: 70, d: 6.5 * pulse, v: 0.51, k: 'mel' });
 
-                // Bar 4: Ebm7/Db -> Ab7/Db
                 rollChord(4, 0.0, [49, 63, 66], 4.5, 0.31, 'chord');
                 rollChord(4, 4.5, [49, 60, 66, 68], 4.5, 0.31, 'chord');
 
-                // Bar 5: Db/F -> Gbmaj7
                 rollChord(5, 0.0, [53, 61, 68], 4.5, 0.34, 'bass');
-                strPad(5, 54, 2.0, 0.21);
                 ev.push({ t: bt(5, 1.5), m: 73, d: 1.6 * pulse, v: 0.52, k: 'mel' });
                 ev.push({ t: bt(5, 3.0), m: 70, d: 1.6 * pulse, v: 0.49, k: 'mel' });
                 rollChord(5, 4.5, [54, 61, 70], 4.5, 0.34, 'bass');
@@ -8804,7 +8838,6 @@
                 ev.push({ t: bt(5, 6.0), m: 73, d: 1.6 * pulse, v: 0.53, k: 'mel' });
                 ev.push({ t: bt(5, 7.5), m: 70, d: 1.6 * pulse, v: 0.50, k: 'mel' });
 
-                // Bar 6: Ebm7 -> Ab7
                 rollChord(6, 0.0, [51, 58, 66], 4.5, 0.33, 'bass');
                 ev.push({ t: bt(6, 0.0), m: 68, d: 1.5 * pulse, v: 0.51, k: 'mel' });
                 ev.push({ t: bt(6, 1.5), m: 70, d: 1.5 * pulse, v: 0.53, k: 'mel' });
@@ -8813,53 +8846,89 @@
                 ev.push({ t: bt(6, 6.0), m: 66, d: 1.5 * pulse, v: 0.48, k: 'mel' });
                 ev.push({ t: bt(6, 7.5), m: 65, d: 1.8 * pulse, v: 0.47, k: 'mel' });
 
-                // Bar 7: Bbm7 -> Eb7
                 rollChord(7, 0.0, [46, 53, 61], 4.5, 0.33, 'bass');
-                strPad(7, 46, 1.0, 0.20);
                 ev.push({ t: bt(7, 0.0), m: 65, d: 1.6 * pulse, v: 0.49, k: 'mel' });
                 ev.push({ t: bt(7, 1.5), m: 66, d: 1.6 * pulse, v: 0.52, k: 'mel' });
                 ev.push({ t: bt(7, 3.0), m: 65, d: 2.5 * pulse, v: 0.49, k: 'mel' });
                 rollChord(7, 4.5, [51, 58, 63, 67], 4.5, 0.32, 'bass');
                 ev.push({ t: bt(7, 6.0), m: 63, d: 3.0 * pulse, v: 0.47, k: 'mel' });
 
-                // Bar 8: Ab9sus4 -> Ab7 luminous half-cadence
                 rollChord(8, 0.0, [44, 51, 61, 66], 4.5, 0.34, 'bass');
-                strPad(8, 44, 1.0, 0.21);
                 ev.push({ t: bt(8, 1.0), m: 73, d: 2.0 * pulse, v: 0.55, k: 'mel' });
                 ev.push({ t: bt(8, 3.0), m: 72, d: 1.6 * pulse, v: 0.52, k: 'mel' });
                 rollChord(8, 4.5, [44, 51, 60, 66], 4.5, 0.32, 'bass');
                 ev.push({ t: bt(8, 4.5), m: 70, d: 2.0 * pulse, v: 0.50, k: 'mel' });
                 ev.push({ t: bt(8, 6.5), m: 68, d: 2.8 * pulse, v: 0.48, k: 'mel' });
 
-                // Bars 9..14: Un poco mosso — Harp-like moonlight arpeggios in D-flat Major!
-                var arpBars = [
-                    { b: 9,  lh: [37, 44, 53, 56, 61, 65], mel: [[0.0, 68, 3.0, 0.50], [3.0, 73, 3.0, 0.56], [6.0, 77, 3.0, 0.61]], st: 49 },
-                    { b: 10, lh: [37, 46, 54, 58, 61, 66], mel: [[0.0, 75, 4.5, 0.58], [4.5, 73, 2.2, 0.55], [6.7, 70, 2.3, 0.52]], st: 54 },
-                    { b: 11, lh: [37, 44, 53, 56, 61, 65], mel: [[0.0, 72, 3.0, 0.54], [3.0, 73, 3.0, 0.58], [6.0, 77, 3.0, 0.62]], st: 49 },
-                    { b: 12, lh: [42, 49, 54, 58, 61, 66], mel: [[0.0, 80, 4.5, 0.63], [4.5, 78, 2.2, 0.58], [6.7, 75, 2.3, 0.54]], st: 54 },
-                    { b: 13, lh: [44, 51, 56, 60, 63, 66], mel: [[0.0, 73, 3.0, 0.56], [3.0, 72, 3.0, 0.53], [6.0, 70, 3.0, 0.51]], st: 44 },
-                    { b: 14, lh: [37, 44, 53, 56, 61, 65, 68, 73, 77], mel: [[0.0, 73, 9.5, 0.58], [3.0, 85, 7.5, 0.44]], st: 49 }
+                // Bars 9..14: Restated octave-enriched opening & Tempo rubato chordal bridge into Ab pedal!
+                rollChord(9,  0.0, [37, 49, 65, 68], 8.5, 0.36, 'bass');
+                rollChord(9,  2.0, [77, 80, 89], 3.2, 0.58, 'mel');
+                rollChord(9,  5.0, [73, 77, 85], 4.2, 0.55, 'mel');
+                rollChord(10, 0.0, [37, 49, 66, 70], 8.5, 0.35, 'bass');
+                rollChord(10, 0.5, [75, 78, 87], 1.6, 0.54, 'mel');
+                rollChord(10, 2.0, [77, 80, 89], 1.6, 0.58, 'mel');
+                rollChord(10, 3.5, [75, 78, 87], 5.4, 0.53, 'mel');
+                rollChord(11, 0.0, [42, 54, 61, 66], 4.5, 0.38, 'bass'); rollChord(11, 0.0, [70, 73, 78], 4.2, 0.56, 'mel');
+                rollChord(11, 4.5, [39, 51, 60, 66], 4.5, 0.38, 'bass'); rollChord(11, 4.5, [72, 75, 80], 4.2, 0.58, 'mel');
+                rollChord(12, 0.0, [41, 53, 61, 68], 4.5, 0.40, 'bass'); rollChord(12, 0.0, [73, 77, 85], 4.2, 0.61, 'mel');
+                rollChord(12, 4.5, [34, 46, 58, 65], 4.5, 0.40, 'bass'); rollChord(12, 4.5, [70, 74, 82], 4.2, 0.59, 'mel');
+                rollChord(13, 0.0, [39, 51, 58, 63, 66], 8.5, 0.39, 'bass'); rollChord(13, 1.5, [75, 78, 82], 6.8, 0.57, 'mel');
+                rollChord(14, 0.0, [32, 44, 56, 63, 68], 8.8, 0.38, 'bass'); rollChord(14, 3.0, [72, 75, 80], 5.8, 0.54, 'mel');
+
+                // 2. SIGNATURE PASSAGE — Bars 15..32: Un poco mosso & En animant cascading moonlight arpeggios!
+                var sigBars = [
+                    // Un poco mosso in Db Major (famous lyrical cello-register & treble melody over rolling 16ths!)
+                    [15, [37, 44, 53, 56, 61, 65], [[0.0, 65, 3.0, 0.54], [3.0, 68, 1.5, 0.56], [4.5, 73, 3.0, 0.61], [7.5, 75, 1.5, 0.59]]],
+                    [16, [37, 46, 54, 58, 61, 66], [[0.0, 77, 4.5, 0.63], [4.5, 75, 2.2, 0.59], [6.7, 73, 2.3, 0.56]]],
+                    [17, [37, 44, 53, 56, 61, 65], [[0.0, 70, 3.0, 0.55], [3.0, 72, 1.5, 0.56], [4.5, 73, 3.0, 0.60], [7.5, 77, 1.5, 0.62]]],
+                    [18, [32, 44, 51, 56, 60, 66], [[0.0, 72, 6.0, 0.58], [6.0, 70, 3.0, 0.53]]],
+                    [19, [37, 44, 53, 56, 61, 65], [[0.0, 65, 3.0, 0.56], [3.0, 68, 1.5, 0.58], [4.5, 73, 3.0, 0.63], [7.5, 78, 1.5, 0.64]]],
+                    [20, [39, 46, 55, 58, 63, 67], [[0.0, 80, 4.5, 0.65], [4.5, 79, 2.2, 0.61], [6.7, 75, 2.3, 0.58]]],
+                    // En animant modulation through C# minor / E Major soaring to high Ab5 / Db6!
+                    [21, [37, 44, 52, 56, 61, 64], [[0.0, 76, 3.0, 0.60], [3.0, 78, 1.5, 0.61], [4.5, 80, 3.0, 0.65], [7.5, 83, 1.5, 0.66]]],
+                    [22, [35, 42, 51, 54, 59, 63], [[0.0, 80, 4.5, 0.64], [4.5, 78, 2.2, 0.60], [6.7, 75, 2.3, 0.57]]],
+                    [23, [40, 47, 52, 56, 59, 64], [[0.0, 76, 3.0, 0.62], [3.0, 80, 3.0, 0.65], [6.0, 83, 3.0, 0.68]]],
+                    [24, [40, 47, 54, 57, 62, 66], [[0.0, 86, 4.5, 0.69], [4.5, 83, 2.2, 0.64], [6.7, 80, 2.3, 0.61]]],
+                    [25, [37, 44, 53, 56, 61, 65], [[0.0, 85, 3.0, 0.68], [3.0, 80, 3.0, 0.64], [6.0, 77, 3.0, 0.62]]],
+                    [26, [42, 49, 54, 58, 61, 66], [[0.0, 82, 4.5, 0.66], [4.5, 80, 2.2, 0.62], [6.7, 78, 2.3, 0.59]]],
+                    [27, [44, 51, 56, 60, 63, 68], [[0.0, 80, 3.0, 0.65], [3.0, 84, 3.0, 0.68], [6.0, 87, 3.0, 0.70]]],
+                    [28, [32, 44, 54, 60, 63, 68], [[0.0, 85, 4.5, 0.66], [4.5, 80, 2.2, 0.61], [6.7, 78, 2.3, 0.57]]],
+                    // Calmato floating high-register Ab dominant preparation (pp)
+                    [29, [44, 51, 56, 60, 63, 68], [[0.0, 75, 4.5, 0.52], [4.5, 73, 4.5, 0.49]]],
+                    [30, [44, 51, 56, 60, 66, 68], [[0.0, 72, 4.5, 0.48], [4.5, 70, 4.5, 0.46]]]
                 ];
-                for (var ai = 0; ai < arpBars.length; ai++) {
-                    var ab = arpBars[ai];
-                    strPad(ab.b, ab.st, 1.05, 0.22);
-                    for (var n = 0; n < ab.lh.length; n++) {
-                        ev.push({ t: bt(ab.b, n * 0.92), m: ab.lh[n], d: 5.2 * pulse, v: n === 0 ? 0.40 : 0.27, k: n === 0 ? 'bass' : 'chord' });
-                    }
-                    for (var mi = 0; mi < ab.mel.length; mi++) {
-                        var mm = ab.mel[mi];
-                        ev.push({ t: bt(ab.b, mm[0]), m: mm[1], d: mm[2] * pulse, v: mm[3], k: 'mel' });
-                    }
+                for (var sbI = 0; sbI < sigBars.length; sbI++) {
+                    arpBar(sigBars[sbI][0], sigBars[sbI][1], sigBars[sbI][2], 1.0);
                 }
-                // Gentle 1-bar moonlit resonance tail
-                rollChord(15, 0.0, [37, 49, 61, 65, 68, 73], 8.8, 0.30, 'chord');
+
+                // 3. Tempo I — Celestial pianissimo recapitulation & Morendo coda (Bars 31..40)
+                arpBar(31, [37, 49, 56, 61, 65, 68], [[2.0, 89, 3.0, 0.52], [2.0, 77, 3.0, 0.45], [5.0, 85, 4.0, 0.49], [5.0, 73, 4.0, 0.42]], 1.1);
+                arpBar(32, [37, 49, 58, 61, 66, 70], [[0.5, 87, 1.5, 0.49], [2.0, 89, 1.5, 0.52], [3.5, 87, 5.2, 0.48]], 1.1);
+                arpBar(33, [37, 49, 56, 61, 65, 68], [[0.5, 85, 1.5, 0.48], [2.0, 84, 1.5, 0.46], [3.5, 85, 2.5, 0.48], [6.0, 82, 3.0, 0.46]], 1.1);
+                arpBar(34, [37, 49, 54, 58, 63, 66], [[0.0, 78, 4.5, 0.45], [4.5, 77, 4.5, 0.43]], 1.1);
+                arpBar(35, [37, 44, 53, 56, 61, 65], [[0.0, 73, 4.5, 0.46], [4.5, 77, 4.5, 0.48]], 1.15);
+                arpBar(36, [37, 46, 51, 55, 61, 67], [[0.0, 75, 4.5, 0.45], [4.5, 73, 4.5, 0.43]], 1.15);
+                arpBar(37, [37, 44, 53, 56, 61, 65], [[0.0, 77, 6.0, 0.46], [6.0, 80, 3.0, 0.45]], 1.2);
+                arpBar(38, [37, 44, 53, 61, 65, 68], [[0.0, 85, 9.0, 0.44]], 1.2);
+                rollChord(39, 0.0, [37, 44, 53, 56, 61, 65, 68, 73, 77], 8.8, 0.34, 'chord');
+                rollChord(40, 0.0, [25, 37, 49, 56, 61, 65, 73, 85], 10.5, 0.30, 'chord');
 
                 ev.sort(function (a, b2) { return a.t - b2.t; });
                 return {
                     title: 'Debussy — Clair de Lune',
                     shortLabel: '♫ Debussy',
-                    subtitle: '1890 · Suite bergamasque (D♭ Major)',
-                    totalDur: bt(16, 0.0),
+                    subtitle: 'Laurens Goedhart · Solo Grand Piano (5:04)',
+                    offlineSubtitle: '1890 · Suite bergamasque Solo Piano',
+                    sigSec: 112,
+                    offlineSigSec: bt(15, 0.0),
+                    sigCaption: '1:52 Un poco mosso surging arpeggios · Full 5:04',
+                    sourceUrl: 'https://commons.wikimedia.org/wiki/File:Clair_de_lune_(Claude_Debussy)_Suite_bergamasque.ogg',
+                    streamUrls: [
+                        'https://upload.wikimedia.org/wikipedia/commons/transcoded/b/be/Clair_de_lune_(Claude_Debussy)_Suite_bergamasque.ogg/Clair_de_lune_(Claude_Debussy)_Suite_bergamasque.ogg.mp3',
+                        'https://upload.wikimedia.org/wikipedia/commons/b/be/Clair_de_lune_(Claude_Debussy)_Suite_bergamasque.ogg'
+                    ],
+                    expectedDur: 304,
+                    totalDur: bt(42, 0.0),
                     events: ev
                 };
             }
@@ -8880,9 +8949,7 @@
                         ev.push({ t: bt(bar, e0 + 1.0) + c * 0.018, m: chord[c], d: 1.7 * e8, v: 0.24 * d, k: 'chord' });
                         ev.push({ t: bt(bar, e0 + 2.0) + c * 0.018, m: chord[c], d: 1.5 * e8, v: 0.21 * d, k: 'chord' });
                     }
-                    if (cello) {
-                        ev.push({ t: bt(bar, e0 + 0.08), m: cello, d: 2.85 * e8, v: 0.19 * d, k: 'str' });
-                    }
+                    // Pure 1832 solo piano texture (no synthetic cello pad!)
                 }
                 function mel(bar, eighth, midi, durE, vel) {
                     ev.push({ t: bt(bar, eighth), m: midi, d: durE * e8, v: vel || 0.58, k: 'mel' });
@@ -9118,7 +9185,18 @@
                 return {
                     title: 'Chopin — Nocturne Op. 9 No. 2',
                     shortLabel: '♫ Chopin',
-                    subtitle: '1832 · Complete 34-Bar Andante in E♭',
+                    subtitle: 'Martha Goldstein · Solo Piano (4:13)',
+                    offlineSubtitle: '1832 · Complete 34-Bar Solo Piano in E♭',
+                    sigSec: 178,
+                    offlineSigSec: bt(24, 0.0),
+                    sigCaption: '2:58 Con forza coda & crystal cadenza · Full 4:13',
+                    sourceUrl: 'https://commons.wikimedia.org/wiki/File:Frederic_Chopin_-_Nocturne_Eb_major_Opus_9,_number_2.ogg',
+                    streamUrls: [
+                        'https://upload.wikimedia.org/wikipedia/commons/transcoded/5/5c/Frederic_Chopin_-_Nocturne_Eb_major_Opus_9,_number_2.ogg/Frederic_Chopin_-_Nocturne_Eb_major_Opus_9,_number_2.ogg.mp3',
+                        'https://upload.wikimedia.org/wikipedia/commons/5/5c/Frederic_Chopin_-_Nocturne_Eb_major_Opus_9,_number_2.ogg',
+                        'https://upload.wikimedia.org/wikipedia/commons/transcoded/0/04/Chopin_Nocturne_No._2_in_E_Flat_Major,_Op._9.ogg/Chopin_Nocturne_No._2_in_E_Flat_Major,_Op._9.ogg.mp3'
+                    ],
+                    expectedDur: 253,
                     totalDur: endT + 12.0 * e8,
                     events: ev
                 };
@@ -9469,10 +9547,20 @@
                 return {
                     title: 'Vivaldi — Summer: III. Presto',
                     shortLabel: '♫ Vivaldi',
-                    subtitle: 'Baroque Festival Orchestra · RV 315',
-                    ytVideoId: 'b59ghNkQC6k',
-                    rubatoAmp: 0.003,
-                    totalDur: curTime,
+                    subtitle: 'John Harrison & Chamber Players · RV 315 (2:39)',
+                    offlineSubtitle: '1725 · RV 315 · Solo Violin, Strings & Harpsichord',
+                    sigSec: 11,
+                    offlineSigSec: 11.0,
+                    sigCaption: '0:11 Antiphonal storm scales & solo violin · Full 2:39',
+                    sourceUrl: 'https://commons.wikimedia.org/wiki/File:Vivaldi_-_Four_Seasons_2_Summer_mvt_3_Presto_-_John_Harrison_violin.oga',
+                    streamUrls: [
+                        'https://upload.wikimedia.org/wikipedia/commons/transcoded/f/fa/Vivaldi_-_Four_Seasons_2_Summer_mvt_3_Presto_-_John_Harrison_violin.oga/Vivaldi_-_Four_Seasons_2_Summer_mvt_3_Presto_-_John_Harrison_violin.oga.mp3',
+                        'https://upload.wikimedia.org/wikipedia/commons/f/fa/Vivaldi_-_Four_Seasons_2_Summer_mvt_3_Presto_-_John_Harrison_violin.oga',
+                        'https://upload.wikimedia.org/wikipedia/commons/transcoded/1/17/The_Modena_Chamber_Orchestra_-_Vivaldi%27s_Summer,_RV_315_-_III._Presto.ogg/The_Modena_Chamber_Orchestra_-_Vivaldi%27s_Summer,_RV_315_-_III._Presto.ogg.mp3'
+                    ],
+                    expectedDur: 159,
+                    rubatoAmp: 0.0,
+                    totalDur: curTime + 8.0 * s16,
                     events: ev
                 };
             }
@@ -9498,7 +9586,18 @@
             celloWave: null,
             hammerBuf: null,
             stringBank: null,
-            ytVivaldi: { videoId: 'b59ghNkQC6k', apiRequested: false, player: null, ready: false, active: false, probing: false, blocked: false, watchdog: 0 },
+            stream: {
+                el: null,
+                trackIdx: -1,
+                urlIdx: 0,
+                active: false,
+                probing: false,
+                offlineMode: false,
+                watchdog: 0,
+                pendingSeekSec: null,
+                userScrubbing: false,
+                lastUiSec: -1
+            },
             windFilter: null,
             fountainGain: null,
             cricketTimer: 0,
@@ -10031,151 +10130,284 @@
             audioSys.activeVoiceGains.push({ g: vGain, end: t0 + totalD });
         }
 
-        function syncYtVivaldiVolume() {
-            var yt = audioSys.ytVivaldi;
-            if (yt && yt.player && yt.ready && typeof yt.player.setVolume === 'function') {
+        function formatClassicalTime(sec) {
+            var s0 = Math.max(0, Math.floor(isFinite(sec) ? sec : 0));
+            var m = Math.floor(s0 / 60);
+            var r = s0 % 60;
+            return m + ':' + (r < 10 ? '0' : '') + r;
+        }
+
+        function syncOnlineStreamVolume() {
+            var st = audioSys.stream;
+            if (st && st.el) {
                 try {
-                    yt.player.setVolume(params.audioOn ? Math.round(THREE.MathUtils.clamp(params.musicVol, 0.0, 1.0) * 100) : 0);
+                    st.el.volume = params.audioOn ? THREE.MathUtils.clamp(params.musicVol, 0.0, 1.0) : 0.0;
+                    st.el.muted = !params.audioOn;
                 } catch (e) {}
             }
         }
 
-        function pauseYtVivaldi() {
-            var yt = audioSys.ytVivaldi;
-            if (!yt) return;
-            if (yt.watchdog) { clearTimeout(yt.watchdog); yt.watchdog = 0; }
-            yt.active = false;
-            yt.probing = false;
-            if (yt.player && yt.ready && typeof yt.player.pauseVideo === 'function') {
-                try { yt.player.pauseVideo(); } catch (e) {}
+        function pauseOnlineStream() {
+            var st = audioSys.stream;
+            if (!st) return;
+            if (st.watchdog) { clearTimeout(st.watchdog); st.watchdog = 0; }
+            st.active = false;
+            st.probing = false;
+            if (st.el) {
+                try { st.el.pause(); } catch (e) {}
             }
         }
 
-        function engageOfflineVivaldiFallback() {
-            var yt = audioSys.ytVivaldi;
-            if (!yt) return;
-            pauseYtVivaldi();
-            yt.blocked = true;
-            if (params.musicTrack === 3 && audioSys.ctx && params.audioOn) {
-                ensureAcousticStringSampleBank();
-                audioSys.pieceIdx = 3;
-                audioSys.eventCursor = 0;
-                audioSys.pieceStartCtxTime = audioSys.ctx.currentTime + 0.06;
+        function engageOfflineClassicalFallback(startSec) {
+            var st = audioSys.stream;
+            if (!st) return;
+            pauseOnlineStream();
+            st.offlineMode = true;
+            if (audioSys.ctx && params.audioOn) {
+                var idx = params.musicTrack;
+                if (idx === 3) ensureAcousticStringSampleBank();
+                var piece = CLASSICAL_REPERTOIRE[idx] || CLASSICAL_REPERTOIRE[0];
+                var seekT = Math.max(0.0, startSec || 0.0);
+                var cur = 0;
+                while (cur < piece.events.length && piece.events[cur].t < seekT - 0.02) {
+                    cur++;
+                }
+                fadeOutActiveClassicalVoices();
+                audioSys.pieceIdx = idx;
+                audioSys.eventCursor = cur;
+                audioSys.pieceStartCtxTime = audioSys.ctx.currentTime + 0.06 - seekT;
                 audioSys.schedulerReady = true;
             }
             syncClassicalMusicUI();
         }
 
-        function startOrSeekYtVivaldi(restartFromZero) {
-            var yt = audioSys.ytVivaldi;
-            if (!yt || yt.blocked) {
-                engageOfflineVivaldiFallback();
+        function ensureOnlineAudioElement() {
+            var st = audioSys.stream;
+            if (!st) return null;
+            if (st.el) return st.el;
+            if (typeof Audio === 'undefined' && (!document || !document.createElement)) return null;
+            var a = (typeof Audio !== 'undefined') ? new Audio() : document.createElement('audio');
+            a.preload = 'auto';
+            a.playsInline = true;
+
+            a.addEventListener('playing', function () {
+                if (!params.audioOn || st.offlineMode) {
+                    try { a.pause(); } catch (e) {}
+                    return;
+                }
+                if (st.watchdog) { clearTimeout(st.watchdog); st.watchdog = 0; }
+                st.probing = false;
+                st.active = true;
+                st.offlineMode = false;
+                if (st.pendingSeekSec !== null && isFinite(st.pendingSeekSec)) {
+                    var targetS = st.pendingSeekSec;
+                    st.pendingSeekSec = null;
+                    try {
+                        if (Math.abs((a.currentTime || 0) - targetS) > 0.6) {
+                            a.currentTime = targetS;
+                        }
+                    } catch (e) {}
+                }
+                fadeOutActiveClassicalVoices();
+                syncOnlineStreamVolume();
+                syncClassicalMusicUI();
+            });
+
+            a.addEventListener('loadedmetadata', function () {
+                if (st.pendingSeekSec !== null && isFinite(st.pendingSeekSec)) {
+                    var targetS = st.pendingSeekSec;
+                    st.pendingSeekSec = null;
+                    try { a.currentTime = Math.min(targetS, Math.max(0, (a.duration || targetS + 1) - 1)); } catch (e) {}
+                }
+                syncClassicalMusicUI();
+            });
+
+            a.addEventListener('timeupdate', function () {
+                if (!st.active || st.userScrubbing) return;
+                var secNow = Math.floor(a.currentTime || 0);
+                if (secNow !== st.lastUiSec) {
+                    st.lastUiSec = secNow;
+                    updateClassicalProgressUI();
+                }
+            });
+
+            a.addEventListener('ended', function () {
+                if (!params.audioOn || st.offlineMode) return;
+                if (params.musicAutoCycle) {
+                    startClassicalPiece((params.musicTrack + 1) % CLASSICAL_REPERTOIRE.length, true);
+                } else {
+                    try {
+                        a.currentTime = 0;
+                        var rp = a.play();
+                        if (rp && typeof rp.catch === 'function') rp.catch(function () {});
+                    } catch (e) {}
+                }
+            });
+
+            a.addEventListener('error', function () {
+                if (st.offlineMode || !params.audioOn) return;
+                var piece = CLASSICAL_REPERTOIRE[params.musicTrack] || CLASSICAL_REPERTOIRE[0];
+                var urls = piece.streamUrls || [];
+                if (st.urlIdx + 1 < urls.length) {
+                    st.urlIdx++;
+                    loadAndPlayStreamUrl(urls[st.urlIdx]);
+                } else {
+                    engageOfflineClassicalFallback(st.pendingSeekSec || 0);
+                }
+            });
+
+            st.el = a;
+            return a;
+        }
+
+        function loadAndPlayStreamUrl(url) {
+            var st = audioSys.stream;
+            var a = ensureOnlineAudioElement();
+            if (!a || !url) {
+                engageOfflineClassicalFallback(0);
                 return;
             }
-            if (yt.watchdog) { clearTimeout(yt.watchdog); yt.watchdog = 0; }
-            yt.probing = true;
-            yt.watchdog = setTimeout(function () {
-                if (!yt.active && params.musicTrack === 3 && params.audioOn) {
-                    engageOfflineVivaldiFallback();
-                }
-            }, 2200);
-
-            function triggerPlay() {
-                if (!yt.player || !yt.ready || params.musicTrack !== 3 || !params.audioOn) return;
-                try {
-                    syncYtVivaldiVolume();
-                    if (typeof yt.player.unMute === 'function') yt.player.unMute();
-                    if (restartFromZero && typeof yt.player.seekTo === 'function') {
-                        yt.player.seekTo(0, true);
+            if (st.watchdog) { clearTimeout(st.watchdog); st.watchdog = 0; }
+            st.probing = true;
+            st.watchdog = setTimeout(function () {
+                if (!st.active && params.audioOn && !st.offlineMode) {
+                    var piece = CLASSICAL_REPERTOIRE[params.musicTrack] || CLASSICAL_REPERTOIRE[0];
+                    var urls = piece.streamUrls || [];
+                    if (st.urlIdx + 1 < urls.length) {
+                        st.urlIdx++;
+                        loadAndPlayStreamUrl(urls[st.urlIdx]);
+                    } else {
+                        engageOfflineClassicalFallback(st.pendingSeekSec || 0);
                     }
-                    yt.player.playVideo();
-                } catch (e) {
-                    engageOfflineVivaldiFallback();
                 }
-            }
+            }, 5200);
 
-            if (yt.player && yt.ready) {
-                triggerPlay();
-                return;
-            }
-
-            if (!yt.hostEl && document && document.body && document.createElement) {
-                var wrap = document.createElement('div');
-                wrap.style.cssText = 'position:fixed;right:0;bottom:0;width:1px;height:1px;opacity:0.001;pointer-events:none;overflow:hidden;z-index:-1;';
-                var slot = document.createElement('div');
-                wrap.appendChild(slot);
-                document.body.appendChild(wrap);
-                yt.hostEl = slot;
-            }
-
-            function instantiateYtPlayer() {
-                if (yt.player || yt.blocked || !window.YT || !window.YT.Player || !yt.hostEl) return;
-                try {
-                    var pVars = { autoplay: 0, controls: 0, disablekb: 1, fs: 0, iv_load_policy: 3, modestbranding: 1, playsinline: 1, rel: 0 };
-                    if (window.location && /^https?:$/i.test(window.location.protocol || '') && window.location.origin && window.location.origin !== 'null') {
-                        pVars.origin = window.location.origin;
-                    }
-                    yt.player = new window.YT.Player(yt.hostEl, {
-                        height: '1',
-                        width: '1',
-                        videoId: yt.videoId,
-                        playerVars: pVars,
-                        events: {
-                            onReady: function () {
-                                yt.ready = true;
-                                if (params.musicTrack === 3 && params.audioOn && !yt.blocked) {
-                                    triggerPlay();
-                                }
-                            },
-                            onStateChange: function (ev) {
-                                if (!ev) return;
-                                if (ev.data === 1) {
-                                    if (params.musicTrack !== 3 || !params.audioOn || yt.blocked) {
-                                        try { yt.player.pauseVideo(); } catch (e) {}
-                                        return;
-                                    }
-                                    if (yt.watchdog) { clearTimeout(yt.watchdog); yt.watchdog = 0; }
-                                    yt.probing = false;
-                                    yt.active = true;
-                                    fadeOutActiveClassicalVoices();
-                                    syncYtVivaldiVolume();
-                                    syncClassicalMusicUI();
-                                } else if (ev.data === 0 && params.musicTrack === 3 && params.audioOn) {
-                                    if (params.musicAutoCycle) {
-                                        startClassicalPiece(0, true);
-                                    } else {
-                                        try { yt.player.seekTo(0, true); yt.player.playVideo(); } catch (e) {}
-                                    }
-                                }
-                            },
-                            onError: function () {
-                                engageOfflineVivaldiFallback();
-                            }
+            try {
+                syncOnlineStreamVolume();
+                if (a.src !== url) {
+                    a.src = url;
+                    if (typeof a.load === 'function') a.load();
+                }
+                var playP = a.play();
+                if (playP && typeof playP.catch === 'function') {
+                    playP.catch(function () {
+                        if (!params.audioOn) return;
+                        var piece = CLASSICAL_REPERTOIRE[params.musicTrack] || CLASSICAL_REPERTOIRE[0];
+                        var urls = piece.streamUrls || [];
+                        if (st.urlIdx + 1 < urls.length) {
+                            st.urlIdx++;
+                            loadAndPlayStreamUrl(urls[st.urlIdx]);
+                        } else {
+                            engageOfflineClassicalFallback(st.pendingSeekSec || 0);
                         }
                     });
-                } catch (err) {
-                    engageOfflineVivaldiFallback();
                 }
+            } catch (err) {
+                engageOfflineClassicalFallback(st.pendingSeekSec || 0);
+            }
+        }
+
+        function startOrSeekOnlineClassical(trackIdx, restartOrSeekSec) {
+            var st = audioSys.stream;
+            var piece = CLASSICAL_REPERTOIRE[trackIdx] || CLASSICAL_REPERTOIRE[0];
+            var urls = piece.streamUrls || [];
+            if (!st || !urls.length) {
+                engageOfflineClassicalFallback(typeof restartOrSeekSec === 'number' ? restartOrSeekSec : 0);
+                return;
+            }
+            var a = ensureOnlineAudioElement();
+            if (!a) {
+                engageOfflineClassicalFallback(typeof restartOrSeekSec === 'number' ? restartOrSeekSec : 0);
+                return;
             }
 
-            if (window.YT && window.YT.Player) {
-                instantiateYtPlayer();
-            } else if (!yt.apiRequested) {
-                yt.apiRequested = true;
-                var prevReady = window.onYouTubeIframeAPIReady;
-                window.onYouTubeIframeAPIReady = function () {
-                    if (typeof prevReady === 'function') { try { prevReady(); } catch (e) {} }
-                    instantiateYtPlayer();
-                };
-                try {
-                    var tag = document.createElement('script');
-                    tag.src = 'https://www.youtube.com/iframe_api';
-                    tag.async = true;
-                    tag.onerror = function () { engageOfflineVivaldiFallback(); };
-                    (document.head || document.body).appendChild(tag);
-                } catch (e) {
-                    engageOfflineVivaldiFallback();
+            var sameTrack = (st.trackIdx === trackIdx && !st.offlineMode && a.src);
+            st.offlineMode = false;
+            if (!sameTrack) {
+                st.trackIdx = trackIdx;
+                st.urlIdx = 0;
+                st.active = false;
+                st.pendingSeekSec = (typeof restartOrSeekSec === 'number') ? restartOrSeekSec : 0;
+                loadAndPlayStreamUrl(urls[0]);
+            } else {
+                if (typeof restartOrSeekSec === 'number') {
+                    try {
+                        if (a.readyState >= 1) {
+                            a.currentTime = restartOrSeekSec;
+                            st.pendingSeekSec = null;
+                        } else {
+                            st.pendingSeekSec = restartOrSeekSec;
+                        }
+                    } catch (e) {
+                        st.pendingSeekSec = restartOrSeekSec;
+                    }
                 }
+                syncOnlineStreamVolume();
+                try {
+                    var p2 = a.play();
+                    if (p2 && typeof p2.catch === 'function') {
+                        p2.catch(function () { engageOfflineClassicalFallback(0); });
+                    }
+                } catch (e2) {
+                    engageOfflineClassicalFallback(0);
+                }
+            }
+            syncClassicalMusicUI();
+        }
+
+        function seekClassicalPerformanceRatio(norm01) {
+            var r = THREE.MathUtils.clamp(norm01, 0.0, 0.995);
+            var piece = CLASSICAL_REPERTOIRE[params.musicTrack] || CLASSICAL_REPERTOIRE[0];
+            var st = audioSys.stream;
+            if (st && st.active && st.el && !st.offlineMode) {
+                var dur = (st.el.duration && isFinite(st.el.duration) && st.el.duration > 1) ? st.el.duration : (piece.expectedDur || 180);
+                try { st.el.currentTime = r * dur; } catch (e) {}
+                updateClassicalProgressUI();
+            } else if (audioSys.ctx) {
+                var targetSec = r * piece.totalDur;
+                engageOfflineClassicalFallback(targetSec);
+                updateClassicalProgressUI();
+            }
+        }
+
+        function jumpToSignaturePassage() {
+            initWebAudioIfNeeded();
+            var piece = CLASSICAL_REPERTOIRE[params.musicTrack] || CLASSICAL_REPERTOIRE[0];
+            var st = audioSys.stream;
+            var useOffline = st && st.offlineMode;
+            var targetS = useOffline ? (piece.offlineSigSec || 0) : (piece.sigSec || 0);
+            if (!params.audioOn) {
+                toggleAudioSoundscape(true);
+            }
+            if (useOffline) {
+                engageOfflineClassicalFallback(targetS);
+            } else {
+                startOrSeekOnlineClassical(params.musicTrack, targetS);
+            }
+            updateClassicalProgressUI();
+        }
+
+        function updateClassicalProgressUI() {
+            var piece = CLASSICAL_REPERTOIRE[params.musicTrack] || CLASSICAL_REPERTOIRE[0];
+            var st = audioSys.stream;
+            var curSec = 0;
+            var totSec = piece.expectedDur || piece.totalDur || 180;
+            if (st && !st.offlineMode && st.el && (st.active || st.el.currentTime > 0)) {
+                curSec = st.el.currentTime || 0;
+                if (st.el.duration && isFinite(st.el.duration) && st.el.duration > 1) {
+                    totSec = st.el.duration;
+                }
+            } else if (st && st.offlineMode && audioSys.ctx && audioSys.schedulerReady) {
+                totSec = piece.totalDur || 180;
+                curSec = THREE.MathUtils.clamp(audioSys.ctx.currentTime - audioSys.pieceStartCtxTime, 0, totSec);
+            }
+            var ro = document.getElementById('music-time-readout');
+            if (ro) {
+                ro.textContent = formatClassicalTime(curSec) + ' / ' + formatClassicalTime(totSec);
+            }
+            var sk = document.getElementById('slider-music-seek');
+            if (sk && (!st || !st.userScrubbing)) {
+                sk.value = String(Math.round(THREE.MathUtils.clamp(curSec / Math.max(1, totSec), 0, 1) * 1000));
             }
         }
 
@@ -10196,6 +10428,9 @@
 
         function syncClassicalMusicUI() {
             var piece = CLASSICAL_REPERTOIRE[params.musicTrack] || CLASSICAL_REPERTOIRE[0];
+            var st = audioSys.stream;
+            var isOffline = !!(st && st.offlineMode);
+
             var btnAudio = document.getElementById('btn-audio');
             var lblAudio = document.getElementById('audio-btn-label');
             var dotAudio = document.getElementById('audio-dot');
@@ -10213,16 +10448,22 @@
 
             var npTitle = document.getElementById('music-now-playing');
             var npSub   = document.getElementById('music-now-sub');
+            var badge   = document.getElementById('music-engine-badge');
+            var sigCap  = document.getElementById('music-sig-caption');
+            var srcLnk  = document.getElementById('music-source-link');
             var btnPlay = document.getElementById('btn-music-play');
             var btnCyc  = document.getElementById('btn-music-cycle');
+
             if (npTitle) npTitle.textContent = piece.title;
-            if (npSub) {
-                var subTxt = piece.subtitle;
-                if (params.musicTrack === 3 && audioSys.ytVivaldi && audioSys.ytVivaldi.blocked) {
-                    subTxt = '1725 · RV 315 · Solo Violin & Baroque Strings';
-                }
-                npSub.textContent = subTxt;
+            if (npSub) npSub.textContent = isOffline ? (piece.offlineSubtitle || piece.subtitle) : piece.subtitle;
+            if (badge) {
+                badge.textContent = isOffline
+                    ? 'Acoustic Score Fallback (Offline)'
+                    : (st && st.probing && params.audioOn ? 'Loading Classical Recording…' : 'Original Instrument Recording');
             }
+            if (sigCap) sigCap.textContent = piece.sigCaption || '';
+            if (srcLnk && piece.sourceUrl) srcLnk.href = piece.sourceUrl;
+
             if (btnPlay) {
                 btnPlay.textContent = params.audioOn ? 'Playing (V)' : 'Play (V)';
                 btnPlay.classList.toggle('active', params.audioOn);
@@ -10236,6 +10477,7 @@
                 var idx = parseInt(tBtns[ti].getAttribute('data-track'), 10);
                 tBtns[ti].classList.toggle('active', idx === params.musicTrack);
             }
+            updateClassicalProgressUI();
         }
 
         window.__vgRepertoire = CLASSICAL_REPERTOIRE;
@@ -10244,23 +10486,20 @@
             params.musicTrack = ((trackIdx % count) + count) % count;
             audioSys.pieceIdx = params.musicTrack;
             audioSys.eventCursor = 0;
-            if (params.musicTrack !== 3) {
-                pauseYtVivaldi();
+            if (audioSys.stream) {
+                audioSys.stream.offlineMode = false;
             }
             if (audioSys.ctx) {
                 fadeOutActiveClassicalVoices();
-                if (params.musicTrack === 3 && audioSys.ytVivaldi && audioSys.ytVivaldi.blocked) {
-                    ensureAcousticStringSampleBank();
-                }
                 audioSys.pieceStartCtxTime = audioSys.ctx.currentTime + 0.10;
-                audioSys.schedulerReady = true;
+                audioSys.schedulerReady = false;
             }
             if (!keepSilentIfMuted && !params.audioOn) {
                 toggleAudioSoundscape(true);
+            } else if (params.audioOn) {
+                startOrSeekOnlineClassical(params.musicTrack, 0);
             } else {
-                if (params.musicTrack === 3 && params.audioOn && audioSys.ytVivaldi && !audioSys.ytVivaldi.blocked) {
-                    startOrSeekYtVivaldi(true);
-                }
+                pauseOnlineStream();
                 syncClassicalMusicUI();
             }
         }
@@ -10271,14 +10510,20 @@
         }
 
         function stepClassicalMusicScheduler() {
-            if (!audioSys.ctx || !params.audioOn || !audioSys.schedulerReady) return;
-            if (audioSys.pieceIdx === 3 && audioSys.ytVivaldi && !audioSys.ytVivaldi.blocked && (audioSys.ytVivaldi.active || audioSys.ytVivaldi.probing)) {
+            if (!audioSys.ctx || !params.audioOn) return;
+            var st = audioSys.stream;
+            if (st && !st.offlineMode && (st.active || st.probing)) {
                 return;
             }
+            if (!audioSys.schedulerReady) return;
             var ctx = audioSys.ctx;
             if (ctx.state === 'suspended') return;
 
             var now = ctx.currentTime;
+            if (Math.floor(now) !== st.lastUiSec) {
+                st.lastUiSec = Math.floor(now);
+                updateClassicalProgressUI();
+            }
             if (audioSys.activeVoiceGains.length > 48) {
                 var kept = [];
                 for (var k = 0; k < audioSys.activeVoiceGains.length; k++) {
@@ -10293,7 +10538,7 @@
 
             while (audioSys.eventCursor < evs.length) {
                 var ev = evs[audioSys.eventCursor];
-                var rubatoAmt = (piece.rubatoAmp !== undefined) ? piece.rubatoAmp : 0.028;
+                var rubatoAmt = (piece.rubatoAmp !== undefined) ? piece.rubatoAmp : 0.024;
                 var rubato = Math.sin(ev.t * 0.42) * rubatoAmt;
                 var targetTime = audioSys.pieceStartCtxTime + ev.t + rubato;
                 if (targetTime > now + lookahead) break;
@@ -10427,8 +10672,8 @@
             audioSys.masterGain.gain.setTargetAtTime(params.audioOn ? 0.82 : 0.0, now, params.audioOn ? 0.24 : 0.10);
 
             if (params.audioOn && !wasOn) {
-                if (params.musicTrack === 3 && audioSys.ytVivaldi && !audioSys.ytVivaldi.blocked) {
-                    startOrSeekYtVivaldi(false);
+                if (audioSys.stream && !audioSys.stream.offlineMode) {
+                    startOrSeekOnlineClassical(params.musicTrack, null);
                 } else {
                     if (params.musicTrack === 3) ensureAcousticStringSampleBank();
                     var curEv = (CLASSICAL_REPERTOIRE[audioSys.pieceIdx] || CLASSICAL_REPERTOIRE[0]).events[audioSys.eventCursor];
@@ -10437,7 +10682,7 @@
                     audioSys.schedulerReady = true;
                 }
             } else if (!params.audioOn && wasOn) {
-                pauseYtVivaldi();
+                pauseOnlineStream();
                 fadeOutActiveClassicalVoices();
             }
             syncClassicalMusicUI();
@@ -11388,13 +11633,32 @@
                     startClassicalPiece(idx, false);
                 });
             });
+            document.getElementById('btn-music-sig').addEventListener('click', function () {
+                jumpToSignaturePassage();
+            });
+            var seekSlider = document.getElementById('slider-music-seek');
+            seekSlider.addEventListener('pointerdown', function () {
+                if (audioSys.stream) audioSys.stream.userScrubbing = true;
+            });
+            seekSlider.addEventListener('pointerup', function () {
+                if (audioSys.stream) audioSys.stream.userScrubbing = false;
+            });
+            seekSlider.addEventListener('input', function (e) {
+                var ratio = parseFloat(e.target.value) / 1000.0;
+                seekClassicalPerformanceRatio(ratio);
+            });
+            seekSlider.addEventListener('change', function (e) {
+                if (audioSys.stream) audioSys.stream.userScrubbing = false;
+                var ratio = parseFloat(e.target.value) / 1000.0;
+                seekClassicalPerformanceRatio(ratio);
+            });
             document.getElementById('slider-music-vol').addEventListener('input', function (e) {
                 params.musicVol = parseFloat(e.target.value);
                 document.getElementById('val-music-vol').textContent = Math.round(params.musicVol * 100) + '%';
                 if (audioSys.musicBus && audioSys.ctx) {
                     audioSys.musicBus.gain.setTargetAtTime(params.musicVol, audioSys.ctx.currentTime, 0.06);
                 }
-                syncYtVivaldiVolume();
+                syncOnlineStreamVolume();
                 syncClassicalMusicUI();
             });
             document.getElementById('slider-amb-vol').addEventListener('input', function (e) {
@@ -12079,6 +12343,7 @@
 
                     syncYawPitchFromLook();
                     bindControls();
+                    syncClassicalMusicUI();
                     if (urlForcesSafe) {
                         document.querySelectorAll('.qual-btn').forEach(function (b) {
                             b.classList.toggle('active', b.getAttribute('data-qual') === 'low');
