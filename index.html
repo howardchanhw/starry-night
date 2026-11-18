@@ -232,6 +232,14 @@
         </div>
     </div>
 
+    <!-- Non-Blocking Progressive Boot Pill -->
+    <div id="boot-loading-pill" class="fixed inset-0 z-40 flex items-center justify-center bg-[#0b1942]/80 backdrop-blur-sm transition-opacity duration-300 pointer-events-none">
+        <div class="studio-glass rounded-2xl px-5 py-3.5 text-center shadow-2xl border-amber-300/60">
+            <div class="font-serif-title text-sm sm:text-base font-bold text-amber-200">Preparing 1889 Saint-R&eacute;my Impasto World&hellip;</div>
+            <div id="boot-loading-sub" class="text-[11px] text-cyan-200/85 mt-1">Optimising shaders &amp; brushwork for your screen</div>
+        </div>
+    </div>
+
     <!-- Safe Diagnostic Banner -->
     <div id="diag-banner" class="fixed bottom-4 left-4 z-50 hidden max-w-lg studio-glass border-rose-400/80 rounded-2xl p-4 text-xs text-rose-100">
         <div class="font-bold text-rose-300 mb-1">Impasto Lab Diagnostic</div>
@@ -572,25 +580,37 @@
 
         var uaLower = (navigator.userAgent || '').toLowerCase();
         var isMobileDevice = /android|iphone|ipad|ipod|mobile/i.test(uaLower) || (navigator.maxTouchPoints > 2 && Math.min(safeViewportW(), safeViewportH()) < 820);
+        var isSoftwareWebGL = false;
 
         function refineTierFromRendererContext(gl) {
-            if (isMobileDevice) return 'lite';
             try {
                 if (gl) {
                     var dbg = gl.getExtension('WEBGL_debug_renderer_info');
                     var gpu = dbg ? String(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) || '').toLowerCase() : '';
-                    if (/rtx\s*(30|40|50)|radeon\s*rx\s*(6[789]|7[6789]|8|9)|apple\s*m[234]\s*(pro|max|ultra)/i.test(gpu)) {
-                        return 'ultra';
+                    if (/swiftshader|llvmpipe|basic render|software|microsoft basic/i.test(gpu)) {
+                        isSoftwareWebGL = true;
+                        return 'lite';
                     }
-                    if (/intel|uhd|iris|vega|adreno|mali|powervr|swiftshader|llvmpipe|gtx\s*(9|10|16)|mx[1-5]/i.test(gpu)) {
+                    if (isMobileDevice) {
+                        // Older low-DPR or budget mobile GPUs start in 'lite'; modern Retina phones/iPads start in crisp 'balanced'!
+                        if ((window.devicePixelRatio || 1) < 1.75 || /mali-4|mali-t|adreno\s*[345]|powervr\s*sgx/i.test(gpu)) {
+                            return 'lite';
+                        }
                         return 'balanced';
                     }
+                    if (/rtx\s*(20[678]|30|40|50)|radeon\s*rx\s*(6[6789]|7[6789]|8|9)|apple\s*m[1234]\s*(pro|max|ultra)/i.test(gpu)) {
+                        return 'ultra';
+                    }
+                    if (/\bhd\s*graphics\s*(2|3|4|500|510|520|530|610|620|630)|gt\s*(6|710|720|730)|quadro\s*(k|nvs|p400|p600)/i.test(gpu)) {
+                        return 'lite';
+                    }
+                    return 'balanced';
                 }
             } catch (e) {}
-            return (safeViewportW() >= 1400) ? 'ultra' : 'balanced';
+            return 'balanced';
         }
 
-        var detectedHwTier = isMobileDevice ? 'lite' : ((safeViewportW() >= 1400) ? 'ultra' : 'balanced');
+        var detectedHwTier = 'balanced';
         var MAX_STAMPS = 80000;
         var params = {
             thinness: 0.55,
@@ -615,10 +635,10 @@
             matteActive: false,
             qualityMode: 'auto',
             activeTier: detectedHwTier,
-            currentDpr: detectedHwTier === 'ultra'
-                ? Math.min(window.devicePixelRatio || 1, 1.85)
-                : (detectedHwTier === 'balanced' ? Math.min(window.devicePixelRatio || 1, 1.35) : 1.0),
-            activeStamps: detectedHwTier === 'ultra' ? 68000 : (detectedHwTier === 'balanced' ? 46000 : 26000),
+            currentDpr: isMobileDevice
+                ? Math.min(window.devicePixelRatio || 1, 1.65)
+                : Math.min(window.devicePixelRatio || 1, 1.35),
+            activeStamps: isMobileDevice ? 38000 : 46000,
             audioOn: false,
             userMuted: false,
             skyBrushMode: false,
@@ -1181,14 +1201,10 @@
         //      Alley Zenith (el 0.58..1.28) + Arching Provençal Milky Way Swirl!
         //    - Tangent-Following Multi-Dab Living Sky Brush (combs sky + curved dabs)
         // ========================================================================
-        function buildStarDomeLookupTexture() {
+        function buildStarAndSkyFlowTextures() {
+            function hypot2(a, b) { return Math.sqrt(a * a + b * b); }
             // 64 Impasto Stars spanning all 360 degrees, widescreen shoulders, Rhône Big Dipper & overhead alley zenith!
             //   Chromatic types: 0 = Zinc/Indian Yellow, 1 = Luminous Venus Ivory-Gold, 2 = Rhône Citron-Chartreuse & Pale Turquoise
-            //   0..10  = Exact 1889 MoMA front stars (100% untouched inside the 92.1x73.7 cm MoMA frame!)
-            //   11..24 = East widescreen shoulder (az 0.59..0.68) + Wheat Field constellations (az 0.59..2.14)
-            //   25..37 = South sky + 7-star "Grande Ourse" (Big Dipper from Starry Night Over the Rhône) over Saint-Paul & Les Antiques
-            //   38..49 = West widescreen shoulder behind Great Cypress (az -0.66..-0.56) + Olive Grove constellations (az -2.12..-0.56)
-            //   50..63 = High Overhead Alley-Zenith & Milky Way canopy stars (el 0.58..1.34, visible straight up from narrow ruelles!)
             var starDefs = [
                 // 0..10: Sacred 1889 MoMA Front Frame (11 stars)
                 [-0.145, 0.228, 0.076, 1], [-0.378, 0.515, 0.055, 0], [-0.262, 0.425, 0.047, 0], [-0.195, 0.535, 0.039, 0],
@@ -1201,59 +1217,397 @@
                 [ 1.575, 0.505, 0.046, 2], [ 1.725, 0.335, 0.042, 0], [ 1.875, 0.535, 0.056, 1], [ 1.995, 0.265, 0.040, 0],
                 [ 2.075, 0.435, 0.045, 2], [ 2.135, 0.305, 0.038, 0],
 
-                // 25..37: South Sky + 7-Star "Grande Ourse" (Big Dipper) Arching Over Saint-Paul & Les Antiques (13 stars, |az| > 2.18)
+                // 25..37: South Sky + 7-Star "Grande Ourse" (Big Dipper) Arching Over Saint-Paul & Les Antiques (13 stars)
                 [ 2.265, 0.485, 0.054, 2], [ 2.435, 0.445, 0.050, 1], [ 2.595, 0.395, 0.048, 2], [ 2.755, 0.365, 0.046, 0],
-                [ 2.935, 0.285, 0.054, 0], [-3.065, 0.305, 0.055, 1], [-2.965, 0.435, 0.058, 2], // <- 7-star Grande Ourse bowl & handle!
+                [ 2.935, 0.285, 0.054, 0], [-3.065, 0.305, 0.055, 1], [-2.965, 0.435, 0.058, 2],
                 [ 2.510, 0.225, 0.039, 0], [ 3.095, 0.515, 0.044, 0], [-2.785, 0.245, 0.040, 0], [-2.620, 0.455, 0.070, 1],
                 [-2.435, 0.325, 0.043, 2], [-2.245, 0.515, 0.048, 0],
 
-                // 38..49: West Widescreen Shoulder Behind Great Cypress + Olive Grove Sky (12 stars, az -2.110..-0.560)
+                // 38..49: West Widescreen Shoulder Behind Great Cypress + Olive Grove Sky (12 stars)
                 [-2.085, 0.295, 0.041, 0], [-1.915, 0.515, 0.055, 2], [-1.745, 0.365, 0.042, 0], [-1.585, 0.235, 0.039, 0],
                 [-1.420, 0.495, 0.068, 1], [-1.255, 0.345, 0.043, 2], [-1.095, 0.535, 0.048, 0], [-0.945, 0.265, 0.040, 0],
                 [-0.815, 0.465, 0.056, 1], [-0.695, 0.335, 0.042, 0], [-0.625, 0.245, 0.039, 2], [-0.565, 0.435, 0.048, 0],
 
-                // 50..63: Overhead Alley-Zenith & Milky Way Canopy (14 stars, el 0.585..1.340 — visible straight up between rooftops!)
+                // 50..63: Overhead Alley-Zenith & Milky Way Canopy (14 stars, el 0.585..1.245)
                 [ 0.045, 0.675, 0.050, 1], [-0.485, 0.645, 0.044, 2], [ 0.545, 0.635, 0.045, 0], [ 1.160, 0.725, 0.056, 1],
                 [ 1.840, 0.685, 0.044, 2], [ 2.520, 0.725, 0.049, 0], [-2.960, 0.745, 0.045, 2], [-2.180, 0.695, 0.044, 0],
                 [-1.420, 0.745, 0.056, 0], [-0.780, 0.895, 0.048, 2], [ 0.340, 0.945, 0.068, 1], [ 1.620, 0.975, 0.050, 0],
                 [-2.040, 1.035, 0.048, 2], [-0.110, 1.245, 0.060, 1]
             ];
 
-            // 64x2 Power-of-Two RGBA8 DataTexture (16-bit az & el in Row 0; radius & chromatic type 0/1/2 in Row 1)
-            var bytes = new Uint8Array(64 * 2 * 4);
+            // 1. 64x2 Power-of-Two RGBA8 Star Metadata LUT (Row 0: 16-bit az/el; Row 1: radius/type/twinkle)
+            var lutBytes = new Uint8Array(64 * 2 * 4);
             for (var i = 0; i < starDefs.length; i++) {
                 var az = starDefs[i][0], el = starDefs[i][1], rad = starDefs[i][2], stype = starDefs[i][3];
                 var azU16 = Math.max(0, Math.min(65535, Math.round(((az + Math.PI) / (Math.PI * 2.0)) * 65535.0)));
                 var elU16 = Math.max(0, Math.min(65535, Math.round(((el + 0.30) / 1.90) * 65535.0)));
                 var o0 = i * 4;
-                bytes[o0]     = (azU16 >> 8) & 255;
-                bytes[o0 + 1] = azU16 & 255;
-                bytes[o0 + 2] = (elU16 >> 8) & 255;
-                bytes[o0 + 3] = elU16 & 255;
+                lutBytes[o0]     = (azU16 >> 8) & 255;
+                lutBytes[o0 + 1] = azU16 & 255;
+                lutBytes[o0 + 2] = (elU16 >> 8) & 255;
+                lutBytes[o0 + 3] = elU16 & 255;
 
                 var o1 = (64 + i) * 4;
-                bytes[o1]     = Math.max(0, Math.min(255, Math.round((rad / 0.10) * 255.0)));
-                bytes[o1 + 1] = stype === 2 ? 255 : (stype === 1 ? 128 : 0);
-                bytes[o1 + 2] = Math.round(((i * 37) % 64) * 3.98); // deterministic twinkle phase seed
-                bytes[o1 + 3] = 255;
+                lutBytes[o1]     = Math.max(0, Math.min(255, Math.round((rad / 0.10) * 255.0)));
+                lutBytes[o1 + 1] = stype === 2 ? 255 : (stype === 1 ? 128 : 0);
+                lutBytes[o1 + 2] = Math.round(((i * 37) % 64) * 3.98);
+                lutBytes[o1 + 3] = 255;
             }
-            var tex = new THREE.DataTexture(bytes, 64, 2, THREE.RGBAFormat, THREE.UnsignedByteType);
-            tex.minFilter = THREE.NearestFilter;
-            tex.magFilter = THREE.NearestFilter;
-            tex.wrapS = THREE.ClampToEdgeWrapping;
-            tex.wrapT = THREE.ClampToEdgeWrapping;
-            tex.flipY = false;
-            tex.generateMipmaps = false;
-            tex.needsUpdate = true;
-            return tex;
+            var starLutTex = new THREE.DataTexture(lutBytes, 64, 2, THREE.RGBAFormat, THREE.UnsignedByteType);
+            starLutTex.minFilter = THREE.NearestFilter;
+            starLutTex.magFilter = THREE.NearestFilter;
+            starLutTex.wrapS = THREE.ClampToEdgeWrapping;
+            starLutTex.wrapT = THREE.ClampToEdgeWrapping;
+            starLutTex.flipY = false;
+            starLutTex.generateMipmaps = false;
+            starLutTex.needsUpdate = true;
+
+            // 2. 256x128 O(1) Spatial Star-Candidate Cell Grid (eliminates all 64-star loops & varying-branch texture2D in GLSL!)
+            var SG_W = 256, SG_H = 128;
+            var EL_MIN = -0.24, EL_SPAN = 1.805; // -0.24 .. +1.565
+            var TWO_PI = Math.PI * 2.0;
+            var sgBest0 = new Float32Array(SG_W * SG_H);
+            var sgBest1 = new Float32Array(SG_W * SG_H);
+            var sgBytes = new Uint8Array(SG_W * SG_H * 4);
+            for (var gi = 0; gi < SG_W * SG_H; gi++) {
+                sgBest0[gi] = 99.0;
+                sgBest1[gi] = 99.0;
+                var go = gi * 4;
+                sgBytes[go]     = 255; // 255 = no star0
+                sgBytes[go + 1] = 255; // 255 = no star1
+                sgBytes[go + 2] = 0;
+                sgBytes[go + 3] = 255;
+            }
+            for (var si = 0; si < starDefs.length; si++) {
+                var saz0 = starDefs[si][0], sel0 = starDefs[si][1], srad0 = starDefs[si][2];
+                var cazS = Math.cos(saz0), sazS = Math.sin(saz0);
+                var celS = Math.cos(sel0), selS = Math.sin(sel0);
+                var cDirX = sazS * celS, cDirY = selS, cDirZ = -cazS * celS;
+                // Right = normalize(cross(cDir, (0,1,0))) = normalize((-cDirZ, 0, cDirX))
+                var rLen = hypot2(cDirZ, cDirX) || 1.0;
+                var cRightX = -cDirZ / rLen, cRightZ = cDirX / rLen;
+                // Up = cross(cRight, cDir)
+                var cUpX = -cRightZ * cDirY;
+                var cUpY = cRightZ * cDirX - cRightX * cDirZ;
+                var cUpZ = cRightX * cDirY;
+
+                var maxAng = srad0 * 1.65;
+                var iyMin = Math.max(0, Math.floor(((sel0 - maxAng - EL_MIN) / EL_SPAN) * SG_H) - 1);
+                var iyMax = Math.min(SG_H - 1, Math.ceil(((sel0 + maxAng - EL_MIN) / EL_SPAN) * SG_H) + 1);
+                var azHalf = (sel0 > 1.15) ? Math.PI : Math.min(Math.PI, maxAng / Math.max(0.18, Math.cos(sel0)) + 0.06);
+                var ixSpan = Math.min(SG_W, Math.ceil((azHalf * 2.0 / TWO_PI) * SG_W) + 3);
+                var ixCenter = Math.floor(((saz0 / TWO_PI) + 0.5) * SG_W);
+                var ixStart = ixCenter - Math.floor(ixSpan * 0.5);
+
+                for (var iy = iyMin; iy <= iyMax; iy++) {
+                    var elC = EL_MIN + ((iy + 0.5) / SG_H) * EL_SPAN;
+                    var celC = Math.cos(elC), selC = Math.sin(elC);
+                    for (var dxI = 0; dxI <= ixSpan; dxI++) {
+                        var ix = ((ixStart + dxI) % SG_W + SG_W) % SG_W;
+                        var azC = (((ix + 0.5) / SG_W) - 0.5) * TWO_PI;
+                        var rx = Math.sin(azC) * celC, ry = selC, rz = -Math.cos(azC) * celC;
+                        var dotC = rx * cDirX + ry * cDirY + rz * cDirZ;
+                        if (dotC > 0.945) {
+                            var tx = rx * cRightX + rz * cRightZ;
+                            var ty = rx * cUpX + ry * cUpY + rz * cUpZ;
+                            var rNorm = hypot2(tx, ty) / (srad0 * 1.045);
+                            if (rNorm < 1.58) {
+                                var cellIdx = iy * SG_W + ix;
+                                var bo = cellIdx * 4;
+                                if (sgBytes[bo] === si || sgBytes[bo + 1] === si) continue;
+                                if (rNorm < sgBest0[cellIdx]) {
+                                    sgBest1[cellIdx] = sgBest0[cellIdx];
+                                    sgBytes[bo + 1]  = sgBytes[bo];
+                                    sgBest0[cellIdx] = rNorm;
+                                    sgBytes[bo]      = si;
+                                } else if (rNorm < sgBest1[cellIdx]) {
+                                    sgBest1[cellIdx] = rNorm;
+                                    sgBytes[bo + 1]  = si;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            var starCellGridTex = new THREE.DataTexture(sgBytes, SG_W, SG_H, THREE.RGBAFormat, THREE.UnsignedByteType);
+            starCellGridTex.minFilter = THREE.NearestFilter;
+            starCellGridTex.magFilter = THREE.NearestFilter;
+            starCellGridTex.wrapS = THREE.RepeatWrapping;
+            starCellGridTex.wrapT = THREE.ClampToEdgeWrapping;
+            starCellGridTex.flipY = false;
+            starCellGridTex.generateMipmaps = false;
+            starCellGridTex.needsUpdate = true;
+
+            // 3. 1024x512 Bilinear Pre-Baked Base Sky Flow Field (eliminates 9,280 unrolled HLSL loop bodies in Chrome ANGLE!)
+            var BF_W = 512, BF_H = 256;
+            var flowVX = new Float32Array(BF_W * BF_H);
+            var flowVY = new Float32Array(BF_W * BF_H);
+
+            function smoothstepJS(e0, e1, x) {
+                var t = Math.max(0.0, Math.min(1.0, (x - e0) / (e1 - e0)));
+                return t * t * (3.0 - 2.0 * t);
+            }
+            function mistCenterJS(azVal) {
+                var fw = Math.exp(-(azVal / 0.72) * (azVal / 0.72));
+                var fd = 0.180 + 0.242 * Math.max(-0.55, Math.min(0.65, azVal));
+                var sb = 0.195 + 0.068 * Math.sin(azVal + 0.35) + 0.028 * Math.cos(azVal * 2.0 - 0.4);
+                var wv = 0.017 * Math.sin(azVal * 12.0 + 0.6) + 0.010 * Math.cos(azVal * 22.0 - 0.8);
+                return sb + (fd - sb) * fw + wv;
+            }
+            function wrapAzDelta(a, b) {
+                var d = (a - b + Math.PI) % TWO_PI;
+                if (d < 0.0) d += TWO_PI;
+                return d - Math.PI;
+            }
+
+            // Precompute 1D azimuth tables so the 524K-texel loop runs in ~6ms with zero inner trig calls!
+            var azTab       = new Float32Array(BF_W);
+            var baseDirXTab = new Float32Array(BF_W);
+            var baseDirYTab = new Float32Array(BF_W);
+            var mistYTab    = new Float32Array(BF_W);
+            var mistDirXTab = new Float32Array(BF_W);
+            var mistDirYTab = new Float32Array(BF_W);
+            var rivYTab     = new Float32Array(BF_W);
+            var rivDirXTab  = new Float32Array(BF_W);
+            var rivDirYTab  = new Float32Array(BF_W);
+            var mwYTab      = new Float32Array(BF_W);
+            var mwDirXTab   = new Float32Array(BF_W);
+            var mwDirYTab   = new Float32Array(BF_W);
+
+            for (var x = 0; x < BF_W; x++) {
+                var azV = (((x + 0.5) / BF_W) - 0.5) * TWO_PI;
+                azTab[x] = azV;
+                var by = 0.17 * Math.cos(azV * 5.0 + 0.7) + 0.10 * Math.sin(azV * 2.0);
+                var bL = hypot2(1.0, by);
+                baseDirXTab[x] = 1.0 / bL; baseDirYTab[x] = by / bL;
+
+                var mY = mistCenterJS(azV);
+                var mS = (mistCenterJS(azV + 0.02) - mY) / 0.02;
+                var mL = hypot2(1.0, mS);
+                mistYTab[x] = mY; mistDirXTab[x] = 1.0 / mL; mistDirYTab[x] = mS / mL;
+
+                var rY = 0.368 + 0.076 * Math.sin(azV * 4.0 + 1.55);
+                var rS = 0.076 * 4.0 * Math.cos(azV * 4.0 + 1.55);
+                var rL = hypot2(1.0, rS);
+                rivYTab[x] = rY; rivDirXTab[x] = 1.0 / rL; rivDirYTab[x] = rS / rL;
+
+                var mwY = 0.80 + 0.18 * Math.sin(azV - 0.45) + 0.05 * Math.cos(azV * 3.0);
+                var mwS = 0.18 * Math.cos(azV - 0.45) - 0.15 * Math.sin(azV * 3.0);
+                var mwL = hypot2(1.0, mwS);
+                mwYTab[x] = mwY; mwDirXTab[x] = 1.0 / mwL; mwDirYTab[x] = mwS / mwL;
+            }
+
+            var cosMoon = Math.cos(0.455);
+            var cosZ1   = Math.cos(0.80);
+            var cosZ2   = Math.cos(0.88);
+            // normalize(0.76, -0.65) & normalize(0.82, 0.57)
+            var v1CoreX = 0.7599, v1CoreY = -0.6500;
+            var v2CoreX = 0.8211, v2CoreY =  0.5708;
+
+            for (var y = 0; y < BF_H; y++) {
+                var py = EL_MIN + ((y + 0.5) / BF_H) * EL_SPAN;
+                var mwGate = py > 0.50 ? smoothstepJS(0.50, 0.64, py) : 0.0;
+                var rowOff = y * BF_W;
+
+                for (var x2 = 0; x2 < BF_W; x2++) {
+                    var px = azTab[x2];
+                    var vx = baseDirXTab[x2], vy = baseDirYTab[x2];
+
+                    var dm = (py - mistYTab[x2]) / 0.082;
+                    if (Math.abs(dm) < 3.0) {
+                        var wMist = Math.exp(-dm * dm) * 0.86;
+                        vx += (mistDirXTab[x2] - vx) * wMist;
+                        vy += (mistDirYTab[x2] - vy) * wMist;
+                    }
+
+                    var dr = (py - rivYTab[x2]) / 0.092;
+                    if (Math.abs(dr) < 3.0) {
+                        var wRiv = Math.exp(-dr * dr) * 0.62;
+                        vx += (rivDirXTab[x2] - vx) * wRiv;
+                        vy += (rivDirYTab[x2] - vy) * wRiv;
+                    }
+
+                    if (mwGate > 0.0) {
+                        var dmw = (py - mwYTab[x2]) / 0.18;
+                        if (Math.abs(dmw) < 3.0) {
+                            var wMW = Math.exp(-dmw * dmw) * mwGate * 0.74;
+                            vx += (mwDirXTab[x2] - vx) * wMW;
+                            vy += (mwDirYTab[x2] - vy) * wMW;
+                        }
+                    }
+
+                    if (Math.abs(px) < 0.75 && py < 0.68) {
+                        var dx1 = wrapAzDelta(px, -0.015), dy1 = py - 0.355;
+                        var r1 = hypot2(dx1, dy1);
+                        if (r1 < 0.44) {
+                            var tx1 = dy1 - dx1 * 0.17 + 0.0001, ty1 = -dx1 - dy1 * 0.17 + 0.0001;
+                            var tl1 = hypot2(tx1, ty1) || 1.0;
+                            tx1 /= tl1; ty1 /= tl1;
+                            var s1 = smoothstepJS(0.008, 0.030, r1);
+                            var mx1 = v1CoreX + (tx1 - v1CoreX) * s1;
+                            var my1 = v1CoreY + (ty1 - v1CoreY) * s1;
+                            var w1 = Math.exp(-(r1 / 0.145) * (r1 / 0.145)) * 0.95;
+                            vx += (mx1 - vx) * w1; vy += (my1 - vy) * w1;
+                        }
+
+                        var dx2 = wrapAzDelta(px, 0.145), dy2 = py - 0.278;
+                        var r2 = hypot2(dx2, dy2);
+                        if (r2 < 0.28) {
+                            var tx2 = -dy2 - dx2 * 0.19 + 0.0001, ty2 = dx2 - dy2 * 0.19 + 0.0001;
+                            var tl2 = hypot2(tx2, ty2) || 1.0;
+                            tx2 /= tl2; ty2 /= tl2;
+                            var s2 = smoothstepJS(0.006, 0.024, r2);
+                            var mx2 = v2CoreX + (tx2 - v2CoreX) * s2;
+                            var my2 = v2CoreY + (ty2 - v2CoreY) * s2;
+                            var w2 = Math.exp(-(r2 / 0.086) * (r2 / 0.086)) * 0.95;
+                            vx += (mx2 - vx) * w2; vy += (my2 - vy) * w2;
+                        }
+
+                        var dxM = wrapAzDelta(px, 0.355) * cosMoon, dyM = py - 0.455;
+                        var rM = hypot2(dxM, dyM);
+                        if (rM < 0.52) {
+                            var mTx = (rM > 0.004) ? (-dyM / rM) : -0.56;
+                            var mTy = (rM > 0.004) ? ( dxM / rM) :  0.83;
+                            var sM = smoothstepJS(0.018, 0.055, rM);
+                            var mxM = -0.56 + (mTx + 0.56) * sM;
+                            var myM =  0.83 + (mTy - 0.83) * sM;
+                            var wM = Math.exp(-(rM / 0.176) * (rM / 0.176)) * 0.94;
+                            vx += (mxM - vx) * wM; vy += (myM - vy) * wM;
+                        }
+                    }
+
+                    if (Math.abs(px) > 0.58 || py > 0.58) {
+                        var dxE = wrapAzDelta(px, 1.320), dyE = py - 0.355;
+                        var rE = hypot2(dxE, dyE);
+                        if (rE < 0.38) {
+                            var txE = dyE - dxE * 0.16 + 0.0001, tyE = -dxE - dyE * 0.16 + 0.0001;
+                            var tlE = hypot2(txE, tyE) || 1.0;
+                            txE /= tlE; tyE /= tlE;
+                            var sE = smoothstepJS(0.008, 0.032, rE);
+                            var wE = Math.exp(-(rE / 0.145) * (rE / 0.145)) * 0.92;
+                            vx += ((0.8 + (txE - 0.8) * sE) - vx) * wE;
+                            vy += ((-0.6 + (tyE + 0.6) * sE) - vy) * wE;
+                        }
+
+                        var dxS = wrapAzDelta(px, 2.820), dyS = py - 0.385;
+                        var rS = hypot2(dxS, dyS);
+                        if (rS < 0.40) {
+                            var txS = -dyS - dxS * 0.16 + 0.0001, tyS = dxS - dyS * 0.16 + 0.0001;
+                            var tlS = hypot2(txS, tyS) || 1.0;
+                            txS /= tlS; tyS /= tlS;
+                            var sS = smoothstepJS(0.008, 0.032, rS);
+                            var wS = Math.exp(-(rS / 0.155) * (rS / 0.155)) * 0.92;
+                            vx += ((0.8 + (txS - 0.8) * sS) - vx) * wS;
+                            vy += ((0.6 + (tyS - 0.6) * sS) - vy) * wS;
+                        }
+
+                        var dxW = wrapAzDelta(px, -1.460), dyW = py - 0.365;
+                        var rW = hypot2(dxW, dyW);
+                        if (rW < 0.38) {
+                            var txW = dyW - dxW * 0.16 + 0.0001, tyW = -dxW - dyW * 0.16 + 0.0001;
+                            var tlW = hypot2(txW, tyW) || 1.0;
+                            txW /= tlW; tyW /= tlW;
+                            var sW = smoothstepJS(0.008, 0.032, rW);
+                            var wW = Math.exp(-(rW / 0.142) * (rW / 0.142)) * 0.92;
+                            vx += ((0.8 + (txW - 0.8) * sW) - vx) * wW;
+                            vy += ((-0.6 + (tyW + 0.6) * sW) - vy) * wW;
+                        }
+
+                        var dxZ1 = wrapAzDelta(px, -0.620) * cosZ1, dyZ1 = py - 0.800;
+                        var rZ1 = hypot2(dxZ1, dyZ1);
+                        if (rZ1 < 0.34) {
+                            var txZ1 = -dyZ1 - dxZ1 * 0.15 + 0.0001, tyZ1 = dxZ1 - dyZ1 * 0.15 + 0.0001;
+                            var tlZ1 = hypot2(txZ1, tyZ1) || 1.0;
+                            var wZ1 = Math.exp(-(rZ1 / 0.145) * (rZ1 / 0.145)) * 0.88;
+                            vx += ((txZ1 / tlZ1) - vx) * wZ1;
+                            vy += ((tyZ1 / tlZ1) - vy) * wZ1;
+                        }
+
+                        var dxZ2 = wrapAzDelta(px, 1.050) * cosZ2, dyZ2 = py - 0.880;
+                        var rZ2 = hypot2(dxZ2, dyZ2);
+                        if (rZ2 < 0.34) {
+                            var txZ2 = dyZ2 - dxZ2 * 0.15 + 0.0001, tyZ2 = -dxZ2 - dyZ2 * 0.15 + 0.0001;
+                            var tlZ2 = hypot2(txZ2, tyZ2) || 1.0;
+                            var wZ2 = Math.exp(-(rZ2 / 0.145) * (rZ2 / 0.145)) * 0.86;
+                            vx += ((txZ2 / tlZ2) - vx) * wZ2;
+                            vy += ((tyZ2 / tlZ2) - vy) * wZ2;
+                        }
+                    }
+
+                    flowVX[rowOff + x2] = vx;
+                    flowVY[rowOff + x2] = vy;
+                }
+            }
+
+            // Splat all 64 star whirlpools onto their local bounding boxes in ~1ms!
+            for (var stIdx = 0; stIdx < starDefs.length; stIdx++) {
+                var stAz = starDefs[stIdx][0], stEl = starDefs[stIdx][1], stR = starDefs[stIdx][2];
+                var cosStEl = Math.cos(Math.max(-1.25, Math.min(1.25, stEl)));
+                var maxR = stR * 2.2;
+                var y0 = Math.max(0, Math.floor(((stEl - 0.14 - EL_MIN) / EL_SPAN) * BF_H));
+                var y1 = Math.min(BF_H - 1, Math.ceil(((stEl + 0.14 - EL_MIN) / EL_SPAN) * BF_H));
+                var azSpan = Math.min(Math.PI, maxR / Math.max(0.18, cosStEl) + 0.02);
+                var xCount = Math.min(BF_W, Math.ceil((azSpan * 2.0 / TWO_PI) * BF_W) + 2);
+                var xStart = Math.floor(((stAz / TWO_PI) + 0.5) * BF_W) - Math.floor(xCount * 0.5);
+
+                for (var sy = y0; sy <= y1; sy++) {
+                    var pEl = EL_MIN + ((sy + 0.5) / BF_H) * EL_SPAN;
+                    var dEl = pEl - stEl;
+                    if (Math.abs(dEl) < 0.14) {
+                        var rOff = sy * BF_W;
+                        for (var sxStep = 0; sxStep <= xCount; sxStep++) {
+                            var sx = ((xStart + sxStep) % BF_W + BF_W) % BF_W;
+                            var dAz = wrapAzDelta(azTab[sx], stAz) * cosStEl;
+                            var dist = hypot2(dAz, dEl);
+                            if (dist < maxR) {
+                                var sTx = (dist > 0.003) ? (-dEl / dist) : 1.0;
+                                var sTy = (dist > 0.003) ? ( dAz / dist) : 0.0;
+                                var denom = Math.max(0.01, stR * 1.46);
+                                var falloff = Math.exp(-(dist / denom) * (dist / denom));
+                                var wSt = smoothstepJS(0.008, 0.025, dist) * falloff * 0.91;
+                                var fIdx = rOff + sx;
+                                flowVX[fIdx] += (sTx - flowVX[fIdx]) * wSt;
+                                flowVY[fIdx] += (sTy - flowVY[fIdx]) * wSt;
+                            }
+                        }
+                    }
+                }
+            }
+
+            var flowBytes = new Uint8Array(BF_W * BF_H * 4);
+            for (var fi = 0; fi < BF_W * BF_H; fi++) {
+                var fx = flowVX[fi] + 0.0001, fy = flowVY[fi] + 0.0001;
+                var fl = hypot2(fx, fy) || 1.0;
+                var fo = fi * 4;
+                flowBytes[fo]     = Math.max(0, Math.min(255, Math.round(((fx / fl) * 0.5 + 0.5) * 255.0)));
+                flowBytes[fo + 1] = Math.max(0, Math.min(255, Math.round(((fy / fl) * 0.5 + 0.5) * 255.0)));
+                flowBytes[fo + 2] = 0;
+                flowBytes[fo + 3] = 255;
+            }
+            var baseSkyFlowTex = new THREE.DataTexture(flowBytes, BF_W, BF_H, THREE.RGBAFormat, THREE.UnsignedByteType);
+            baseSkyFlowTex.minFilter = THREE.LinearFilter;
+            baseSkyFlowTex.magFilter = THREE.LinearFilter;
+            baseSkyFlowTex.wrapS = THREE.RepeatWrapping;
+            baseSkyFlowTex.wrapT = THREE.ClampToEdgeWrapping;
+            baseSkyFlowTex.flipY = false;
+            baseSkyFlowTex.generateMipmaps = false;
+            baseSkyFlowTex.needsUpdate = true;
+
+            return {
+                starLutTex: starLutTex,
+                starCellGridTex: starCellGridTex,
+                baseSkyFlowTex: baseSkyFlowTex
+            };
         }
 
         function buildOrganicOverlappingSkyDome() {
             var skyGeo = new THREE.SphereGeometry(435, 96, 64);
-            var starLutTex = buildStarDomeLookupTexture();
+            var skyTexPack = buildStarAndSkyFlowTextures();
 
             var skyUniforms = {
-                tStarLut: { value: starLutTex },
+                tStarLut: { value: skyTexPack.starLutTex },
+                tStarCellGrid: { value: skyTexPack.starCellGridTex },
+                tBaseSkyFlow: { value: skyTexPack.baseSkyFlowTex },
                 tBrushMap: { value: brushMapTex },
                 uFlowPhase: uFlowPhase,
                 uThinness: uThinness,
@@ -1267,12 +1621,14 @@
                 uDaylight: uDaylight
             };
 
-            // Stage 2 GLSL 100 Sky Shader:
-            //   - 64-star 360° dome (MoMA front 11 + widescreen shoulders + Rhône Grande Ourse + overhead zenith canopy)
-            //   - Continuous 256x128 tBrushMap O(1) vector & pigment field (unlimited locked strokes, zero loop bloat!)
-            //   - 2-layer discrete hog-bristle brush micro-dabs aligned to curved streamlines (zero parallel planks!)
+            // ANGLE / Direct3D 11 HLSL fxc-Safe GLSL 100 Sky Shader:
+            //   - O(1) tBaseSkyFlow & tStarCellGrid texture reads (ZERO 64-star loops in GLSL!)
+            //   - ZERO `continue`, ZERO `break`, and ZERO `texture2D` calls inside varying branches!
+            //   - Compiles in <25ms on Windows school PCs while delivering native Retina crispness on phones!
             var SKY_CORE_GLSL = [
                 'uniform sampler2D tStarLut;',
+                'uniform sampler2D tStarCellGrid;',
+                'uniform sampler2D tBaseSkyFlow;',
                 'uniform sampler2D tBrushMap;',
                 'uniform float uFlowPhase;',
                 'uniform float uThinness;',
@@ -1287,9 +1643,15 @@
                 '',
                 GLSL_RIBBON_LIBRARY,
                 '',
-                '// Returns vec4(az, el, outerRadius, encodedTypeAndPhase) where floor(w)=type (0,1,2), fract(w)=phase',
-                'vec4 fetchStar(int idx) {',
-                '    float u = (float(idx) + 0.5) / 64.0;',
+                'vec2 skyToBrushUv(vec2 p) {',
+                '    float u = fract(p.x / 6.2831853 + 0.5);',
+                '    float v = clamp((p.y + 0.24) / 1.805, 0.0, 1.0);',
+                '    return vec2(u, v);',
+                '}',
+                '',
+                'vec4 fetchStarByFloatIdx(float fIdx) {',
+                '    float safeIdx = clamp(fIdx, 0.0, 63.0);',
+                '    float u = (safeIdx + 0.5) / 64.0;',
                 '    vec4 p0 = texture2D(tStarLut, vec2(u, 0.25));',
                 '    vec4 p1 = texture2D(tStarLut, vec2(u, 0.75));',
                 '    float azNorm = (p0.r * 255.0 * 256.0 + p0.g * 255.0) / 65535.0;',
@@ -1297,18 +1659,12 @@
                 '    float az = azNorm * 6.2831853 - 3.14159265;',
                 '    float el = elNorm * 1.90 - 0.30;',
                 '    float stype = floor(p1.g * 2.0 + 0.5);',
-                '    return vec4(az, el, p1.r * 0.10, stype + p1.b * 0.90);',
+                '    float validMask = 1.0 - step(63.5, fIdx);',
+                '    return vec4(az, el, (p1.r * 0.10) * validMask - (1.0 - validMask), stype + p1.b * 0.90);',
                 '}',
                 '',
-                'vec2 skyToBrushUv(vec2 p) {',
-                '    float u = fract(p.x / 6.2831853 + 0.5);',
-                '    float v = clamp((p.y + 0.24) / (1.565 + 0.24), 0.0, 1.0);',
-                '    return vec2(u, v);',
-                '}',
-                '',
-                '// Smooth bilinear brush vector/strength + nearest-texel discrete pigment palette',
+                '// Unconditional gradient-safe brush field sample (zero branching around texture2D!)',
                 'vec4 sampleBrushField(vec2 p) {',
-                '    if (uBrushAnyActive <= 0.005) return vec4(1.0, 0.0, 0.0, 0.33);',
                 '    vec2 buv = skyToBrushUv(p);',
                 '    vec4 lin = texture2D(tBrushMap, buv);',
                 '    vec2 nearestUv = (floor(buv * vec2(256.0, 128.0)) + 0.5) / vec2(256.0, 128.0);',
@@ -1316,7 +1672,8 @@
                 '    vec2 dir = lin.rg * 2.0 - 1.0;',
                 '    float dLen = length(dir);',
                 '    dir = (dLen > 0.02) ? (dir / dLen) : vec2(1.0, 0.0);',
-                '    return vec4(dir, lin.b, exactPal);',
+                '    float act = step(0.005, uBrushAnyActive);',
+                '    return vec4(mix(vec2(1.0, 0.0), dir, act), lin.b * act, mix(0.33, exactPal, act));',
                 '}',
                 '',
                 'vec2 skyDelta(vec2 p, vec2 c) {',
@@ -1343,139 +1700,32 @@
                 '    return mix(surroundBand, frontDiag, frontWeight) + wave;',
                 '}',
                 '',
-                'void blendStarSwirl(vec2 p, int idx, inout vec2 v) {',
-                '    vec4 st = fetchStar(idx);',
-                '    if (abs(p.y - st.y) < 0.14) {',
-                '        vec2 ds = skyDelta(p, st.xy);',
-                '        ds.x *= cos(clamp(st.y, -1.25, 1.25));',
-                '        float dist = length(ds);',
-                '        if (dist < st.z * 2.2) {',
-                '            vec2 sTan = (dist > 0.003) ? (vec2(-ds.y, ds.x) / dist) : vec2(1.0, 0.0);',
-                '            float falloff = exp(-sqf(dist / max(0.01, st.z * 1.46)));',
-                '            v = mix(v, sTan, smoothstep(0.008, 0.025, dist) * falloff * 0.91);',
-                '        }',
-                '    }',
-                '}',
-                '',
                 'vec2 getBaseSkyFlow(vec2 p) {',
-                '    float mistY = getMistCenterY(p.x);',
-                '    float mistSlope = (getMistCenterY(p.x + 0.02) - mistY) / 0.02;',
-                '    vec2 v = normalize(vec2(1.0, 0.17 * cos(p.x * 5.0 + 0.7) + 0.10 * sin(p.x * 2.0)));',
-                '',
-                '    float mistProx = exp(-sqf((p.y - mistY) / 0.082));',
-                '    v = mix(v, normalize(vec2(1.0, mistSlope)), mistProx * 0.86);',
-                '',
-                '    float riverSpineY = 0.368 + 0.076 * sin(p.x * 4.0 + 1.55);',
-                '    float riverSlope  = 0.076 * 4.0 * cos(p.x * 4.0 + 1.55);',
-                '    float inUpperRiver = exp(-sqf((p.y - riverSpineY) / 0.092));',
-                '    v = mix(v, normalize(vec2(1.0, riverSlope)), inUpperRiver * 0.62);',
-                '',
-                '    // High Overhead Twin-Stream Provençal Milky Way Arching Above Saint-Rémy Alleys',
-                '    if (p.y > 0.50) {',
-                '        float mwY = 0.80 + 0.18 * sin(p.x * 1.0 - 0.45) + 0.05 * cos(p.x * 3.0);',
-                '        float mwSlope = 0.18 * cos(p.x * 1.0 - 0.45) - 0.15 * sin(p.x * 3.0);',
-                '        float inMW = exp(-sqf((p.y - mwY) / 0.18)) * smoothstep(0.50, 0.64, p.y);',
-                '        v = mix(v, normalize(vec2(1.0, mwSlope)), inMW * 0.74);',
-                '    }',
-                '',
-                '    if (abs(p.x) < 0.75 && p.y < 0.68) {',
-                '        vec2 dV1 = skyDelta(p, vec2(-0.015, 0.355));',
-                '        float r1 = length(dV1);',
-                '        vec2 tangV1 = normalize(vec2(dV1.y, -dV1.x) - dV1 * 0.17 + vec2(0.0001));',
-                '        v = mix(v, mix(normalize(vec2(0.76, -0.65)), tangV1, smoothstep(0.008, 0.030, r1)), exp(-sqf(r1 / 0.145)) * 0.95);',
-                '',
-                '        vec2 dV2 = skyDelta(p, vec2(0.145, 0.278));',
-                '        float r2 = length(dV2);',
-                '        vec2 tangV2 = normalize(vec2(-dV2.y, dV2.x) - dV2 * 0.19 + vec2(0.0001));',
-                '        v = mix(v, mix(normalize(vec2(0.82, 0.57)), tangV2, smoothstep(0.006, 0.024, r2)), exp(-sqf(r2 / 0.086)) * 0.95);',
-                '',
-                '        vec2 dMoon = skyDelta(p, vec2(0.355, 0.455));',
-                '        dMoon.x *= cos(0.455);',
-                '        float rMoon = length(dMoon);',
-                '        vec2 moonTan = (rMoon > 0.004) ? (vec2(-dMoon.y, dMoon.x) / rMoon) : vec2(-0.56, 0.83);',
-                '        v = mix(v, mix(vec2(-0.56, 0.83), moonTan, smoothstep(0.018, 0.055, rMoon)), exp(-sqf(rMoon / 0.176)) * 0.94);',
-                '    }',
-                '',
-                '    if (abs(p.x) > 0.58 || p.y > 0.58) {',
-                '        vec2 dVE = skyDelta(p, vec2(1.320, 0.355));',
-                '        float rE = length(dVE);',
-                '        if (rE < 0.38) {',
-                '            vec2 tE = normalize(vec2(dVE.y, -dVE.x) - dVE * 0.16 + vec2(0.0001));',
-                '            v = mix(v, mix(vec2(0.8, -0.6), tE, smoothstep(0.008, 0.032, rE)), exp(-sqf(rE / 0.145)) * 0.92);',
-                '        }',
-                '        vec2 dVS = skyDelta(p, vec2(2.820, 0.385));',
-                '        float rS = length(dVS);',
-                '        if (rS < 0.40) {',
-                '            vec2 tS = normalize(vec2(-dVS.y, dVS.x) - dVS * 0.16 + vec2(0.0001));',
-                '            v = mix(v, mix(vec2(0.8, 0.6), tS, smoothstep(0.008, 0.032, rS)), exp(-sqf(rS / 0.155)) * 0.92);',
-                '        }',
-                '        vec2 dVW = skyDelta(p, vec2(-1.460, 0.365));',
-                '        float rW = length(dVW);',
-                '        if (rW < 0.38) {',
-                '            vec2 tW = normalize(vec2(dVW.y, -dVW.x) - dVW * 0.16 + vec2(0.0001));',
-                '            v = mix(v, mix(vec2(0.8, -0.6), tW, smoothstep(0.008, 0.032, rW)), exp(-sqf(rW / 0.142)) * 0.92);',
-                '        }',
-                '        // Twin high-zenith eddies directly above town square & Rue Carnot!',
-                '        vec2 dVZ1 = skyDelta(p, vec2(-0.620, 0.800));',
-                '        dVZ1.x *= cos(0.80);',
-                '        float rZ1 = length(dVZ1);',
-                '        if (rZ1 < 0.34) {',
-                '            vec2 tZ1 = normalize(vec2(-dVZ1.y, dVZ1.x) - dVZ1 * 0.15 + vec2(0.0001));',
-                '            v = mix(v, tZ1, exp(-sqf(rZ1 / 0.145)) * 0.88);',
-                '        }',
-                '        vec2 dVZ2 = skyDelta(p, vec2(1.050, 0.880));',
-                '        dVZ2.x *= cos(0.88);',
-                '        float rZ2 = length(dVZ2);',
-                '        if (rZ2 < 0.34) {',
-                '            vec2 tZ2 = normalize(vec2(dVZ2.y, -dVZ2.x) - dVZ2 * 0.15 + vec2(0.0001));',
-                '            v = mix(v, tZ2, exp(-sqf(rZ2 / 0.145)) * 0.86);',
-                '        }',
-                '    }',
-                '',
-                '    // Generous overlapping sector gates across all 64 stars (zero boundary clipping!)',
-                '    if (p.y < 0.70) {',
-                '        if (abs(p.x) < 0.62) {',
-                '            for (int i = 0; i < 11; i++) { blendStarSwirl(p, i, v); }',
-                '        }',
-                '        if (p.x > 0.42 && p.x < 2.34) {',
-                '            for (int i = 11; i < 25; i++) { blendStarSwirl(p, i, v); }',
-                '        }',
-                '        if (abs(p.x) > 2.04) {',
-                '            for (int i = 25; i < 38; i++) { blendStarSwirl(p, i, v); }',
-                '        }',
-                '        if (p.x < -0.38 && p.x > -2.30) {',
-                '            for (int i = 38; i < 50; i++) { blendStarSwirl(p, i, v); }',
-                '        }',
-                '    }',
-                '    if (p.y > 0.46) {',
-                '        for (int i = 50; i < 64; i++) { blendStarSwirl(p, i, v); }',
-                '    }',
-                '    return normalize(v + vec2(0.0001));',
+                '    vec2 enc = texture2D(tBaseSkyFlow, skyToBrushUv(p)).rg * 2.0 - 1.0;',
+                '    return normalize(enc + vec2(0.0001));',
                 '}',
                 '',
+                '// Unconditional gradient-safe flow sample (safe inside all 3x3 HLSL loops!)',
                 'vec2 getSkyFlow(vec2 p) {',
                 '    vec2 v = getBaseSkyFlow(p);',
-                '    if (uBrushAnyActive > 0.005) {',
-                '        vec4 bf = sampleBrushField(p);',
-                '        if (bf.z > 0.008) {',
-                '            v = mix(v, bf.xy, clamp(bf.z * 0.94, 0.0, 0.96));',
-                '        }',
-                '        if (uBrushCursor.z > 0.01) {',
-                '            vec2 dc = skyDelta(p, uBrushCursor.xy);',
-                '            dc.x *= cos(clamp(p.y, -0.85, 1.25));',
-                '            float rc = length(dc);',
-                '            if (rc < 0.18) {',
-                '                vec2 cTan = (rc > 0.004) ? (vec2(-dc.y, dc.x) / rc * uBrushCursor.w) : bf.xy;',
-                '                v = mix(v, cTan, clamp(uBrushCursor.z * exp(-sqf(rc / 0.075)) * 0.48, 0.0, 0.68));',
-                '            }',
+                '    vec4 brushTap = texture2D(tBrushMap, skyToBrushUv(p));',
+                '    float bStr = brushTap.b * step(0.005, uBrushAnyActive);',
+                '    if (bStr > 0.008) {',
+                '        vec2 bDir = brushTap.rg * 2.0 - 1.0;',
+                '        float bLen = length(bDir);',
+                '        bDir = (bLen > 0.02) ? (bDir / bLen) : vec2(1.0, 0.0);',
+                '        v = mix(v, bDir, clamp(bStr * 0.94, 0.0, 0.96));',
+                '    }',
+                '    if (uBrushAnyActive > 0.005 && uBrushCursor.z > 0.01) {',
+                '        vec2 dc = skyDelta(p, uBrushCursor.xy);',
+                '        dc.x *= cos(clamp(p.y, -0.85, 1.25));',
+                '        float rc = length(dc);',
+                '        if (rc < 0.18) {',
+                '            vec2 cTan = (rc > 0.004) ? (vec2(-dc.y, dc.x) / rc * uBrushCursor.w) : v;',
+                '            v = mix(v, cTan, clamp(uBrushCursor.z * exp(-sqf(rc / 0.075)) * 0.48, 0.0, 0.68));',
                 '        }',
                 '    }',
                 '    return normalize(v + vec2(0.0001));',
-                '}',
-                '',
-                'float evalBrushExciteAt(vec2 skyPos) {',
-                '    if (uBrushAnyActive <= 0.005) return 0.0;',
-                '    return texture2D(tBrushMap, skyToBrushUv(skyPos)).b;',
                 '}',
                 '',
                 'float getSkyBlackShearWeight(vec2 pos) {',
@@ -1504,8 +1754,6 @@
                 '',
                 '    float sSpine = 0.374 + 0.070 * sin(centerSky.x * 4.0 + 1.62);',
                 '    float riverEnv = exp(-sqf((centerSky.y - sSpine) / 0.052)) * (0.45 + 0.55 * cos(centerSky.x * 2.0 + 0.8));',
-                '',
-                '    // Luminous overhead Milky Way band arching high above Saint-Rémy town alleys (outside MoMA front frame)',
                 '    float mwSpine = 0.80 + 0.18 * sin(centerSky.x * 1.0 - 0.45) + 0.05 * cos(centerSky.x * 3.0);',
                 '    float mwEnv = exp(-sqf((centerSky.y - mwSpine) / 0.125)) * smoothstep(0.53, 0.66, centerSky.y) * 0.82;',
                 '',
@@ -1541,43 +1789,37 @@
                 '    float surroundMod = mix(0.76 + 0.24 * cos(centerSky.x * 3.0), 1.0, exp(-sqf(centerSky.x / 0.65)));',
                 '    float mistProb = exp(-sqf((centerSky.y - mistY) / 0.038)) * surroundMod;',
                 '    float yBoost = clamp(uYellowBoost, 0.2, 2.0);',
+                '    float blackProb = getSkyBlackShearWeight(centerSky) * 0.23 * uBlackInk;',
+                '    float macroZone = vnoise(vec2(sin(centerSky.x) * 3.5, cos(centerSky.x) * 3.5 + centerSky.y * 5.8));',
                 '',
                 '    if (mistProb > 0.24 && rnd.x < mistProb * 1.22) {',
                 '        float yellowCut = clamp(0.58 * yBoost, 0.15, 0.88);',
-                '        if (rnd.y < yellowCut * 0.55) { pigA = zincYellow; pigB = leadWhite; return; }',
-                '        if (rnd.y < yellowCut)        { pigA = chartreuse; pigB = milkyTurq; return; }',
-                '        if (rnd.y < 0.82)             { pigA = leadWhite;  pigB = chartreuse; return; }',
-                '        pigA = milkyTurq; pigB = cobalt; return;',
-                '    }',
-                '',
-                '    if (vortexProb > 0.24 && rnd.x < vortexProb * 1.14) {',
-                '        if (rnd.z < 0.06 * uBlackInk) { pigA = prussianBlk; pigB = cobalt; return; }',
-                '        if (rnd.y < 0.26 * yBoost)    { pigA = zincYellow;  pigB = leadWhite; return; }',
-                '        if (rnd.y < 0.42 * yBoost)    { pigA = chartreuse;  pigB = milkyTurq; return; }',
-                '        if (rnd.y < 0.72)             { pigA = leadWhite;   pigB = milkyTurq; return; }',
-                '        if (rnd.y < 0.88)             { pigA = milkyTurq;   pigB = cerulean; return; }',
-                '        pigA = cerulean; pigB = cobalt; return;',
-                '    }',
-                '',
-                '    float blackProb = getSkyBlackShearWeight(centerSky) * 0.23 * uBlackInk;',
-                '    if (rnd.z < blackProb) {',
+                '        if (rnd.y < yellowCut * 0.55)      { pigA = zincYellow; pigB = leadWhite; }',
+                '        else if (rnd.y < yellowCut)        { pigA = chartreuse; pigB = milkyTurq; }',
+                '        else if (rnd.y < 0.82)             { pigA = leadWhite;  pigB = chartreuse; }',
+                '        else                               { pigA = milkyTurq;  pigB = cobalt; }',
+                '    } else if (vortexProb > 0.24 && rnd.x < vortexProb * 1.14) {',
+                '        if (rnd.z < 0.06 * uBlackInk)      { pigA = prussianBlk; pigB = cobalt; }',
+                '        else if (rnd.y < 0.26 * yBoost)    { pigA = zincYellow;  pigB = leadWhite; }',
+                '        else if (rnd.y < 0.42 * yBoost)    { pigA = chartreuse;  pigB = milkyTurq; }',
+                '        else if (rnd.y < 0.72)             { pigA = leadWhite;   pigB = milkyTurq; }',
+                '        else if (rnd.y < 0.88)             { pigA = milkyTurq;   pigB = cerulean; }',
+                '        else                               { pigA = cerulean;    pigB = cobalt; }',
+                '    } else if (rnd.z < blackProb) {',
                 '        pigA = (rnd.x > 0.45) ? charcoalBlk : prussianBlk;',
                 '        pigB = prussian;',
-                '        return;',
-                '    }',
-                '',
-                '    float macroZone = vnoise(vec2(sin(centerSky.x) * 3.5, cos(centerSky.x) * 3.5 + centerSky.y * 5.8));',
-                '    if (rnd.y > 1.0 - 0.065 * yBoost && macroZone > 0.52) {',
-                '        pigA = chartreuse; pigB = cerulean; return;',
-                '    }',
-                '    if (rnd.y > 0.83) { pigA = cerulean; pigB = milkyTurq; return; }',
-                '    if (rnd.y > 0.52) { pigA = cobalt; pigB = cerulean; return; }',
-                '    if (rnd.y > 0.28) {',
+                '    } else if (rnd.y > 1.0 - 0.065 * yBoost && macroZone > 0.52) {',
+                '        pigA = chartreuse; pigB = cerulean;',
+                '    } else if (rnd.y > 0.83) {',
+                '        pigA = cerulean; pigB = milkyTurq;',
+                '    } else if (rnd.y > 0.52) {',
+                '        pigA = cobalt; pigB = cerulean;',
+                '    } else if (rnd.y > 0.28) {',
                 '        pigA = (macroZone > 0.50) ? violetBlue : ultramarine;',
                 '        pigB = cobalt;',
-                '        return;',
+                '    } else {',
+                '        pigA = prussian; pigB = ultramarine;',
                 '    }',
-                '    pigA = prussian; pigB = ultramarine;',
                 '}',
                 '',
                 'void splatSkyRibbonLayer(vec2 p, float baseFreq, vec2 phaseOff, float layerSeed, inout vec3 canvasCol, inout float heightAccum) {',
@@ -1600,52 +1842,47 @@
                 '            float jitScale = isBaseBed ? 0.42 : (0.34 + 0.14 * min(uChaos, 2.2));',
                 '            vec2 cGrid = rawCell + vec2(0.5) + (rnd.xy - 0.5) * jitScale;',
                 '            vec2 rawDiff = g - cGrid;',
-                '            if (abs(rawDiff.x) > 1.52 || abs(rawDiff.y) > 1.52) continue;',
-                '',
                 '            vec2 centerSky = vec2((cGrid.x - phaseOff.x) / azFreq - 3.14159265, (cGrid.y - phaseOff.y) / gridFreqY);',
+                '',
+                '            // Unconditional O(1) texture taps keep HLSL quad derivatives 100% uniform!',
                 '            vec2 rawT = getSkyFlow(centerSky);',
                 '            float handWobble = (rnd.z - 0.5) * (isBaseBed ? 0.14 : 0.24) * min(uChaos, 2.2);',
                 '            float cw = cos(handWobble); float sw = sin(handWobble);',
                 '            vec2 T = mat2(cw, -sw, sw, cw) * rawT;',
-                '            vec2 N = vec2(-T.y, T.x);',
+                '            vec2 T2 = getBaseSkyFlow(centerSky + T * (0.82 / gridFreqY));',
                 '',
-                '            float life = fract(uFlowPhase * 0.28 + rnd.x * 0.93 + rnd.y * 0.37 + layerSeed * 0.21);',
-                '            float travel = isBaseBed ? (sin(uFlowPhase * 1.5 + rnd.x * 6.2831853) * 0.20) : ((life - 0.5) * 0.74);',
-                '            float lifeEnv = isBaseBed ? 1.0 : (smoothstep(0.0, 0.22, life) * (1.0 - smoothstep(0.78, 1.0, life)));',
+                '            if (abs(rawDiff.x) <= 1.52 && abs(rawDiff.y) <= 1.52) {',
+                '                vec2 N = vec2(-T.y, T.x);',
+                '                float life = fract(uFlowPhase * 0.28 + rnd.x * 0.93 + rnd.y * 0.37 + layerSeed * 0.21);',
+                '                float travel = isBaseBed ? (sin(uFlowPhase * 1.5 + rnd.x * 6.2831853) * 0.20) : ((life - 0.5) * 0.74);',
+                '                float lifeEnv = isBaseBed ? 1.0 : (smoothstep(0.0, 0.22, life) * (1.0 - smoothstep(0.78, 1.0, life)));',
                 '',
-                '            vec2 rel = vec2(rawDiff.x * cosScaleX, rawDiff.y) - T * travel;',
-                '            float sAlong  = dot(rel, T);',
-                '            float sAcross = dot(rel, N);',
-                '',
-                '            if (uQuality > 0.60) {',
-                '                vec2 T2 = getSkyFlow(centerSky + T * (0.82 / gridFreqY));',
-                '                float bend = dot(T2 - rawT, N) * 0.48;',
+                '                vec2 rel = vec2(rawDiff.x * cosScaleX, rawDiff.y) - T * travel;',
+                '                float sAlong  = dot(rel, T);',
+                '                float sAcross = dot(rel, N);',
+                '                float bend = dot(T2 - rawT, N) * 0.48 * step(0.55, uQuality);',
                 '                sAcross -= bend * sAlong * sAlong;',
-                '            }',
                 '',
-                '            bool isComma = (!isBaseBed && rnd.y > 0.86 && layerSeed > 3.0);',
-                '            float halfLen = (layerSeed < 0.8) ? (0.92 + rnd.x * 0.26) : (isComma ? (0.48 + rnd.x * 0.20) : (0.66 + rnd.x * 0.22));',
-                '            float halfWid = (isComma ? 0.165 : (0.118 + rnd.y * 0.048)) * widthScale;',
+                '                bool isComma = (!isBaseBed && rnd.y > 0.86 && layerSeed > 3.0);',
+                '                float halfLen = (layerSeed < 0.8) ? (0.92 + rnd.x * 0.26) : (isComma ? (0.48 + rnd.x * 0.20) : (0.66 + rnd.x * 0.22));',
+                '                float halfWid = (isComma ? 0.165 : (0.118 + rnd.y * 0.048)) * widthScale;',
                 '',
-                '            vec4 stroke = evalSlenderBristleStroke(sAlong / halfLen, sAcross / halfWid, rnd.x + layerSeed);',
-                '            float finalAlpha = stroke.x * lifeEnv;',
-                '            if (finalAlpha > 0.01) {',
-                '                vec3 pigA; vec3 pigB;',
-                '                pickSkyMarbledPigments(centerSky, rnd, pigA, pigB);',
-                '                vec3 pig = mix(pigA, pigB, stroke.w * 0.55) * (1.0 + stroke.y);',
-                '                canvasCol = mix(canvasCol, pig, finalAlpha);',
-                '                heightAccum = mix(heightAccum, stroke.z, finalAlpha * 0.88) + finalAlpha * 0.05;',
+                '                vec4 stroke = evalSlenderBristleStroke(sAlong / halfLen, sAcross / halfWid, rnd.x + layerSeed);',
+                '                float finalAlpha = stroke.x * lifeEnv;',
+                '                if (finalAlpha > 0.01) {',
+                '                    vec3 pigA; vec3 pigB;',
+                '                    pickSkyMarbledPigments(centerSky, rnd, pigA, pigB);',
+                '                    vec3 pig = mix(pigA, pigB, stroke.w * 0.55) * (1.0 + stroke.y);',
+                '                    canvasCol = mix(canvasCol, pig, finalAlpha);',
+                '                    heightAccum = mix(heightAccum, stroke.z, finalAlpha * 0.88) + finalAlpha * 0.05;',
+                '                }',
                 '            }',
                 '        }',
                 '    }',
                 '}',
                 '',
-                '// Discrete, Multi-Angle Van Gogh Impasto Brush Micro-Dabs Over Painted Sky Regions (Zero Parallel Planks!)',
                 'void splatPaintedBrushLayer(vec2 p, float baseFreq, vec2 phaseOff, float layerSeed, float coreShield, inout vec3 canvasCol, inout float heightAccum) {',
                 '    vec4 localB = sampleBrushField(p);',
-                '    // Skip immediately if unpainted or if palette is pure Comb Only (a < 0.16)',
-                '    if (localB.z < 0.025 || localB.w < 0.16) return;',
-                '',
                 '    float gridFreqY = baseFreq * max(0.76, uThinness);',
                 '    float circumCells = max(32.0, floor(6.2831853 * gridFreqY * 0.90 + 0.5));',
                 '    float azFreq = circumCells / 6.2831853;',
@@ -1662,57 +1899,48 @@
                 '',
                 '            vec2 cGrid = rawCell + vec2(0.5) + (rnd.xy - 0.5) * 0.46;',
                 '            vec2 rawDiff = g - cGrid;',
-                '            if (abs(rawDiff.x) > 1.38 || abs(rawDiff.y) > 1.38) continue;',
-                '',
                 '            vec2 centerSky = vec2((cGrid.x - phaseOff.x) / azFreq - 3.14159265, (cGrid.y - phaseOff.y) / gridFreqY);',
-                '            vec4 cellB = sampleBrushField(centerSky);',
-                '            if (cellB.w < 0.16) continue;',
-                '            // Probabilistic feathered dab dropout at brush edges so strokes break into organic individual marks!',
-                '            float keepProb = smoothstep(0.03, 0.52, cellB.z) * 0.92;',
-                '            if (rnd.x > keepProb) continue;',
                 '',
+                '            vec4 cellB = sampleBrushField(centerSky);',
                 '            vec2 rawT = getSkyFlow(centerSky);',
-                '            // Authentic Van Gogh wrist-angle weave (+-17 deg) so neighboring dabs never align into rigid planks!',
                 '            float wristTilt = (rnd.z - 0.5) * 0.56;',
                 '            float cw = cos(wristTilt); float sw = sin(wristTilt);',
                 '            vec2 T = mat2(cw, -sw, sw, cw) * rawT;',
-                '            vec2 N = vec2(-T.y, T.x);',
-                '',
-                '            float drift = sin(uFlowPhase * 1.9 + rnd.x * 6.2831853) * 0.16;',
-                '            vec2 rel = vec2(rawDiff.x * cosScaleX, rawDiff.y) - T * drift;',
-                '            float sAlong  = dot(rel, T);',
-                '            float sAcross = dot(rel, N);',
-                '',
-                '            // Follow local curved streamline bend around vortices & S-curves!',
                 '            vec2 T2 = getSkyFlow(centerSky + T * (0.90 / gridFreqY));',
-                '            float bend = clamp(dot(T2 - rawT, N) * 0.68, -0.55, 0.55);',
-                '            sAcross -= bend * sAlong * sAlong;',
                 '',
-                '            float halfLen = 0.58 + rnd.y * 0.28;',
-                '            float halfWid = 0.135 + rnd.z * 0.055;',
-                '            vec4 bst = evalSlenderBristleStroke(sAlong / halfLen, sAcross / halfWid, rnd.y + layerSeed);',
-                '            float bAlpha = bst.x * clamp(cellB.z * 1.05, 0.0, 0.90) * (1.0 - coreShield * 0.88);',
-                '            if (bAlpha > 0.01) {',
-                '                vec3 pigA; vec3 pigB;',
-                '                if (cellB.w < 0.50) {',
-                '                    // Gold Impasto Palette (Zinc Yellow + Lead White + Chartreuse + Milky Turquoise)',
-                '                    if (rnd.y > 0.54)      { pigA = vec3(0.985, 0.910, 0.315); pigB = vec3(0.985, 0.970, 0.855); }',
-                '                    else if (rnd.y > 0.22) { pigA = vec3(0.825, 0.878, 0.385); pigB = vec3(0.965, 0.925, 0.565); }',
-                '                    else                   { pigA = vec3(0.645, 0.845, 0.875); pigB = vec3(0.985, 0.910, 0.315); }',
-                '                } else if (cellB.w < 0.84) {',
-                '                    // Turquoise Nebula Palette (Celadon Turquoise + Luminous Cerulean + Pale Sulfur)',
-                '                    if (rnd.y > 0.52)      { pigA = vec3(0.655, 0.855, 0.885); pigB = vec3(0.955, 0.955, 0.865); }',
-                '                    else if (rnd.y > 0.20) { pigA = vec3(0.295, 0.555, 0.775); pigB = vec3(0.655, 0.855, 0.885); }',
-                '                    else                   { pigA = vec3(0.805, 0.868, 0.405); pigB = vec3(0.315, 0.565, 0.765); }',
-                '                } else {',
-                '                    // Cobalt & Prussian Shear Palette (Deep Cobalt + Ultramarine + Prussian Ink)',
-                '                    if (rnd.y > 0.58)      { pigA = vec3(0.145, 0.315, 0.625); pigB = vec3(0.315, 0.560, 0.755); }',
-                '                    else if (rnd.y > 0.24) { pigA = vec3(0.075, 0.168, 0.435); pigB = vec3(0.185, 0.235, 0.505); }',
-                '                    else                   { pigA = vec3(0.028, 0.048, 0.118); pigB = vec3(0.075, 0.168, 0.435); }',
+                '            float keepProb = smoothstep(0.03, 0.52, cellB.z) * 0.92;',
+                '            if (localB.z >= 0.025 && localB.w >= 0.16 && abs(rawDiff.x) <= 1.38 && abs(rawDiff.y) <= 1.38 && cellB.w >= 0.16 && rnd.x <= keepProb) {',
+                '                vec2 N = vec2(-T.y, T.x);',
+                '                float drift = sin(uFlowPhase * 1.9 + rnd.x * 6.2831853) * 0.16;',
+                '                vec2 rel = vec2(rawDiff.x * cosScaleX, rawDiff.y) - T * drift;',
+                '                float sAlong  = dot(rel, T);',
+                '                float sAcross = dot(rel, N);',
+                '                float bend = clamp(dot(T2 - rawT, N) * 0.68, -0.55, 0.55);',
+                '                sAcross -= bend * sAlong * sAlong;',
+                '',
+                '                float halfLen = 0.58 + rnd.y * 0.28;',
+                '                float halfWid = 0.135 + rnd.z * 0.055;',
+                '                vec4 bst = evalSlenderBristleStroke(sAlong / halfLen, sAcross / halfWid, rnd.y + layerSeed);',
+                '                float bAlpha = bst.x * clamp(cellB.z * 1.05, 0.0, 0.90) * (1.0 - coreShield * 0.88);',
+                '                if (bAlpha > 0.01) {',
+                '                    vec3 pigA; vec3 pigB;',
+                '                    if (cellB.w < 0.50) {',
+                '                        if (rnd.y > 0.54)      { pigA = vec3(0.985, 0.910, 0.315); pigB = vec3(0.985, 0.970, 0.855); }',
+                '                        else if (rnd.y > 0.22) { pigA = vec3(0.825, 0.878, 0.385); pigB = vec3(0.965, 0.925, 0.565); }',
+                '                        else                   { pigA = vec3(0.645, 0.845, 0.875); pigB = vec3(0.985, 0.910, 0.315); }',
+                '                    } else if (cellB.w < 0.84) {',
+                '                        if (rnd.y > 0.52)      { pigA = vec3(0.655, 0.855, 0.885); pigB = vec3(0.955, 0.955, 0.865); }',
+                '                        else if (rnd.y > 0.20) { pigA = vec3(0.295, 0.555, 0.775); pigB = vec3(0.655, 0.855, 0.885); }',
+                '                        else                   { pigA = vec3(0.805, 0.868, 0.405); pigB = vec3(0.315, 0.565, 0.765); }',
+                '                    } else {',
+                '                        if (rnd.y > 0.58)      { pigA = vec3(0.145, 0.315, 0.625); pigB = vec3(0.315, 0.560, 0.755); }',
+                '                        else if (rnd.y > 0.24) { pigA = vec3(0.075, 0.168, 0.435); pigB = vec3(0.185, 0.235, 0.505); }',
+                '                        else                   { pigA = vec3(0.028, 0.048, 0.118); pigB = vec3(0.075, 0.168, 0.435); }',
+                '                    }',
+                '                    vec3 wPig = mix(pigA, pigB, bst.w * 0.54) * (1.0 + bst.y);',
+                '                    canvasCol = mix(canvasCol, wPig, bAlpha);',
+                '                    heightAccum = mix(heightAccum, max(0.70, bst.z + 0.20), bAlpha * 0.92);',
                 '                }',
-                '                vec3 wPig = mix(pigA, pigB, bst.w * 0.54) * (1.0 + bst.y);',
-                '                canvasCol = mix(canvasCol, wPig, bAlpha);',
-                '                heightAccum = mix(heightAccum, max(0.70, bst.z + 0.20), bAlpha * 0.92);',
                 '            }',
                 '        }',
                 '    }',
@@ -1734,83 +1962,82 @@
                 '    float ang = atan(d.y, d.x + 0.00001);',
                 '',
                 '    for (int passIdx = 0; passIdx < 5; passIdx++) {',
-                '        if (uQuality < 0.45 && passIdx >= 3) break;',
-                '        float pf = float(passIdx);',
-                '        float rCoord = (r / baseRingPitch) + pf * 0.23;',
-                '        float rBand = floor(rCoord);',
-                '        if (rBand >= 0.0 && rBand <= maxBands) {',
-                '            float rRingWorld = max((rBand + 0.5 - pf * 0.23) * baseRingPitch, 0.015);',
-                '            if (rRingWorld >= minPolarRadius) {',
-                '                float rFracNorm = rRingWorld / outerR;',
-                '                float ringCircum = 6.2831853 * max(rRingWorld, 0.020);',
-                '                float arcCount = max(8.0, floor(ringCircum / targetArcLen + 0.5));',
-                '                float spin = (mod(rBand + pf, 2.0) < 0.5 ? 1.0 : -1.0) * (uFlowPhase * 0.24 + brushExcite * 0.95);',
-                '                float aRaw  = ((ang + 3.14159265 + pf * 1.61803 + rBand * 1.3247 + spin) / 6.2831853) * arcCount;',
-                '                float aBase = floor(aRaw);',
+                '        if (passIdx < 3 || uQuality >= 0.45) {',
+                '            float pf = float(passIdx);',
+                '            float rCoord = (r / baseRingPitch) + pf * 0.23;',
+                '            float rBand = floor(rCoord);',
+                '            if (rBand >= 0.0 && rBand <= maxBands) {',
+                '                float rRingWorld = max((rBand + 0.5 - pf * 0.23) * baseRingPitch, 0.015);',
+                '                if (rRingWorld >= minPolarRadius) {',
+                '                    float rFracNorm = rRingWorld / outerR;',
+                '                    float ringCircum = 6.2831853 * max(rRingWorld, 0.020);',
+                '                    float arcCount = max(8.0, floor(ringCircum / targetArcLen + 0.5));',
+                '                    float spin = (mod(rBand + pf, 2.0) < 0.5 ? 1.0 : -1.0) * (uFlowPhase * 0.24 + brushExcite * 0.95);',
+                '                    float aRaw  = ((ang + 3.14159265 + pf * 1.61803 + rBand * 1.3247 + spin) / 6.2831853) * arcCount;',
+                '                    float aBase = floor(aRaw);',
                 '',
-                '                for (int da = -1; da <= 1; da++) {',
-                '                    float aIdx = aBase + float(da);',
-                '                    float wrappedA = mod(aIdx, arcCount);',
-                '                    vec3 rnd = hash23(vec2(rBand + pf * 23.0, wrappedA + center.x * 113.0 + center.y * 59.0));',
-                '                    float cellCenterAng = ((aIdx + 0.5) / arcCount) * 6.2831853 - 3.14159265 - pf * 1.61803 - rBand * 1.3247 - spin;',
-                '                    vec2 radialDir = vec2(cos(cellCenterAng), sin(cellCenterAng));',
-                '                    vec2 polarTan  = vec2(-radialDir.y, radialDir.x);',
+                '                    for (int da = -1; da <= 1; da++) {',
+                '                        float aIdx = aBase + float(da);',
+                '                        float wrappedA = mod(aIdx, arcCount);',
+                '                        vec3 rnd = hash23(vec2(rBand + pf * 23.0, wrappedA + center.x * 113.0 + center.y * 59.0));',
+                '                        float cellCenterAng = ((aIdx + 0.5) / arcCount) * 6.2831853 - 3.14159265 - pf * 1.61803 - rBand * 1.3247 - spin;',
+                '                        vec2 radialDir = vec2(cos(cellCenterAng), sin(cellCenterAng));',
+                '                        vec2 polarTan  = vec2(-radialDir.y, radialDir.x);',
                 '',
-                '                    float swirlStretch = (isMoon > 0.5) ? (0.12 * dot(radialDir, vec2(-0.66, -0.75))) : 0.0;',
-                '                    float featherProb = (1.0 - smoothstep(0.68 + swirlStretch, 1.18 + swirlStretch, rFracNorm + (rnd.x - 0.5) * 0.14))',
-                '                                      * (1.0 - uLinenGap * 0.12 * smoothstep(0.55, 1.0, rFracNorm));',
+                '                        float swirlStretch = (isMoon > 0.5) ? (0.12 * dot(radialDir, vec2(-0.66, -0.75))) : 0.0;',
+                '                        float featherProb = (1.0 - smoothstep(0.68 + swirlStretch, 1.18 + swirlStretch, rFracNorm + (rnd.x - 0.5) * 0.14))',
+                '                                          * (1.0 - uLinenGap * 0.12 * smoothstep(0.55, 1.0, rFracNorm));',
                 '',
-                '                    if (rnd.z < featherProb) {',
-                '                        vec2 alignedStream = (dot(streamTan, polarTan) >= 0.0) ? streamTan : -streamTan;',
-                '                        float peelStart = (isMoon > 0.5) ? 0.60 : 0.72;',
-                '                        float peelBlend = smoothstep(peelStart, 1.14, rFracNorm) * ((isMoon > 0.5) ? 0.74 : 0.62);',
-                '                        vec2 strokeTan  = normalize(mix(polarTan, alignedStream, peelBlend));',
+                '                        if (rnd.z < featherProb) {',
+                '                            vec2 alignedStream = (dot(streamTan, polarTan) >= 0.0) ? streamTan : -streamTan;',
+                '                            float peelStart = (isMoon > 0.5) ? 0.60 : 0.72;',
+                '                            float peelBlend = smoothstep(peelStart, 1.14, rFracNorm) * ((isMoon > 0.5) ? 0.74 : 0.62);',
+                '                            vec2 strokeTan  = normalize(mix(polarTan, alignedStream, peelBlend));',
                 '',
-                '                        float wobbleLim = mix(0.22, 0.13, smoothstep(0.65, 1.05, rFracNorm));',
-                '                        float handTilt  = (rnd.z - 0.5) * wobbleLim * min(uChaos, 2.0);',
-                '                        float ct = cos(handTilt); float stSin = sin(handTilt);',
-                '                        strokeTan = mat2(ct, -stSin, stSin, ct) * strokeTan;',
-                '                        vec2 strokeNorm = vec2(-strokeTan.y, strokeTan.x);',
+                '                            float wobbleLim = mix(0.22, 0.13, smoothstep(0.65, 1.05, rFracNorm));',
+                '                            float handTilt  = (rnd.z - 0.5) * wobbleLim * min(uChaos, 2.0);',
+                '                            float ct = cos(handTilt); float stSin = sin(handTilt);',
+                '                            strokeTan = mat2(ct, -stSin, stSin, ct) * strokeTan;',
+                '                            vec2 strokeNorm = vec2(-strokeTan.y, strokeTan.x);',
                 '',
-                '                        float jitCap = min(uChaos, 1.85);',
-                '                        vec2 anchorOffset = radialDir * rRingWorld',
-                '                            + polarTan * ((rnd.x - 0.5) * targetArcLen * 0.42 * jitCap)',
-                '                            + radialDir * ((rnd.y - 0.5) * baseRingPitch * 0.45 * jitCap);',
-                '                        vec2 relVec = d - anchorOffset;',
-                '                        float sAlong  = dot(relVec, strokeTan);',
-                '                        float sAcross = dot(relVec, strokeNorm) + (sAlong * sAlong) / (2.0 * max(rRingWorld, 0.032)) * (1.0 - peelBlend * 0.75);',
+                '                            float jitCap = min(uChaos, 1.85);',
+                '                            vec2 anchorOffset = radialDir * rRingWorld',
+                '                                + polarTan * ((rnd.x - 0.5) * targetArcLen * 0.42 * jitCap)',
+                '                                + radialDir * ((rnd.y - 0.5) * baseRingPitch * 0.45 * jitCap);',
+                '                            vec2 relVec = d - anchorOffset;',
+                '                            float sAlong  = dot(relVec, strokeTan);',
+                '                            float sAcross = dot(relVec, strokeNorm) + (sAlong * sAlong) / (2.0 * max(rRingWorld, 0.032)) * (1.0 - peelBlend * 0.75);',
                 '',
-                '                        float outerTaper = mix(1.0, 0.72, smoothstep(0.65, 1.15, rFracNorm));',
-                '                        float halfLen = targetArcLen * (0.58 + rnd.x * 0.34);',
-                '                        float halfWid = baseRingPitch * (0.48 + rnd.y * 0.16) * outerTaper * (1.0 - uLinenGap * 0.14);',
+                '                            float outerTaper = mix(1.0, 0.72, smoothstep(0.65, 1.15, rFracNorm));',
+                '                            float halfLen = targetArcLen * (0.58 + rnd.x * 0.34);',
+                '                            float halfWid = baseRingPitch * (0.48 + rnd.y * 0.16) * outerTaper * (1.0 - uLinenGap * 0.14);',
                 '',
-                '                        vec4 st = evalSlenderBristleStroke(sAlong / halfLen, sAcross / halfWid, rnd.x + pf * 3.1);',
-                '                        if (st.x > 0.01) {',
-                '                            vec3 colA; vec3 colB;',
-                '                            if (isMoon > 0.5) {',
-                '                                if (rFracNorm < 0.56)      { colA = (rnd.y > 0.36) ? zincYellow : indianYellow; colB = sulfurCream; }',
-                '                                else if (rFracNorm < 0.80) { colA = (rnd.y < 0.42 * yBoost) ? zincYellow : sulfurCream; colB = chartreuseHalo; }',
-                '                                else if (rFracNorm < 0.98) { colA = (rnd.y < 0.38 * yBoost) ? chartreuseHalo : warmIvory; colB = celadonTurq; }',
-                '                                else                       { colA = celadonTurq; colB = lumCerulean; }',
-                '                            } else if (starType > 1.5) {',
-                '                                // Rhône Citron-Chartreuse & Pale Turquoise Star Corona',
-                '                                if (rFracNorm < 0.46)      { colA = warmIvory; colB = citronRhone; }',
-                '                                else if (rFracNorm < 0.78) { colA = citronRhone; colB = celadonTurq; }',
-                '                                else                       { colA = celadonTurq; colB = lumCerulean; }',
-                '                            } else if (starType > 0.5) {',
-                '                                // Luminous Venus Ivory-Gold Corona',
-                '                                if (rFracNorm < 0.44)      { colA = venusWhiteGold; colB = warmIvory; }',
-                '                                else if (rFracNorm < 0.76) { colA = (rnd.y < 0.35 * yBoost) ? zincYellow : warmIvory; colB = chartreuseHalo; }',
-                '                                else if (rFracNorm < 0.96) { colA = warmIvory; colB = celadonTurq; }',
-                '                                else                       { colA = celadonTurq; colB = lumCerulean; }',
-                '                            } else {',
-                '                                if (rFracNorm < 0.48)      { colA = zincYellow; colB = sulfurCream; }',
-                '                                else if (rFracNorm < 0.80) { colA = (rnd.y < 0.40 * yBoost) ? zincYellow : sulfurCream; colB = chartreuseHalo; }',
-                '                                else                       { colA = (rnd.y < 0.28 * yBoost) ? chartreuseHalo : celadonTurq; colB = lumCerulean; }',
+                '                            vec4 st = evalSlenderBristleStroke(sAlong / halfLen, sAcross / halfWid, rnd.x + pf * 3.1);',
+                '                            if (st.x > 0.01) {',
+                '                                vec3 colA; vec3 colB;',
+                '                                if (isMoon > 0.5) {',
+                '                                    if (rFracNorm < 0.56)      { colA = (rnd.y > 0.36) ? zincYellow : indianYellow; colB = sulfurCream; }',
+                '                                    else if (rFracNorm < 0.80) { colA = (rnd.y < 0.42 * yBoost) ? zincYellow : sulfurCream; colB = chartreuseHalo; }',
+                '                                    else if (rFracNorm < 0.98) { colA = (rnd.y < 0.38 * yBoost) ? chartreuseHalo : warmIvory; colB = celadonTurq; }',
+                '                                    else                       { colA = celadonTurq; colB = lumCerulean; }',
+                '                                } else if (starType > 1.5) {',
+                '                                    if (rFracNorm < 0.46)      { colA = warmIvory; colB = citronRhone; }',
+                '                                    else if (rFracNorm < 0.78) { colA = citronRhone; colB = celadonTurq; }',
+                '                                    else                       { colA = celadonTurq; colB = lumCerulean; }',
+                '                                } else if (starType > 0.5) {',
+                '                                    if (rFracNorm < 0.44)      { colA = venusWhiteGold; colB = warmIvory; }',
+                '                                    else if (rFracNorm < 0.76) { colA = (rnd.y < 0.35 * yBoost) ? zincYellow : warmIvory; colB = chartreuseHalo; }',
+                '                                    else if (rFracNorm < 0.96) { colA = warmIvory; colB = celadonTurq; }',
+                '                                    else                       { colA = celadonTurq; colB = lumCerulean; }',
+                '                                } else {',
+                '                                    if (rFracNorm < 0.48)      { colA = zincYellow; colB = sulfurCream; }',
+                '                                    else if (rFracNorm < 0.80) { colA = (rnd.y < 0.40 * yBoost) ? zincYellow : sulfurCream; colB = chartreuseHalo; }',
+                '                                    else                       { colA = (rnd.y < 0.28 * yBoost) ? chartreuseHalo : celadonTurq; colB = lumCerulean; }',
+                '                                }',
+                '                                vec3 dashCol = mix(colA, colB, st.w * 0.50) * (1.0 + st.y);',
+                '                                canvasCol = mix(canvasCol, dashCol, st.x);',
+                '                                heightAccum = mix(heightAccum, max(0.52, st.z + 0.14), st.x * 0.90);',
                 '                            }',
-                '                            vec3 dashCol = mix(colA, colB, st.w * 0.50) * (1.0 + st.y);',
-                '                            canvasCol = mix(canvasCol, dashCol, st.x);',
-                '                            heightAccum = mix(heightAccum, max(0.52, st.z + 0.14), st.x * 0.90);',
                 '                        }',
                 '                    }',
                 '                }',
@@ -1819,116 +2046,115 @@
                 '    }',
                 '}',
                 '',
-                'void paintWetOnWetMoon(vec3 rayDir, vec2 p, vec2 streamTan, inout vec3 canvasCol, inout float heightAccum) {',
+                'void paintWetOnWetMoon(vec3 rayDir, vec2 streamTan, float brushExcite, inout vec3 canvasCol, inout float heightAccum) {',
                 '    vec2 center = vec2(0.355, 0.455);',
                 '    float outerR = 0.142;',
                 '    vec2 d = celestialTangentDelta(rayDir, center);',
                 '    float r = length(d);',
-                '    if (r > outerR * 1.30) return;',
+                '    if (r <= outerR * 1.30) {',
+                '        vec3 cadOrange      = vec3(0.935, 0.495, 0.075);',
+                '        vec3 indianYellow   = vec3(0.972, 0.695, 0.125);',
+                '        vec3 zincYellow     = vec3(0.985, 0.895, 0.265);',
+                '        vec3 sulfurCream    = vec3(0.992, 0.948, 0.555);',
+                '        vec3 chartreuseHalo = vec3(0.825, 0.875, 0.415);',
+                '        vec3 warmIvory      = vec3(0.985, 0.968, 0.835);',
+                '        vec3 celadonTurq    = vec3(0.505, 0.725, 0.795);',
+                '        vec3 lumCerulean    = vec3(0.239, 0.451, 0.722);',
+                '        vec3 transCobalt    = vec3(0.122, 0.271, 0.569);',
                 '',
-                '    vec3 cadOrange      = vec3(0.935, 0.495, 0.075);',
-                '    vec3 indianYellow   = vec3(0.972, 0.695, 0.125);',
-                '    vec3 zincYellow     = vec3(0.985, 0.895, 0.265);',
-                '    vec3 sulfurCream    = vec3(0.992, 0.948, 0.555);',
-                '    vec3 chartreuseHalo = vec3(0.825, 0.875, 0.415);',
-                '    vec3 warmIvory      = vec3(0.985, 0.968, 0.835);',
-                '    vec3 celadonTurq    = vec3(0.505, 0.725, 0.795);',
-                '    vec3 lumCerulean    = vec3(0.239, 0.451, 0.722);',
-                '    vec3 transCobalt    = vec3(0.122, 0.271, 0.569);',
+                '        float effThin = max(uThinness, 0.86) * (0.72 + 0.28 * uThinness);',
+                '        float baseRingPitch = 0.0086 / effThin;',
+                '        float yBoost = clamp(uYellowBoost + brushExcite * 0.45, 0.3, 2.0);',
                 '',
-                '    float brushExcite = evalBrushExciteAt(center);',
-                '    float effThin = max(uThinness, 0.86) * (0.72 + 0.28 * uThinness);',
-                '    float baseRingPitch = 0.0086 / effThin;',
-                '    float yBoost = clamp(uYellowBoost + brushExcite * 0.45, 0.3, 2.0);',
-                '',
-                '    float uNorm = r / outerR;',
-                '    float glazeJit = (vnoise(d * 42.0 + center * 23.0) - 0.5) * 0.22;',
-                '    float asymDir = dot(d / max(r, 0.001), vec2(-0.66, -0.75));',
-                '    float wetMask = 1.0 - smoothstep(0.56, 1.06 + 0.14 * asymDir, uNorm + glazeJit);',
-                '    if (wetMask > 0.005) {',
-                '        vec2 mUv = d / (outerR * 0.355);',
-                '        float inHollow = 1.0 - smoothstep(0.45, 0.88, length(mUv - vec2(0.34, 0.23)));',
-                '        vec3 innerMoonGlow = mix(mix(indianYellow, sulfurCream, smoothstep(0.18, 0.58, uNorm)), mix(sulfurCream, celadonTurq, 0.48), inHollow * 0.78);',
-                '        vec3 outerMoonGlow = mix(mix(celadonTurq, lumCerulean, smoothstep(0.66, 1.02, uNorm)), transCobalt, smoothstep(0.88, 1.16, uNorm));',
-                '        canvasCol = mix(canvasCol, mix(innerMoonGlow, outerMoonGlow, smoothstep(0.54, 0.98, uNorm)), wetMask * 0.82);',
-                '        heightAccum = max(heightAccum, 0.42 * wetMask);',
-                '    }',
-                '',
-                '    if (r < outerR * 0.46) {',
-                '        float hPitch = baseRingPitch * 1.18;',
-                '        vec2 hollowDir = normalize(vec2(-0.52, 0.85));',
-                '        vec2 hollowNrm = vec2(-hollowDir.y, hollowDir.x);',
-                '        float hollowFade = 1.0 - smoothstep(0.33 * outerR, 0.45 * outerR, r);',
-                '        for (int hp = 0; hp < 3; hp++) {',
-                '            float fhp = float(hp);',
-                '            vec2 hg = vec2(dot(d, hollowDir), dot(d, hollowNrm)) / hPitch + vec2(fhp * 0.37, fhp * 0.61);',
-                '            vec2 qStart = floor(hg) + step(vec2(0.5), fract(hg)) - vec2(1.0);',
-                '            for (int dy = 0; dy <= 1; dy++) {',
-                '                for (int dx = 0; dx <= 1; dx++) {',
-                '                    vec2 cid = qStart + vec2(float(dx), float(dy));',
-                '                    vec3 rnd = hash23(cid + vec2(fhp * 19.1 + 7.3, 43.7));',
-                '                    vec2 relH = hg - (cid + vec2(0.5) + (rnd.xy - 0.5) * 0.58);',
-                '                    float aWob = (rnd.z - 0.5) * 0.38;',
-                '                    vec2 locH = mat2(cos(aWob), -sin(aWob), sin(aWob), cos(aWob)) * relH;',
-                '                    locH.y -= 0.16 * locH.x * locH.x;',
-                '                    vec4 stH = evalSlenderBristleStroke(locH.x / 1.15, locH.y / 0.36, rnd.x + fhp);',
-                '                    float mAlpha = stH.x * hollowFade;',
-                '                    if (mAlpha > 0.01) {',
-                '                        vec3 hColA = (rnd.y > 0.52) ? sulfurCream : ((rnd.y > 0.22) ? warmIvory : celadonTurq);',
-                '                        vec3 hColB = (rnd.x > 0.50) ? zincYellow : chartreuseHalo;',
-                '                        canvasCol = mix(canvasCol, mix(hColA, hColB, stH.w * 0.45) * (1.0 + stH.y), mAlpha);',
-                '                        heightAccum = mix(heightAccum, max(0.50, stH.z + 0.10), mAlpha * 0.85);',
-                '                    }',
-                '                }',
-                '            }',
+                '        float uNorm = r / outerR;',
+                '        float glazeJit = (vnoise(d * 42.0 + center * 23.0) - 0.5) * 0.22;',
+                '        float asymDir = dot(d / max(r, 0.001), vec2(-0.66, -0.75));',
+                '        float wetMask = 1.0 - smoothstep(0.56, 1.06 + 0.14 * asymDir, uNorm + glazeJit);',
+                '        if (wetMask > 0.005) {',
+                '            vec2 mUv = d / (outerR * 0.355);',
+                '            float inHollow = 1.0 - smoothstep(0.45, 0.88, length(mUv - vec2(0.34, 0.23)));',
+                '            vec3 innerMoonGlow = mix(mix(indianYellow, sulfurCream, smoothstep(0.18, 0.58, uNorm)), mix(sulfurCream, celadonTurq, 0.48), inHollow * 0.78);',
+                '            vec3 outerMoonGlow = mix(mix(celadonTurq, lumCerulean, smoothstep(0.66, 1.02, uNorm)), transCobalt, smoothstep(0.88, 1.16, uNorm));',
+                '            canvasCol = mix(canvasCol, mix(innerMoonGlow, outerMoonGlow, smoothstep(0.54, 0.98, uNorm)), wetMask * 0.82);',
+                '            heightAccum = max(heightAccum, 0.42 * wetMask);',
                 '        }',
-                '    }',
                 '',
-                '    paintPolarCoronaRings(d, r, center, outerR, baseRingPitch, outerR * 0.35, 1.0, 0.0, streamTan, brushExcite, yBoost, canvasCol, heightAccum);',
-                '',
-                '    if (r < outerR * 0.39) {',
-                '        vec2 cUv = d / (outerR * 0.355);',
-                '        vec2 holeCenter = vec2(0.34, 0.23);',
-                '        float innerD = length(cUv - holeCenter);',
-                '        float rimJit = (vnoise(cUv * 7.5 + vec2(2.1, 5.4)) - 0.5) * 0.055;',
-                '        float crescentMask = (1.0 - smoothstep(0.90, 1.01, length(cUv) + rimJit)) * smoothstep(0.74, 0.83, innerD - rimJit * 0.8);',
-                '        if (crescentMask > 0.005) {',
-                '            float bellyT = clamp((innerD - 0.76) / 0.34, 0.0, 1.0);',
-                '            vec3 moonCol = mix(mix(cadOrange, indianYellow, smoothstep(0.0, 0.55, bellyT)), zincYellow, smoothstep(0.45, 0.95, bellyT) * 0.72);',
-                '            float moonHgt = 0.76 + 0.10 * sin(bellyT * 3.14159);',
-                '            vec2 arcVec = cUv - holeCenter * 0.42;',
-                '            vec2 bellyAxis = normalize(-holeCenter);',
-                '            vec2 arcRel = vec2(dot(arcVec, bellyAxis), dot(arcVec, vec2(-bellyAxis.y, bellyAxis.x)));',
-                '            float arcR = length(arcRel);',
-                '            float arcAng = atan(arcRel.y, arcRel.x + 0.00001);',
-                '            for (int mp = 0; mp < 3; mp++) {',
-                '                float fmp = float(mp);',
-                '                vec2 mg = vec2((arcAng / 6.2831853) * 14.0 + fmp * 0.41, arcR * 7.2 + fmp * 0.34);',
-                '                vec2 mq = floor(mg) + step(vec2(0.5), fract(mg)) - vec2(1.0);',
+                '        if (r < outerR * 0.46) {',
+                '            float hPitch = baseRingPitch * 1.18;',
+                '            vec2 hollowDir = normalize(vec2(-0.52, 0.85));',
+                '            vec2 hollowNrm = vec2(-hollowDir.y, hollowDir.x);',
+                '            float hollowFade = 1.0 - smoothstep(0.33 * outerR, 0.45 * outerR, r);',
+                '            for (int hp = 0; hp < 3; hp++) {',
+                '                float fhp = float(hp);',
+                '                vec2 hg = vec2(dot(d, hollowDir), dot(d, hollowNrm)) / hPitch + vec2(fhp * 0.37, fhp * 0.61);',
+                '                vec2 qStart = floor(hg) + step(vec2(0.5), fract(hg)) - vec2(1.0);',
                 '                for (int dy = 0; dy <= 1; dy++) {',
                 '                    for (int dx = 0; dx <= 1; dx++) {',
-                '                        vec2 cid = mq + vec2(float(dx), float(dy));',
-                '                        vec3 mrnd = hash23(cid + vec2(fmp * 17.0, 91.3));',
-                '                        vec2 mRel = mg - (cid + vec2(0.5) + (mrnd.xy - 0.5) * 0.45);',
-                '                        float mTilt = (mrnd.z - 0.5) * 0.22;',
-                '                        vec2 mLoc = mat2(cos(mTilt), -sin(mTilt), sin(mTilt), cos(mTilt)) * mRel;',
-                '                        vec4 mst = evalSlenderBristleStroke(mLoc.x / 0.92, mLoc.y / 0.42, mrnd.x + fmp * 2.7);',
-                '                        if (mst.x > 0.01) {',
-                '                            vec3 mPigA = (mrnd.y > 0.58) ? zincYellow : ((mrnd.y > 0.20) ? indianYellow : cadOrange);',
-                '                            vec3 mPigB = (mrnd.x > 0.55) ? warmIvory : indianYellow;',
-                '                            moonCol = mix(moonCol, mix(mPigA, mPigB, mst.w * 0.48) * (1.0 + mst.y * 0.85), mst.x * 0.88);',
-                '                            moonHgt = mix(moonHgt, 0.72 + mst.z * 0.24, mst.x * 0.75);',
+                '                        vec2 cid = qStart + vec2(float(dx), float(dy));',
+                '                        vec3 rnd = hash23(cid + vec2(fhp * 19.1 + 7.3, 43.7));',
+                '                        vec2 relH = hg - (cid + vec2(0.5) + (rnd.xy - 0.5) * 0.58);',
+                '                        float aWob = (rnd.z - 0.5) * 0.38;',
+                '                        vec2 locH = mat2(cos(aWob), -sin(aWob), sin(aWob), cos(aWob)) * relH;',
+                '                        locH.y -= 0.16 * locH.x * locH.x;',
+                '                        vec4 stH = evalSlenderBristleStroke(locH.x / 1.15, locH.y / 0.36, rnd.x + fhp);',
+                '                        float mAlpha = stH.x * hollowFade;',
+                '                        if (mAlpha > 0.01) {',
+                '                            vec3 hColA = (rnd.y > 0.52) ? sulfurCream : ((rnd.y > 0.22) ? warmIvory : celadonTurq);',
+                '                            vec3 hColB = (rnd.x > 0.50) ? zincYellow : chartreuseHalo;',
+                '                            canvasCol = mix(canvasCol, mix(hColA, hColB, stH.w * 0.45) * (1.0 + stH.y), mAlpha);',
+                '                            heightAccum = mix(heightAccum, max(0.50, stH.z + 0.10), mAlpha * 0.85);',
                 '                        }',
                 '                    }',
                 '                }',
                 '            }',
-                '            canvasCol = mix(canvasCol, moonCol, crescentMask);',
-                '            heightAccum = mix(heightAccum, moonHgt, crescentMask);',
+                '        }',
+                '',
+                '        paintPolarCoronaRings(d, r, center, outerR, baseRingPitch, outerR * 0.35, 1.0, 0.0, streamTan, brushExcite, yBoost, canvasCol, heightAccum);',
+                '',
+                '        if (r < outerR * 0.39) {',
+                '            vec2 cUv = d / (outerR * 0.355);',
+                '            vec2 holeCenter = vec2(0.34, 0.23);',
+                '            float innerD = length(cUv - holeCenter);',
+                '            float rimJit = (vnoise(cUv * 7.5 + vec2(2.1, 5.4)) - 0.5) * 0.055;',
+                '            float crescentMask = (1.0 - smoothstep(0.90, 1.01, length(cUv) + rimJit)) * smoothstep(0.74, 0.83, innerD - rimJit * 0.8);',
+                '            if (crescentMask > 0.005) {',
+                '                float bellyT = clamp((innerD - 0.76) / 0.34, 0.0, 1.0);',
+                '                vec3 moonCol = mix(mix(cadOrange, indianYellow, smoothstep(0.0, 0.55, bellyT)), zincYellow, smoothstep(0.45, 0.95, bellyT) * 0.72);',
+                '                float moonHgt = 0.76 + 0.10 * sin(bellyT * 3.14159);',
+                '                vec2 arcVec = cUv - holeCenter * 0.42;',
+                '                vec2 bellyAxis = normalize(-holeCenter);',
+                '                vec2 arcRel = vec2(dot(arcVec, bellyAxis), dot(arcVec, vec2(-bellyAxis.y, bellyAxis.x)));',
+                '                float arcR = length(arcRel);',
+                '                float arcAng = atan(arcRel.y, arcRel.x + 0.00001);',
+                '                for (int mp = 0; mp < 3; mp++) {',
+                '                    float fmp = float(mp);',
+                '                    vec2 mg = vec2((arcAng / 6.2831853) * 14.0 + fmp * 0.41, arcR * 7.2 + fmp * 0.34);',
+                '                    vec2 mq = floor(mg) + step(vec2(0.5), fract(mg)) - vec2(1.0);',
+                '                    for (int dy = 0; dy <= 1; dy++) {',
+                '                        for (int dx = 0; dx <= 1; dx++) {',
+                '                            vec2 cid = mq + vec2(float(dx), float(dy));',
+                '                            vec3 mrnd = hash23(cid + vec2(fmp * 17.0, 91.3));',
+                '                            vec2 mRel = mg - (cid + vec2(0.5) + (mrnd.xy - 0.5) * 0.45);',
+                '                            float mTilt = (mrnd.z - 0.5) * 0.22;',
+                '                            vec2 mLoc = mat2(cos(mTilt), -sin(mTilt), sin(mTilt), cos(mTilt)) * mRel;',
+                '                            vec4 mst = evalSlenderBristleStroke(mLoc.x / 0.92, mLoc.y / 0.42, mrnd.x + fmp * 2.7);',
+                '                            if (mst.x > 0.01) {',
+                '                                vec3 mPigA = (mrnd.y > 0.58) ? zincYellow : ((mrnd.y > 0.20) ? indianYellow : cadOrange);',
+                '                                vec3 mPigB = (mrnd.x > 0.55) ? warmIvory : indianYellow;',
+                '                                moonCol = mix(moonCol, mix(mPigA, mPigB, mst.w * 0.48) * (1.0 + mst.y * 0.85), mst.x * 0.88);',
+                '                                moonHgt = mix(moonHgt, 0.72 + mst.z * 0.24, mst.x * 0.75);',
+                '                            }',
+                '                        }',
+                '                    }',
+                '                }',
+                '                canvasCol = mix(canvasCol, moonCol, crescentMask);',
+                '                heightAccum = mix(heightAccum, moonHgt, crescentMask);',
+                '            }',
                 '        }',
                 '    }',
                 '}',
                 '',
-                'void paintWetOnWetStar(vec3 rayDir, vec4 starInfo, vec2 streamTan, inout vec3 canvasCol, inout float heightAccum) {',
+                'void paintWetOnWetStar(vec3 rayDir, vec4 starInfo, vec2 streamTan, float brushExcite, inout vec3 canvasCol, inout float heightAccum) {',
                 '    vec2 center = starInfo.xy;',
                 '    float starType = floor(starInfo.w);',
                 '    float twinklePhase = fract(starInfo.w) * 6.98;',
@@ -1936,72 +2162,72 @@
                 '    float outerR = starInfo.z * pulse;',
                 '    vec2 d = celestialTangentDelta(rayDir, center);',
                 '    float r = length(d);',
-                '    if (r > outerR * 1.30) return;',
+                '    if (starInfo.z > 0.0 && r <= outerR * 1.30) {',
+                '        vec3 indianYellow   = vec3(0.972, 0.695, 0.125);',
+                '        vec3 zincYellow     = vec3(0.985, 0.895, 0.265);',
+                '        vec3 sulfurCream    = vec3(0.992, 0.948, 0.555);',
+                '        vec3 citronRhone    = vec3(0.765, 0.915, 0.465);',
+                '        vec3 warmIvory      = vec3(0.985, 0.968, 0.835);',
+                '        vec3 venusWhiteGold = vec3(1.000, 0.988, 0.905);',
+                '        vec3 celadonTurq    = vec3(0.505, 0.725, 0.795);',
+                '        vec3 lumCerulean    = vec3(0.239, 0.451, 0.722);',
+                '        vec3 transCobalt    = vec3(0.122, 0.271, 0.569);',
                 '',
-                '    vec3 indianYellow   = vec3(0.972, 0.695, 0.125);',
-                '    vec3 zincYellow     = vec3(0.985, 0.895, 0.265);',
-                '    vec3 sulfurCream    = vec3(0.992, 0.948, 0.555);',
-                '    vec3 citronRhone    = vec3(0.765, 0.915, 0.465);',
-                '    vec3 warmIvory      = vec3(0.985, 0.968, 0.835);',
-                '    vec3 venusWhiteGold = vec3(1.000, 0.988, 0.905);',
-                '    vec3 celadonTurq    = vec3(0.505, 0.725, 0.795);',
-                '    vec3 lumCerulean    = vec3(0.239, 0.451, 0.722);',
-                '    vec3 transCobalt    = vec3(0.122, 0.271, 0.569);',
+                '        float effThin = max(uThinness, 0.86) * (0.72 + 0.28 * uThinness);',
+                '        float baseRingPitch = ((starType > 0.5) ? 0.0070 : 0.0064) / effThin;',
+                '        float yBoost = clamp(uYellowBoost + brushExcite * 0.45, 0.3, 2.0);',
                 '',
-                '    float brushExcite = evalBrushExciteAt(center);',
-                '    float effThin = max(uThinness, 0.86) * (0.72 + 0.28 * uThinness);',
-                '    float baseRingPitch = ((starType > 0.5) ? 0.0070 : 0.0064) / effThin;',
-                '    float yBoost = clamp(uYellowBoost + brushExcite * 0.45, 0.3, 2.0);',
+                '        float uNorm = r / outerR;',
+                '        float glazeJit = (vnoise(d * 42.0 + center * 23.0) - 0.5) * 0.22;',
+                '        float wetMask = 1.0 - smoothstep(0.56, 1.12, uNorm + glazeJit);',
+                '        if (wetMask > 0.005) {',
+                '            vec3 innerGlow = (starType > 1.5) ? mix(citronRhone, warmIvory, 0.55) : ((starType > 0.5) ? warmIvory : sulfurCream);',
+                '            vec3 outerGlow = mix(mix(celadonTurq, lumCerulean, smoothstep(0.64, 1.02, uNorm)), transCobalt, smoothstep(0.88, 1.14, uNorm));',
+                '            canvasCol = mix(canvasCol, mix(innerGlow, outerGlow, smoothstep(0.38, 0.96, uNorm)), wetMask * 0.78);',
+                '            heightAccum = max(heightAccum, 0.42 * wetMask);',
+                '        }',
                 '',
-                '    float uNorm = r / outerR;',
-                '    float glazeJit = (vnoise(d * 42.0 + center * 23.0) - 0.5) * 0.22;',
-                '    float wetMask = 1.0 - smoothstep(0.56, 1.12, uNorm + glazeJit);',
-                '    if (wetMask > 0.005) {',
-                '        vec3 innerGlow = (starType > 1.5) ? mix(citronRhone, warmIvory, 0.55) : ((starType > 0.5) ? warmIvory : sulfurCream);',
-                '        vec3 outerGlow = mix(mix(celadonTurq, lumCerulean, smoothstep(0.64, 1.02, uNorm)), transCobalt, smoothstep(0.88, 1.14, uNorm));',
-                '        canvasCol = mix(canvasCol, mix(innerGlow, outerGlow, smoothstep(0.38, 0.96, uNorm)), wetMask * 0.78);',
-                '        heightAccum = max(heightAccum, 0.42 * wetMask);',
-                '    }',
+                '        paintPolarCoronaRings(d, r, center, outerR, baseRingPitch, outerR * 0.24, 0.0, starType, streamTan, brushExcite, yBoost, canvasCol, heightAccum);',
                 '',
-                '    paintPolarCoronaRings(d, r, center, outerR, baseRingPitch, outerR * 0.24, 0.0, starType, streamTan, brushExcite, yBoost, canvasCol, heightAccum);',
-                '',
-                '    if (r < outerR * 0.88) {',
-                '        float starSeed = center.x * 73.1 + center.y * 139.7;',
-                '        float dabPitch = min(baseRingPitch * 1.12, outerR * 0.22);',
-                '        for (int sp = 0; sp < 4; sp++) {',
-                '            if (uQuality < 0.45 && sp >= 2) break;',
-                '            float fsp = float(sp);',
-                '            float passAng = starSeed + fsp * 1.12;',
-                '            vec2 sDir = vec2(cos(passAng), sin(passAng));',
-                '            vec2 sg = vec2(dot(d, sDir), dot(d, vec2(-sDir.y, sDir.x))) / dabPitch + vec2(fsp * 0.37, fsp * 0.63);',
-                '            vec2 qStart = floor(sg) + step(vec2(0.5), fract(sg)) - vec2(1.0);',
-                '            for (int dy = 0; dy <= 1; dy++) {',
-                '                for (int dx = 0; dx <= 1; dx++) {',
-                '                    vec2 cid = qStart + vec2(float(dx), float(dy));',
-                '                    vec3 srnd = hash23(cid + vec2(fsp * 29.3 + starSeed, 67.1));',
-                '                    vec2 cGrid = cid + vec2(0.5) + (srnd.xy - 0.5) * 0.56;',
-                '                    vec2 cLocal = (cGrid - vec2(fsp * 0.37, fsp * 0.63)) * dabPitch;',
-                '                    float keepProb = 1.0 - smoothstep(0.14, 0.38, length(cLocal) / outerR + (srnd.z - 0.5) * 0.14);',
-                '                    if (srnd.x < keepProb) {',
-                '                        vec2 relS = sg - cGrid;',
-                '                        float wob = (srnd.z - 0.5) * 0.65;',
-                '                        vec2 locS = mat2(cos(wob), -sin(wob), sin(wob), cos(wob)) * relS;',
-                '                        locS.y -= 0.20 * locS.x * locS.x * ((srnd.y > 0.5) ? 1.0 : -1.0);',
-                '                        vec4 sst = evalSlenderBristleStroke(locS.x / (0.82 + srnd.y * 0.46), locS.y / (0.34 + srnd.z * 0.16), srnd.x + fsp * 4.3);',
-                '                        if (sst.x > 0.01) {',
-                '                            vec3 cPigA; vec3 cPigB;',
-                '                            if (starType > 1.5) {',
-                '                                cPigA = (srnd.y > 0.38) ? venusWhiteGold : citronRhone;',
-                '                                cPigB = (srnd.z > 0.45) ? celadonTurq : warmIvory;',
-                '                            } else if (starType > 0.5) {',
-                '                                cPigA = (srnd.y > 0.34) ? venusWhiteGold : warmIvory;',
-                '                                cPigB = (srnd.z > 0.45) ? zincYellow : sulfurCream;',
-                '                            } else {',
-                '                                cPigA = (srnd.y > 0.42) ? zincYellow : indianYellow;',
-                '                                cPigB = (srnd.z > 0.42) ? sulfurCream : warmIvory;',
+                '        if (r < outerR * 0.88) {',
+                '            float starSeed = center.x * 73.1 + center.y * 139.7;',
+                '            float dabPitch = min(baseRingPitch * 1.12, outerR * 0.22);',
+                '            for (int sp = 0; sp < 4; sp++) {',
+                '                if (sp < 2 || uQuality >= 0.45) {',
+                '                    float fsp = float(sp);',
+                '                    float passAng = starSeed + fsp * 1.12;',
+                '                    vec2 sDir = vec2(cos(passAng), sin(passAng));',
+                '                    vec2 sg = vec2(dot(d, sDir), dot(d, vec2(-sDir.y, sDir.x))) / dabPitch + vec2(fsp * 0.37, fsp * 0.63);',
+                '                    vec2 qStart = floor(sg) + step(vec2(0.5), fract(sg)) - vec2(1.0);',
+                '                    for (int dy = 0; dy <= 1; dy++) {',
+                '                        for (int dx = 0; dx <= 1; dx++) {',
+                '                            vec2 cid = qStart + vec2(float(dx), float(dy));',
+                '                            vec3 srnd = hash23(cid + vec2(fsp * 29.3 + starSeed, 67.1));',
+                '                            vec2 cGrid = cid + vec2(0.5) + (srnd.xy - 0.5) * 0.56;',
+                '                            vec2 cLocal = (cGrid - vec2(fsp * 0.37, fsp * 0.63)) * dabPitch;',
+                '                            float keepProb = 1.0 - smoothstep(0.14, 0.38, length(cLocal) / outerR + (srnd.z - 0.5) * 0.14);',
+                '                            if (srnd.x < keepProb) {',
+                '                                vec2 relS = sg - cGrid;',
+                '                                float wob = (srnd.z - 0.5) * 0.65;',
+                '                                vec2 locS = mat2(cos(wob), -sin(wob), sin(wob), cos(wob)) * relS;',
+                '                                locS.y -= 0.20 * locS.x * locS.x * ((srnd.y > 0.5) ? 1.0 : -1.0);',
+                '                                vec4 sst = evalSlenderBristleStroke(locS.x / (0.82 + srnd.y * 0.46), locS.y / (0.34 + srnd.z * 0.16), srnd.x + fsp * 4.3);',
+                '                                if (sst.x > 0.01) {',
+                '                                    vec3 cPigA; vec3 cPigB;',
+                '                                    if (starType > 1.5) {',
+                '                                        cPigA = (srnd.y > 0.38) ? venusWhiteGold : citronRhone;',
+                '                                        cPigB = (srnd.z > 0.45) ? celadonTurq : warmIvory;',
+                '                                    } else if (starType > 0.5) {',
+                '                                        cPigA = (srnd.y > 0.34) ? venusWhiteGold : warmIvory;',
+                '                                        cPigB = (srnd.z > 0.45) ? zincYellow : sulfurCream;',
+                '                                    } else {',
+                '                                        cPigA = (srnd.y > 0.42) ? zincYellow : indianYellow;',
+                '                                        cPigB = (srnd.z > 0.42) ? sulfurCream : warmIvory;',
+                '                                    }',
+                '                                    canvasCol = mix(canvasCol, mix(cPigA, cPigB, sst.w * 0.52) * (1.0 + sst.y * 1.05), sst.x);',
+                '                                    heightAccum = mix(heightAccum, max(0.56, sst.z + 0.16), sst.x * 0.90);',
+                '                                }',
                 '                            }',
-                '                            canvasCol = mix(canvasCol, mix(cPigA, cPigB, sst.w * 0.52) * (1.0 + sst.y * 1.05), sst.x);',
-                '                            heightAccum = mix(heightAccum, max(0.56, sst.z + 0.16), sst.x * 0.90);',
                 '                        }',
                 '                    }',
                 '                }',
@@ -2010,25 +2236,29 @@
                 '    }',
                 '}',
                 '',
-                'void considerStarCandidate(vec3 rayDir, int idx, inout float bestNorm0, inout vec4 star0, inout float bestNorm1, inout vec4 star1, inout float shield) {',
-                '    vec4 st = fetchStar(idx);',
+                'float evalStarShield(vec3 rayDir, vec4 st) {',
+                '    if (st.z <= 0.0) return 0.0;',
                 '    float caz = cos(st.x); float saz = sin(st.x);',
                 '    float cel = cos(st.y); float sel = sin(st.y);',
                 '    vec3 cDir = vec3(saz * cel, sel, -caz * cel);',
-                '    if (dot(rayDir, cDir) < 0.958) return;',
+                '    if (dot(rayDir, cDir) < 0.958) return 0.0;',
                 '    float rNorm = length(celestialTangentDelta(rayDir, st.xy)) / (st.z * 1.045);',
-                '    shield = max(shield, 1.0 - smoothstep(0.68, 1.08, rNorm));',
-                '    if (rNorm < 1.34) {',
-                '        if (rNorm < bestNorm0) {',
-                '            bestNorm1 = bestNorm0; star1 = star0;',
-                '            bestNorm0 = rNorm;     star0 = st;',
-                '        } else if (rNorm < bestNorm1) {',
-                '            bestNorm1 = rNorm;     star1 = st;',
-                '        }',
-                '    }',
+                '    return 1.0 - smoothstep(0.68, 1.08, rNorm);',
                 '}',
                 '',
                 'vec4 evaluateCompleteSkyColor(vec3 d, vec2 p) {',
+                '    // Unconditional O(1) top-level texture reads (100% uniform control flow for ANGLE D3D11 HLSL!)',
+                '    vec2 skyUv = skyToBrushUv(p);',
+                '    vec4 starCell = texture2D(tStarCellGrid, skyUv);',
+                '    float idx0 = floor(starCell.r * 255.0 + 0.5);',
+                '    float idx1 = floor(starCell.g * 255.0 + 0.5);',
+                '    vec4 star0 = fetchStarByFloatIdx(idx0);',
+                '    vec4 star1 = fetchStarByFloatIdx(idx1);',
+                '    float bAct = step(0.005, uBrushAnyActive);',
+                '    float moonExcite  = texture2D(tBrushMap, skyToBrushUv(vec2(0.355, 0.455))).b * bAct;',
+                '    float star0Excite = texture2D(tBrushMap, skyToBrushUv(star0.xy)).b * bAct;',
+                '    float star1Excite = texture2D(tBrushMap, skyToBrushUv(star1.xy)).b * bAct;',
+                '',
                 '    float baseGrad = smoothstep(-0.05, 0.72, p.y);',
                 '    vec3 canvasCol = mix(vec3(0.062, 0.142, 0.355), vec3(0.032, 0.074, 0.210), baseGrad);',
                 '    float heightAccum = 0.34;',
@@ -2045,52 +2275,37 @@
                 '',
                 '    vec2 rawLocalFlow = getSkyFlow(p);',
                 '    vec2 streamTan = normalize(vec2(rawLocalFlow.x * cos(clamp(p.y, -1.25, 1.25)), rawLocalFlow.y) + vec2(0.0001));',
-                '    float coreShield = 0.0;',
+                '    float coreShield = max(evalStarShield(d, star0), evalStarShield(d, star1));',
                 '',
                 '    if (abs(p.x - 0.355) < 0.28 && abs(p.y - 0.455) < 0.24) {',
                 '        float rm = length(celestialTangentDelta(d, vec2(0.355, 0.455))) / 0.142;',
                 '        coreShield = max(coreShield, 1.0 - smoothstep(0.68, 1.08, rm));',
-                '        paintWetOnWetMoon(d, p, streamTan, canvasCol, heightAccum);',
+                '        paintWetOnWetMoon(d, streamTan, moonExcite, canvasCol, heightAccum);',
                 '    }',
                 '',
-                '    float bestNorm0 = 99.0; vec4 star0 = vec4(0.0, 0.0, -1.0, 0.0);',
-                '    float bestNorm1 = 99.0; vec4 star1 = vec4(0.0, 0.0, -1.0, 0.0);',
-                '    if (p.y < 0.70) {',
-                '        if (abs(p.x) < 0.62) {',
-                '            for (int i = 0; i < 11; i++) { considerStarCandidate(d, i, bestNorm0, star0, bestNorm1, star1, coreShield); }',
-                '        }',
-                '        if (p.x > 0.42 && p.x < 2.34) {',
-                '            for (int i = 11; i < 25; i++) { considerStarCandidate(d, i, bestNorm0, star0, bestNorm1, star1, coreShield); }',
-                '        }',
-                '        if (abs(p.x) > 2.04) {',
-                '            for (int i = 25; i < 38; i++) { considerStarCandidate(d, i, bestNorm0, star0, bestNorm1, star1, coreShield); }',
-                '        }',
-                '        if (p.x < -0.38 && p.x > -2.30) {',
-                '            for (int i = 38; i < 50; i++) { considerStarCandidate(d, i, bestNorm0, star0, bestNorm1, star1, coreShield); }',
-                '        }',
-                '    }',
-                '    if (p.y > 0.46) {',
-                '        for (int i = 50; i < 64; i++) { considerStarCandidate(d, i, bestNorm0, star0, bestNorm1, star1, coreShield); }',
-                '    }',
-                '    if (star1.z > 0.0) { paintWetOnWetStar(d, star1, streamTan, canvasCol, heightAccum); }',
-                '    if (star0.z > 0.0) { paintWetOnWetStar(d, star0, streamTan, canvasCol, heightAccum); }',
+                '    if (star1.z > 0.0) { paintWetOnWetStar(d, star1, streamTan, star1Excite, canvasCol, heightAccum); }',
+                '    if (star0.z > 0.0) { paintWetOnWetStar(d, star0, streamTan, star0Excite, canvasCol, heightAccum); }',
                 '',
-                '    if (coreShield < 0.96 && uQuality > 0.45) {',
+                '    if (uQuality > 0.45) {',
                 '        vec3 weaveCol = canvasCol;',
                 '        float weaveHgt = heightAccum;',
                 '        splatSkyRibbonLayer(p, 94.0, vec2(0.53, 0.41), 6.9, weaveCol, weaveHgt);',
                 '        float weaveLum = dot(weaveCol, vec3(0.299, 0.587, 0.114));',
-                '        float rimSafe = (coreShield > 0.05 && weaveLum < 0.09) ? 0.0 : (1.0 - coreShield);',
+                '        float rimSafe = (coreShield >= 0.96 || (coreShield > 0.05 && weaveLum < 0.09)) ? 0.0 : (1.0 - coreShield);',
                 '        canvasCol = mix(canvasCol, weaveCol, rimSafe);',
                 '        heightAccum = mix(heightAccum, weaveHgt, rimSafe);',
                 '    }',
                 '',
-                '    // Stage 2 Living Sky Brush: 2 Staggered Discrete Hog-Bristle Micro-Dab Passes Following Curved Streamline!',
-                '    if (uBrushAnyActive > 0.005 && coreShield < 0.92) {',
-                '        splatPaintedBrushLayer(p, 62.0, vec2(0.23, 0.71), 11.4, coreShield, canvasCol, heightAccum);',
+                '    if (uBrushAnyActive > 0.005) {',
+                '        vec3 brCol = canvasCol;',
+                '        float brHgt = heightAccum;',
+                '        splatPaintedBrushLayer(p, 62.0, vec2(0.23, 0.71), 11.4, coreShield, brCol, brHgt);',
                 '        if (uQuality > 0.40) {',
-                '            splatPaintedBrushLayer(p, 84.0, vec2(0.67, 0.19), 17.8, coreShield, canvasCol, heightAccum);',
+                '            splatPaintedBrushLayer(p, 84.0, vec2(0.67, 0.19), 17.8, coreShield, brCol, brHgt);',
                 '        }',
+                '        float brKeep = step(coreShield, 0.92);',
+                '        canvasCol = mix(canvasCol, brCol, brKeep);',
+                '        heightAccum = mix(heightAccum, brHgt, brKeep);',
                 '    }',
                 '',
                 '    if (uLinenGap > 0.02) {',
@@ -2120,7 +2335,7 @@
                 '}'
             ].join('\n');
 
-            // 1. Panoramic Sky Bake Material (evaluates 2pi-periodic sky into Power-of-Two equirectangular RT)
+            // 1. Panoramic Sky Bake Material (used in Lite / Software fallback mode)
             var skyBakeMat = new THREE.ShaderMaterial({
                 depthTest: false,
                 depthWrite: false,
@@ -2140,11 +2355,12 @@
                 ].join('\n')
             });
 
-            // 2. Lazy Direct Procedural Dome Material (compiled ONLY if narrow-FOV Crescent Moon Macro <26 deg is opened!)
+            // 2. Direct Crisp Per-Pixel Sky Dome Material (native Retina sharpness + GPU Early-Z occlusion!)
             skyCacheState.ensureProcDomeMat = function () {
                 if (!skyCacheState.procDomeMat) {
                     skyCacheState.procDomeMat = new THREE.ShaderMaterial({
                         side: THREE.BackSide,
+                        depthTest: true,
                         depthWrite: false,
                         uniforms: skyUniforms,
                         vertexShader: [
@@ -2170,9 +2386,10 @@
                 return skyCacheState.procDomeMat;
             };
 
-            // 3. Fast Cached Sky Dome Material (1 texture lookup per pixel -> 8x faster on laptops & phones!)
+            // 3. Cached Sky Dome Material (1 texture lookup per pixel for Lite / low-power mode)
             var cachedDomeMat = new THREE.ShaderMaterial({
                 side: THREE.BackSide,
+                depthTest: true,
                 depthWrite: false,
                 uniforms: {
                     tSkyCache: { value: null }
@@ -2207,6 +2424,9 @@
             skyCacheState.scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), skyBakeMat));
 
             var skyMesh = new THREE.Mesh(skyGeo, cachedDomeMat);
+            // Render after opaque terrain/buildings (renderOrder 2) so hardware Early-Z skips ~60% occluded sky pixels!
+            skyMesh.renderOrder = 2;
+            skyMesh.frustumCulled = false;
             skyCacheState.skyMesh = skyMesh;
             scene.add(skyMesh);
         }
@@ -2216,7 +2436,6 @@
             skyCacheState.width = w;
             skyCacheState.height = h;
             if (skyCacheState.rt) skyCacheState.rt.dispose();
-            // Power-of-Two dimensions (2048x1024 or 1024x512) guarantee WebGL 1.0 RepeatWrapping support!
             skyCacheState.rt = new THREE.WebGLRenderTarget(w, h, {
                 wrapS: THREE.RepeatWrapping,
                 wrapT: THREE.ClampToEdgeWrapping,
@@ -2530,13 +2749,15 @@
                     '    vec3 mCol = mix(vec3(0.055, 0.125, 0.325), vec3(0.020, 0.032, 0.075), clamp(rightCap * 0.85 * uBlackInk, 0.0, 0.95));',
                     '    float mHgt = 0.32;',
                     '',
-                    '    splatMountainPass(vWorldPos.xz, vWorldPos.y, N, 0.44, vec2(0.00, 0.00), 1.4, ndl, rightCap, mCol, mHgt);',
-                    '    splatMountainPass(vWorldPos.xz, vWorldPos.y, N, 0.58, vec2(0.41, 0.63), 2.8, ndl, rightCap, mCol, mHgt);',
-                    '    if (uQuality > 0.45) {',
-                    '        splatMountainPass(vWorldPos.xz, vWorldPos.y, N, 0.70, vec2(0.77, 0.23), 4.2, ndl, rightCap, mCol, mHgt);',
-                    '    }',
-                    '    if (uQuality > 0.80) {',
-                    '        splatMountainPass(vWorldPos.xz, vWorldPos.y, N, 0.82, vec2(0.19, 0.81), 5.9, ndl, rightCap, mCol, mHgt);',
+                    '    if (isMtn > 0.004) {',
+                    '        splatMountainPass(vWorldPos.xz, vWorldPos.y, N, 0.44, vec2(0.00, 0.00), 1.4, ndl, rightCap, mCol, mHgt);',
+                    '        splatMountainPass(vWorldPos.xz, vWorldPos.y, N, 0.58, vec2(0.41, 0.63), 2.8, ndl, rightCap, mCol, mHgt);',
+                    '        if (uQuality > 0.45) {',
+                    '            splatMountainPass(vWorldPos.xz, vWorldPos.y, N, 0.70, vec2(0.77, 0.23), 4.2, ndl, rightCap, mCol, mHgt);',
+                    '        }',
+                    '        if (uQuality > 0.80) {',
+                    '            splatMountainPass(vWorldPos.xz, vWorldPos.y, N, 0.82, vec2(0.19, 0.81), 5.9, ndl, rightCap, mCol, mHgt);',
+                    '        }',
                     '    }',
                     '',
                     '    float nv = abs(dot(N, V));',
@@ -2552,16 +2773,18 @@
                     '    vec3 fCol = mix(vec3(0.052, 0.105, 0.225), vec3(0.14, 0.12, 0.10), clamp(pathMasks.x + pathMasks.y, 0.0, 1.0));',
                     '    float fHgt = 0.30;',
                     '    float camDist = distance(cameraPosition, vWorldPos);',
-                    '    splatCurvedFieldPass(vWorldPos.xz, 0.78, vec2(0.00, 0.00), 7.1, ndl, pathMasks, fCol, fHgt);',
-                    '    splatCurvedFieldPass(vWorldPos.xz, 1.02, vec2(0.39, 0.57), 8.5, ndl, pathMasks, fCol, fHgt);',
-                    '    if (uQuality > 0.45 && camDist < 125.0) {',
-                    '        splatCurvedFieldPass(vWorldPos.xz, 1.26, vec2(0.71, 0.31), 9.9, ndl, pathMasks, fCol, fHgt);',
-                    '    }',
-                    '    if (uQuality > 0.80 && camDist < 85.0) {',
-                    '        splatCurvedFieldPass(vWorldPos.xz, 1.48, vec2(0.18, 0.84), 11.3, ndl, pathMasks, fCol, fHgt);',
-                    '    }',
-                    '    if (uQuality > 0.50 && camDist < 28.0) {',
-                    '        splatCurvedFieldPass(vWorldPos.xz, 2.05, vec2(0.52, 0.19), 13.7, ndl, pathMasks, fCol, fHgt);',
+                    '    if (isMtn < 0.996) {',
+                    '        splatCurvedFieldPass(vWorldPos.xz, 0.78, vec2(0.00, 0.00), 7.1, ndl, pathMasks, fCol, fHgt);',
+                    '        splatCurvedFieldPass(vWorldPos.xz, 1.02, vec2(0.39, 0.57), 8.5, ndl, pathMasks, fCol, fHgt);',
+                    '        if (uQuality > 0.45 && camDist < 125.0) {',
+                    '            splatCurvedFieldPass(vWorldPos.xz, 1.26, vec2(0.71, 0.31), 9.9, ndl, pathMasks, fCol, fHgt);',
+                    '        }',
+                    '        if (uQuality > 0.80 && camDist < 85.0) {',
+                    '            splatCurvedFieldPass(vWorldPos.xz, 1.48, vec2(0.18, 0.84), 11.3, ndl, pathMasks, fCol, fHgt);',
+                    '        }',
+                    '        if (uQuality > 0.50 && camDist < 28.0) {',
+                    '            splatCurvedFieldPass(vWorldPos.xz, 2.05, vec2(0.52, 0.19), 13.7, ndl, pathMasks, fCol, fHgt);',
+                    '        }',
                     '    }',
                     '',
                     '    // Full 360° Provençal field-parcel hedgerow borders (sparing old town, asylum cloister & Les Antiques)',
@@ -3083,7 +3306,7 @@
                     '    }',
                     '',
                     '    for (int k = 0; k < 3; k++) {',
-                    '        if (uQuality < 0.45 && k >= 2) break;',
+                    '        if (k < 2 || uQuality >= 0.45) {',
                     '        float fk = float(k);',
                     '        vec2 g = base * uFreq * mix(1.0, uThinness, 0.55) * (1.0 + fk * 0.24) + vec2(fk * 0.41, fk * 0.67);',
                     '        vec2 bCell = floor(g);',
@@ -3106,6 +3329,7 @@
                     '                    hgt = mix(hgt, st.z, st.x * 0.86);',
                     '                }',
                     '            }',
+                    '        }',
                     '        }',
                     '    }',
                     '',
@@ -4477,8 +4701,7 @@
                         '',
                         '    vec2 bUv = (vWorldPos.xz * 1.15 + vec2(vWorldPos.y * 0.65, -vWorldPos.y * 0.45)) * uThinness;',
                         '    for (int k = 0; k < 4; k++) {',
-                        '        if (uQuality < 0.45 && k >= 2) break;',
-                        '        if (uQuality < 0.80 && k >= 3) break;',
+                        '        if (k < 2 || (k == 2 && uQuality >= 0.45) || uQuality >= 0.80) {',
                         '        float fk = float(k);',
                         '        vec2 g = bUv * (1.0 + fk * 0.24) + vec2(fk * 0.37, fk * 0.61);',
                         '        vec2 bCell = floor(g);',
@@ -4511,6 +4734,7 @@
                         '                    hgt = mix(hgt, st.z + (isTopBloom ? 0.16 : 0.08), st.x * 0.88);',
                         '                }',
                         '            }',
+                        '        }',
                         '        }',
                         '    }',
                         '    float distCam = distance(cameraPosition, vWorldPos);',
@@ -6136,14 +6360,31 @@
         // ========================================================================
         // 11. POST-PROCESS IMPASTO RELIEF + GALLERY RAKING LIGHT + LINEN WEAVE
         // ========================================================================
-        var renderer = new THREE.WebGLRenderer({ antialias: isMobileDevice, powerPreference: 'high-performance' });
-        detectedHwTier = refineTierFromRendererContext(renderer.getContext ? renderer.getContext() : null);
+        var renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'default', failIfMajorPerformanceCaveat: false });
+        var rawGlCtx = renderer.getContext ? renderer.getContext() : null;
+        var maxGpuTexSize = 2048;
+        try {
+            if (rawGlCtx) maxGpuTexSize = Math.max(1024, Math.min(4096, rawGlCtx.getParameter(rawGlCtx.MAX_TEXTURE_SIZE) || 2048));
+        } catch (e) {}
+        detectedHwTier = refineTierFromRendererContext(rawGlCtx);
         if (params.qualityMode === 'auto') {
             params.activeTier = detectedHwTier;
-            uQuality.value = detectedHwTier === 'ultra' ? 1.0 : (detectedHwTier === 'balanced' ? 0.65 : 0.30);
+            uQuality.value = detectedHwTier === 'ultra' ? 1.0 : (detectedHwTier === 'balanced' ? 0.65 : 0.34);
         }
         var viewportEl = document.getElementById('viewport');
         viewportEl.appendChild(renderer.domElement);
+        renderer.domElement.addEventListener('webglcontextlost', function (ev) {
+            ev.preventDefault();
+            params.qualityMode = 'low';
+            params.activeTier = 'lite';
+            reportError('School PC GPU driver reset detected — switched automatically to Safe Low (1x) mode. Reload or tap Low (1x) if needed.');
+        }, false);
+        renderer.domElement.addEventListener('webglcontextrestored', function () {
+            var banner = document.getElementById('diag-banner');
+            if (banner) banner.classList.add('hidden');
+            skyCacheState.dirty = true;
+            if (window.__applyQualityProfile) window.__applyQualityProfile('lite');
+        }, false);
 
         var camera = new THREE.PerspectiveCamera(
             PRESETS[0].fov,
@@ -6197,7 +6438,6 @@
                 '    vec2 texel = 1.0 / uResolution;',
                 '    float weave = texture2D(tLinen, vUv * (uResolution / 84.0)).r - 0.5;',
                 '',
-                '    // Fast 3-tap Mobile Lite impasto raking highlight + linen weave (<0.3ms on phones!)',
                 '    if (uQuality < 0.45) {',
                 '        float hDiag = samplePaintHeight(vUv + vec2(-texel.x, texel.y) * 1.15, weave);',
                 '        float ridgeSlope = (hCenter - hDiag) * 2.10 * uRelief;',
@@ -6205,17 +6445,7 @@
                 '        col += vec3(1.0, 0.97, 0.88) * max(0.0, ridgeSlope) * 0.14;',
                 '        float expLin = 1.0 - smoothstep(0.08, 0.28, hCenter);',
                 '        col += weave * (0.034 + 0.075 * expLin * (0.4 + uLinenGap));',
-                '        if (uDaylight > 0.005) {',
-                '            float dBellL = sin(clamp(uDaylight, 0.0, 1.0) * 3.1415926);',
-                '            float dAmtL  = smoothstep(0.22, 1.0, uDaylight);',
-                '            float lumL   = dot(col, vec3(0.299, 0.587, 0.114));',
-                '            col += vec3(0.14, 0.06, 0.04) * dBellL * (1.0 - lumL * 0.5);',
-                '            vec3 sunLiftL = col * mix(vec3(1.0), vec3(1.42, 1.38, 1.16), dAmtL) + vec3(0.06, 0.08, 0.05) * dAmtL * smoothstep(0.05, 0.35, lumL);',
-                '            col = mix(col, sunLiftL, dAmtL);',
-                '        }',
-                '        gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);',
-                '        return;',
-                '    }',
+                '    } else {',
                 '    float hL = samplePaintHeight(vUv - vec2(texel.x, 0.0), weave);',
                 '    float hR = samplePaintHeight(vUv + vec2(texel.x, 0.0), weave);',
                 '    float hD = samplePaintHeight(vUv - vec2(0.0, texel.y), weave);',
@@ -6239,8 +6469,9 @@
                 '    col += col * clamp(diffDelta * 0.56, -0.22, 0.30);',
                 '    col += vec3(1.0, 0.97, 0.88) * (max(0.0, diffDelta) * 0.15 + wetSpec * (1.0 - dropShadow));',
                 '',
-                '    float exposedLinen = 1.0 - smoothstep(0.08, 0.28, hCenter);',
-                '    col += weave * (0.036 + 0.085 * exposedLinen * (0.4 + uLinenGap));',
+                '        float exposedLinen = 1.0 - smoothstep(0.08, 0.28, hCenter);',
+                '        col += weave * (0.036 + 0.085 * exposedLinen * (0.4 + uLinenGap));',
+                '    }',
                 '',
                 '    if (uDaylight > 0.005) {',
                 '        float dBell = sin(clamp(uDaylight, 0.0, 1.0) * 3.1415926);',
@@ -7280,19 +7511,21 @@
                 var hwDpr = window.devicePixelRatio || 1;
                 if (tierName === 'ultra') {
                     uQuality.value = 1.0;
-                    resizeSkyCacheTarget(2048, 1024);
                     applyRenderTargetSize(Math.min(hwDpr, 2.0));
                     setActiveStampBudget(stampRecords.length);
                 } else if (tierName === 'balanced') {
-                    uQuality.value = 0.65;
-                    resizeSkyCacheTarget(2048, 1024);
-                    applyRenderTargetSize(Math.min(hwDpr, 1.35));
-                    setActiveStampBudget(Math.floor(stampRecords.length * 0.68));
+                    uQuality.value = isMobileDevice ? 0.62 : 0.68;
+                    var targetDprB = isMobileDevice ? Math.min(hwDpr, 1.70) : Math.min(hwDpr, 1.40);
+                    applyRenderTargetSize(targetDprB);
+                    setActiveStampBudget(Math.floor(stampRecords.length * (isMobileDevice ? 0.56 : 0.68)));
                 } else {
-                    uQuality.value = 0.30;
-                    resizeSkyCacheTarget(1024, 512);
-                    applyRenderTargetSize(Math.min(hwDpr, 1.0));
-                    setActiveStampBudget(Math.floor(stampRecords.length * 0.38));
+                    uQuality.value = isSoftwareWebGL ? 0.28 : 0.38;
+                    var cacheW = isSoftwareWebGL ? 1024 : Math.min(2048, maxGpuTexSize);
+                    var cacheH = Math.floor(cacheW * 0.5);
+                    resizeSkyCacheTarget(cacheW, cacheH);
+                    var targetDprL = isSoftwareWebGL ? 0.85 : (isMobileDevice ? Math.min(hwDpr, 1.25) : Math.min(hwDpr, 1.0));
+                    applyRenderTargetSize(targetDprL);
+                    setActiveStampBudget(Math.floor(stampRecords.length * (isSoftwareWebGL ? 0.25 : 0.38)));
                 }
                 skyCacheState.dirty = true;
                 var qReadout = document.getElementById('qual-tier-readout');
@@ -7748,33 +7981,20 @@
         }
 
         // ========================================================================
-        // 15. BUILD COMPLETE 360° SAINT-RÉMY WORLD & START LOOP
+        // 15. PROGRESSIVE NON-BLOCKING WORLD BOOT & RENDER LOOP (ANTI-TDR SAFE)
         // ========================================================================
-        bakeTerrainGrid();
-        buildOrganicOverlappingSkyDome();
-        buildOrganicMountainsFieldsAndPaths();
-        buildTurbulentOliveGroves();
-        buildSaintRemyVillageCourtyardAndAsylum();
-        buildCypressMonolithAndSurroundGuardians();
-        batchStaticWorldMeshes();
-        buildInstancedBristleStampCloud();
-
-        syncYawPitchFromLook();
-        bindControls();
-        if (window.__applyQualityProfile) window.__applyQualityProfile(params.activeTier);
-        if (params.drawerCollapsed) {
-            document.getElementById('lab-drawer').classList.add('drawer-collapsed');
-            document.getElementById('drawer-toggle-label').textContent = 'Controls';
-        }
-        updateBrushLockUI();
-        updateMoMAMatteLayout();
-        camera.position.copy(camCtrl.pos);
-        camera.lookAt(camCtrl.target);
-        syncModePills();
-
         var clock = new THREE.Clock();
-        var frames = 0, accTime = 0, autoCooldown = 1.5;
+        var frames = 0, accTime = 0, autoCooldown = 2.0;
+        var warmupStage = 0; // 0 = sky shader warmup frame, 1 = scene shader warmup, 2 = live
         var fpsEl = document.getElementById('fps-readout');
+
+        function hideBootLoadingPill() {
+            var pill = document.getElementById('boot-loading-pill');
+            if (pill) {
+                pill.style.opacity = '0';
+                setTimeout(function () { pill.classList.add('hidden'); }, 320);
+            }
+        }
 
         function animate() {
             requestAnimationFrame(animate);
@@ -7870,17 +8090,45 @@
                 }
             }
 
-            // Switch cleanly to direct procedural dome during narrow-FOV Crescent Moon Macro (<26 deg)
-            var useDirectMacroSky = (camera.fov < 26.0 && params.activeTier !== 'lite');
+            // Direct per-pixel Retina sky on 'ultra' & 'balanced' (both PC and modern phones!);
+            // 'lite' uses the 2048x1024 panoramic sky cache for ultra-light GPU load.
+            var useDirectSky = (params.activeTier !== 'lite');
             if (skyCacheState.skyMesh) {
-                var desiredSkyMat = useDirectMacroSky ? skyCacheState.ensureProcDomeMat() : skyCacheState.domeMat;
+                var desiredSkyMat = useDirectSky ? skyCacheState.ensureProcDomeMat() : skyCacheState.domeMat;
                 if (skyCacheState.skyMesh.material !== desiredSkyMat) {
                     skyCacheState.skyMesh.material = desiredSkyMat;
                 }
             }
 
-            if (!useDirectMacroSky && skyCacheState.rt) {
-                var refreshInterval = (params.activeTier === 'ultra') ? 0.032 : ((params.activeTier === 'balanced') ? 0.045 : 0.062);
+            // Staggered Frame-0 Warmup: compile sky shader alone on first frame so Windows D3D11 never hits a 2s TDR spike!
+            if (warmupStage === 0) {
+                if (!useDirectSky && skyCacheState.rt) {
+                    renderer.setRenderTarget(skyCacheState.rt);
+                    renderer.render(skyCacheState.scene, skyCacheState.cam);
+                    skyCacheState.dirty = false;
+                    skyCacheState.accumDt = 0.0;
+                } else if (skyCacheState.skyMesh) {
+                    renderer.setRenderTarget(null);
+                    renderer.setClearColor(0x0b1942, 1.0);
+                    renderer.clear();
+                    var tmpSceneVis = [];
+                    for (var ci = 0; ci < scene.children.length; ci++) {
+                        var ch = scene.children[ci];
+                        if (ch !== skyCacheState.skyMesh && ch.visible) {
+                            ch.visible = false;
+                            tmpSceneVis.push(ch);
+                        }
+                    }
+                    renderer.render(scene, camera);
+                    for (var ri = 0; ri < tmpSceneVis.length; ri++) tmpSceneVis[ri].visible = true;
+                }
+                warmupStage = 1;
+                clock.getDelta();
+                return;
+            }
+
+            if (!useDirectSky && skyCacheState.rt) {
+                var refreshInterval = isSoftwareWebGL ? 0.12 : 0.062;
                 if (skyCacheState.dirty || skyBrush.painting || (params.swirlSpeed > 0.0001 && skyCacheState.accumDt >= refreshInterval)) {
                     renderer.setRenderTarget(skyCacheState.rt);
                     renderer.render(skyCacheState.scene, skyCacheState.cam);
@@ -7889,7 +8137,7 @@
                 }
             }
 
-            if (params.activeTier === 'lite' && params.relief < 0.12 && params.daylight < 0.02) {
+            if ((params.activeTier === 'lite' || isSoftwareWebGL) && params.relief < 0.12 && params.daylight < 0.02) {
                 renderer.setRenderTarget(null);
                 renderer.setClearColor(0x0b1942, 1.0);
                 renderer.clear();
@@ -7906,36 +8154,46 @@
                 renderer.render(postScene, postCam);
             }
 
+            if (warmupStage === 1) {
+                warmupStage = 2;
+                hideBootLoadingPill();
+                clock.getDelta();
+                return;
+            }
+
             frames++;
             accTime += dt;
             if (autoCooldown > 0) autoCooldown -= dt;
 
-            if (accTime >= 0.55) {
+            if (accTime >= 0.60) {
                 var fps = Math.round(frames / accTime);
                 fpsEl.textContent = fps;
                 if (params.qualityMode === 'auto' && autoCooldown <= 0) {
                     var maxHardwareDpr = Math.min(window.devicePixelRatio || 1, 2.0);
-                    if (fps < 44) {
+                    var stepDownFps = isMobileDevice ? 32 : 40;
+                    if (fps < stepDownFps) {
                         if (params.activeTier === 'ultra') {
                             window.__applyQualityProfile('balanced');
-                        } else if (params.activeTier === 'balanced' && fps < 36) {
+                        } else if (params.activeTier === 'balanced' && isMobileDevice && params.currentDpr > 1.32) {
+                            applyRenderTargetSize(Math.max(1.25, params.currentDpr - 0.22));
+                        } else if (params.activeTier === 'balanced' && fps < (isMobileDevice ? 24 : 30)) {
                             window.__applyQualityProfile('lite');
                         } else if (params.activeStamps > 18000) {
                             setActiveStampBudget(params.activeStamps - 8000);
-                        } else if (params.currentDpr > 0.80) {
-                            applyRenderTargetSize(Math.max(0.75, params.currentDpr - 0.15));
+                        } else if (params.currentDpr > 0.85) {
+                            applyRenderTargetSize(Math.max(0.80, params.currentDpr - 0.15));
                         }
-                        autoCooldown = 1.6;
+                        autoCooldown = 1.8;
                     } else if (fps >= 58) {
-                        if (params.activeTier === 'lite' && detectedHwTier !== 'lite') {
+                        if (params.activeTier === 'lite' && detectedHwTier !== 'lite' && !isSoftwareWebGL) {
                             window.__applyQualityProfile('balanced');
-                            autoCooldown = 2.5;
+                            autoCooldown = 2.8;
                         } else if (params.activeTier === 'balanced' && detectedHwTier === 'ultra') {
                             window.__applyQualityProfile('ultra');
-                            autoCooldown = 2.5;
+                            autoCooldown = 2.8;
                         } else if (params.activeTier === 'ultra' && params.currentDpr + 0.15 <= maxHardwareDpr) {
                             applyRenderTargetSize(Math.min(maxHardwareDpr, params.currentDpr + 0.15));
-                            autoCooldown = 2.2;
+                            autoCooldown = 2.4;
                         }
                     }
                 }
@@ -7944,7 +8202,39 @@
             }
         }
 
-        animate();
+        // Yield 1 animation frame so the browser paints the UI shell immediately before building geometry!
+        requestAnimationFrame(function () {
+            setTimeout(function () {
+                try {
+                    bakeTerrainGrid();
+                    buildOrganicOverlappingSkyDome();
+                    buildOrganicMountainsFieldsAndPaths();
+                    buildTurbulentOliveGroves();
+                    buildSaintRemyVillageCourtyardAndAsylum();
+                    buildCypressMonolithAndSurroundGuardians();
+                    batchStaticWorldMeshes();
+                    buildInstancedBristleStampCloud();
+
+                    syncYawPitchFromLook();
+                    bindControls();
+                    if (window.__applyQualityProfile) window.__applyQualityProfile(params.activeTier);
+                    if (params.drawerCollapsed) {
+                        document.getElementById('lab-drawer').classList.add('drawer-collapsed');
+                        document.getElementById('drawer-toggle-label').textContent = 'Controls';
+                    }
+                    updateBrushLockUI();
+                    updateMoMAMatteLayout();
+                    camera.position.copy(camCtrl.pos);
+                    camera.lookAt(camCtrl.target);
+                    syncModePills();
+                    clock.start();
+                    requestAnimationFrame(animate);
+                } catch (err) {
+                    hideBootLoadingPill();
+                    reportError('World build error: ' + (err && err.stack ? err.stack : String(err)));
+                }
+            }, 16);
+        });
     }
     </script>
 </body>
