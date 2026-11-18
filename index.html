@@ -316,8 +316,12 @@
         </div>
 
         <div class="flex items-center gap-1.5 pointer-events-auto shrink-0">
-            <button id="btn-audio" title="Synthesized Soundscape (Key V)" class="mode-pill rounded-xl px-2.5 py-1.5 sm:py-2 text-[11px] sm:text-xs font-semibold text-amber-200">
+            <button id="btn-audio" title="Classical Music &amp; Soundscape (Key V)" class="mode-pill rounded-xl px-2.5 py-1.5 sm:py-2 text-[11px] sm:text-xs font-semibold text-amber-200 flex items-center gap-1.5">
+                <span id="audio-dot" class="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0"></span>
                 <span id="audio-btn-label">Sound: Off</span>
+            </button>
+            <button id="btn-next-track" title="Next Classical Piece (Key N)" class="mode-pill rounded-xl px-2 py-1.5 sm:py-2 text-[11px] sm:text-xs font-semibold text-cyan-100" aria-label="Next Classical Piece">
+                &#9835;<span class="hidden lg:inline ml-1">Next</span>
             </button>
             <button id="btn-freeze" title="Freeze Still Painting (Key F)" class="studio-glass hover:border-amber-300 active:scale-95 transition rounded-xl px-2.5 py-1.5 sm:py-2 text-[11px] sm:text-xs font-semibold text-amber-100 flex items-center gap-1.5">
                 <span id="freeze-dot" class="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
@@ -356,8 +360,9 @@
     <!-- Tabbed Responsive Control Drawer (Side Panel on Desktop/Landscape, Bottom Sheet on Portrait Phone) -->
     <aside id="lab-drawer" class="fixed z-20 overflow-y-auto studio-glass rounded-2xl p-3 sm:p-3.5 flex flex-col gap-2.5 transition-transform duration-300">
         <!-- Drawer Tabs -->
-        <div class="grid grid-cols-3 gap-1 bg-slate-950/60 p-1 rounded-xl border border-amber-200/15 shrink-0">
+        <div class="grid grid-cols-4 gap-1 bg-slate-950/60 p-1 rounded-xl border border-amber-200/15 shrink-0">
             <button data-dtab="explore" class="drawer-tab-btn active rounded-lg py-1 text-[11px] font-semibold">Explore</button>
+            <button data-dtab="music" class="drawer-tab-btn rounded-lg py-1 text-[11px] font-semibold">Music</button>
             <button data-dtab="paint" class="drawer-tab-btn rounded-lg py-1 text-[11px] font-semibold">Paint</button>
             <button data-dtab="quality" class="drawer-tab-btn rounded-lg py-1 text-[11px] font-semibold">Quality</button>
         </div>
@@ -415,7 +420,66 @@
             </div>
         </div>
 
-        <!-- Tab 2: Paint & Pigment Sliders -->
+        <!-- Tab 2: 1889 Classical Nocturne Music & Soundscape -->
+        <div id="dtab-music" class="drawer-tab-panel hidden flex-col gap-2.5 text-xs">
+            <div class="bg-slate-950/60 border border-amber-300/25 rounded-xl p-2.5 flex flex-col gap-2">
+                <div class="flex items-center justify-between gap-2">
+                    <div class="min-w-0">
+                        <div class="text-[9px] uppercase tracking-wider text-cyan-200/80 font-semibold">1889 Nocturne Chamber Hall</div>
+                        <div id="music-now-playing" class="font-serif-title text-xs font-bold text-amber-200 truncate">Satie &mdash; Gymnop&eacute;die No. 1</div>
+                        <div id="music-now-sub" class="text-[10px] text-cyan-100/75 truncate">Paris, 1888 &middot; Felt Piano &amp; Strings</div>
+                    </div>
+                    <button id="btn-music-play" class="mode-pill rounded-xl px-2.5 py-1.5 text-[11px] font-semibold text-amber-200 shrink-0">
+                        Play (V)
+                    </button>
+                </div>
+                <div class="flex items-center justify-between gap-1.5 pt-1 border-t border-amber-200/10">
+                    <button id="btn-music-prev" class="mode-pill rounded-lg px-2 py-1 text-[10px] font-semibold text-cyan-100">&larr; Prev</button>
+                    <button id="btn-music-cycle" class="mode-pill active rounded-lg px-2.5 py-1 text-[10px] font-semibold text-amber-100 flex-1 text-center">Cycle All 3</button>
+                    <button id="btn-music-next" class="mode-pill rounded-lg px-2 py-1 text-[10px] font-semibold text-cyan-100">Next (N) &rarr;</button>
+                </div>
+            </div>
+
+            <div>
+                <div class="flex items-center justify-between mb-1.5">
+                    <span class="text-[10px] uppercase tracking-wider font-bold text-amber-200">Select Classical Piece</span>
+                    <span class="text-[10px] text-cyan-200/75">Web Audio Concert Synth</span>
+                </div>
+                <div class="grid grid-cols-1 gap-1.5 text-xs">
+                    <button data-track="0" class="music-track-btn preset-btn active rounded-xl px-2.5 py-1.5 text-left flex items-center justify-between">
+                        <span class="font-semibold">1. Gymnop&eacute;die No. 1</span>
+                        <span class="text-[10px] text-amber-300">Satie &middot; 1888</span>
+                    </button>
+                    <button data-track="1" class="music-track-btn preset-btn rounded-xl px-2.5 py-1.5 text-left flex items-center justify-between">
+                        <span class="font-semibold">2. Clair de Lune</span>
+                        <span class="text-[10px] text-cyan-200/85">Debussy &middot; 1890</span>
+                    </button>
+                    <button data-track="2" class="music-track-btn preset-btn rounded-xl px-2.5 py-1.5 text-left flex items-center justify-between">
+                        <span class="font-semibold">3. Nocturne Op. 9 No. 2</span>
+                        <span class="text-[10px] text-cyan-200/85">Chopin &middot; E&flat;</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-2 pt-0.5">
+                <div>
+                    <div class="flex justify-between text-[11px] mb-0.5">
+                        <span class="text-cyan-100">Classical Piano &amp; Strings</span>
+                        <span id="val-music-vol" class="font-mono text-amber-300">78%</span>
+                    </div>
+                    <input id="slider-music-vol" type="range" min="0.00" max="1.00" step="0.02" value="0.78" />
+                </div>
+                <div>
+                    <div class="flex justify-between text-[11px] mb-0.5">
+                        <span class="text-cyan-100">Saint-R&eacute;my Night Ambience</span>
+                        <span id="val-amb-vol" class="font-mono text-amber-300">36%</span>
+                    </div>
+                    <input id="slider-amb-vol" type="range" min="0.00" max="1.00" step="0.02" value="0.36" />
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Paint & Pigment Sliders -->
         <div id="dtab-paint" class="drawer-tab-panel hidden flex-col gap-2 text-xs">
             <div class="flex items-center justify-between">
                 <span class="text-[10px] uppercase tracking-wider font-bold text-amber-200">1889 Brushwork &amp; Pigment</span>
@@ -641,6 +705,10 @@
             activeStamps: isMobileDevice ? 38000 : 46000,
             audioOn: false,
             userMuted: false,
+            musicTrack: 0,
+            musicAutoCycle: true,
+            musicVol: 0.78,
+            ambienceVol: 0.36,
             skyBrushMode: false,
             skyBrushLocked: false,
             skyBrushPalette: 'gold' // 'gold' | 'turq' | 'cobalt' | 'comb'
@@ -728,10 +796,10 @@
         //   - Unlimited locked curves & swirls across all 360° (never overwrites old strokes!)
         //   - Sub-stepped smooth polyline stamping (zero gaps on fast drags)
         //   - O(1) single texture lookup in GLSL (zero uniform-array loops!)
+        // Lambert Azimuthal Equal-Area Dome-Disk Sky Brush Field (256x256 POT RGBA8 — zero pole pinch at 90° ceiling!)
+        var DOME_DISK_EXTENT = 1.14; // Covers d.y = +1.0 (center) down to d.y = -0.30 (horizon skirt) seamlessly!
         var BRUSH_MAP_W = 256;
-        var BRUSH_MAP_H = 128;
-        var BRUSH_EL_MIN = -0.24;
-        var BRUSH_EL_MAX = 1.565;
+        var BRUSH_MAP_H = 256;
         var brushFieldDirX = new Float32Array(BRUSH_MAP_W * BRUSH_MAP_H);
         var brushFieldDirY = new Float32Array(BRUSH_MAP_W * BRUSH_MAP_H);
         var brushFieldStr  = new Float32Array(BRUSH_MAP_W * BRUSH_MAP_H);
@@ -739,7 +807,8 @@
         var brushMapBytes  = new Uint8Array(BRUSH_MAP_W * BRUSH_MAP_H * 4);
         for (var bmi = 0; bmi < BRUSH_MAP_W * BRUSH_MAP_H; bmi++) {
             brushFieldDirX[bmi] = 1.0;
-            brushFieldPal[bmi] = 85; // default 'gold' (85/255 ~ 0.333)
+            brushFieldDirY[bmi] = 0.0;
+            brushFieldPal[bmi] = 85;
             var bmo = bmi * 4;
             brushMapBytes[bmo]     = 255;
             brushMapBytes[bmo + 1] = 128;
@@ -747,7 +816,7 @@
             brushMapBytes[bmo + 3] = 85;
         }
         var brushMapTex = new THREE.DataTexture(brushMapBytes, BRUSH_MAP_W, BRUSH_MAP_H, THREE.RGBAFormat, THREE.UnsignedByteType);
-        brushMapTex.wrapS = THREE.RepeatWrapping;
+        brushMapTex.wrapS = THREE.ClampToEdgeWrapping;
         brushMapTex.wrapT = THREE.ClampToEdgeWrapping;
         brushMapTex.minFilter = THREE.LinearFilter;
         brushMapTex.magFilter = THREE.LinearFilter;
@@ -1203,15 +1272,33 @@
         // ========================================================================
         function buildStarAndSkyFlowTextures() {
             function hypot2(a, b) { return Math.sqrt(a * a + b * b); }
-            // 64 Impasto Stars spanning all 360 degrees, widescreen shoulders, Rhône Big Dipper & overhead alley zenith!
+            function hypot3(a, b, c) { return Math.sqrt(a * a + b * b + c * c); }
+            function smoothstepJS(e0, e1, x) {
+                var t = Math.max(0.0, Math.min(1.0, (x - e0) / (e1 - e0)));
+                return t * t * (3.0 - 2.0 * t);
+            }
+            function mistCenterJS(azVal) {
+                var fw = Math.exp(-(azVal / 0.72) * (azVal / 0.72));
+                var fd = 0.180 + 0.242 * Math.max(-0.55, Math.min(0.65, azVal));
+                var sb = 0.195 + 0.068 * Math.sin(azVal + 0.35) + 0.028 * Math.cos(azVal * 2.0 - 0.4);
+                var wv = 0.017 * Math.sin(azVal * 12.0 + 0.6) + 0.010 * Math.cos(azVal * 22.0 - 0.8);
+                return sb + (fd - sb) * fw + wv;
+            }
+            function wrapAzDelta(a, b) {
+                var d = (a - b + Math.PI) % (Math.PI * 2.0);
+                if (d < 0.0) d += Math.PI * 2.0;
+                return d - Math.PI;
+            }
+
+            // 64 Impasto Stars spanning all 360 degrees, sacred 1889 MoMA frame, & high overhead zenith canopy (up to 85.5 deg)!
             //   Chromatic types: 0 = Zinc/Indian Yellow, 1 = Luminous Venus Ivory-Gold, 2 = Rhône Citron-Chartreuse & Pale Turquoise
             var starDefs = [
-                // 0..10: Sacred 1889 MoMA Front Frame (11 stars)
+                // 0..10: Sacred 1889 MoMA Front Frame (11 stars — 100% locked!)
                 [-0.145, 0.228, 0.076, 1], [-0.378, 0.515, 0.055, 0], [-0.262, 0.425, 0.047, 0], [-0.195, 0.535, 0.039, 0],
                 [-0.112, 0.515, 0.039, 0], [-0.042, 0.495, 0.039, 0], [ 0.096, 0.502, 0.055, 0], [ 0.188, 0.392, 0.047, 0],
                 [-0.165, 0.352, 0.039, 0], [-0.398, 0.285, 0.039, 0], [-0.325, 0.252, 0.039, 0],
 
-                // 11..24: East Widescreen Shoulder + Wheat Field Sky (14 stars, az 0.590..2.135)
+                // 11..24: East Widescreen Shoulder + Wheat Field Sky (14 stars)
                 [ 0.595, 0.335, 0.046, 0], [ 0.655, 0.505, 0.054, 2], [ 0.745, 0.235, 0.039, 0], [ 0.865, 0.465, 0.056, 0],
                 [ 1.005, 0.265, 0.041, 2], [ 1.145, 0.535, 0.048, 0], [ 1.290, 0.395, 0.068, 1], [ 1.435, 0.225, 0.040, 0],
                 [ 1.575, 0.505, 0.046, 2], [ 1.725, 0.335, 0.042, 0], [ 1.875, 0.535, 0.056, 1], [ 1.995, 0.265, 0.040, 0],
@@ -1228,12 +1315,18 @@
                 [-1.420, 0.495, 0.068, 1], [-1.255, 0.345, 0.043, 2], [-1.095, 0.535, 0.048, 0], [-0.945, 0.265, 0.040, 0],
                 [-0.815, 0.465, 0.056, 1], [-0.695, 0.335, 0.042, 0], [-0.625, 0.245, 0.039, 2], [-0.565, 0.435, 0.048, 0],
 
-                // 50..63: Overhead Alley-Zenith & Milky Way Canopy (14 stars, el 0.585..1.245)
-                [ 0.045, 0.675, 0.050, 1], [-0.485, 0.645, 0.044, 2], [ 0.545, 0.635, 0.045, 0], [ 1.160, 0.725, 0.056, 1],
-                [ 1.840, 0.685, 0.044, 2], [ 2.520, 0.725, 0.049, 0], [-2.960, 0.745, 0.045, 2], [-2.180, 0.695, 0.044, 0],
-                [-1.420, 0.745, 0.056, 0], [-0.780, 0.895, 0.048, 2], [ 0.340, 0.945, 0.068, 1], [ 1.620, 0.975, 0.050, 0],
-                [-2.040, 1.035, 0.048, 2], [-0.110, 1.245, 0.060, 1]
+                // 50..63: Overhead Alley-Zenith & High Sky Ceiling Canopy (14 stars up to el = 1.485 / 85.1 deg!)
+                [ 0.045, 0.675, 0.050, 1], [-0.485, 0.645, 0.044, 2], [ 0.545, 0.635, 0.045, 0], [ 1.160, 0.745, 0.056, 1],
+                [ 1.880, 0.725, 0.046, 2], [ 2.560, 0.785, 0.050, 0], [-2.880, 0.825, 0.046, 2], [-2.050, 0.765, 0.045, 0],
+                [-1.320, 0.865, 0.056, 0], [ 0.420, 0.965, 0.064, 1],
+                // 4 Crown Ceiling Stars framing the Overhead Yin-Yang Swirl right near 90 deg Zenith!
+                [ 1.720, 1.165, 0.054, 0], [-1.850, 1.265, 0.052, 2], [ 0.680, 1.365, 0.060, 1], [-0.540, 1.485, 0.052, 0]
             ];
+
+            // Precompute 3D basis vectors for all 64 stars (100% pole-safe upRef!)
+            var starDirX = new Float32Array(64), starDirY = new Float32Array(64), starDirZ = new Float32Array(64);
+            var starRgtX = new Float32Array(64), starRgtY = new Float32Array(64), starRgtZ = new Float32Array(64);
+            var starUpX  = new Float32Array(64), starUpY  = new Float32Array(64), starUpZ  = new Float32Array(64);
 
             // 1. 64x2 Power-of-Two RGBA8 Star Metadata LUT (Row 0: 16-bit az/el; Row 1: radius/type/twinkle)
             var lutBytes = new Uint8Array(64 * 2 * 4);
@@ -1252,6 +1345,25 @@
                 lutBytes[o1 + 1] = stype === 2 ? 255 : (stype === 1 ? 128 : 0);
                 lutBytes[o1 + 2] = Math.round(((i * 37) % 64) * 3.98);
                 lutBytes[o1 + 3] = 255;
+
+                var cazS = Math.cos(az), sazS = Math.sin(az);
+                var celS = Math.cos(el), selS = Math.sin(el);
+                var cdx = sazS * celS, cdy = selS, cdz = -cazS * celS;
+                starDirX[i] = cdx; starDirY[i] = cdy; starDirZ[i] = cdz;
+                // Pole-safe upRef matches GLSL celestialTangentDelta bit-for-bit:
+                var upX = Math.abs(selS) > 0.985 ? 1.0 : 0.0;
+                var upY = Math.abs(selS) > 0.985 ? 0.0 : 1.0;
+                // cross(cDir, upRef)
+                var rx = cdy * 0.0 - cdz * upY;
+                var ry = cdz * upX - cdx * 0.0;
+                var rz = cdx * upY - cdy * upX;
+                var rl = hypot3(rx, ry, rz) || 1.0;
+                rx /= rl; ry /= rl; rz /= rl;
+                starRgtX[i] = rx; starRgtY[i] = ry; starRgtZ[i] = rz;
+                // cUp = cross(cRight, cDir)
+                starUpX[i] = ry * cdz - rz * cdy;
+                starUpY[i] = rz * cdx - rx * cdz;
+                starUpZ[i] = rx * cdy - ry * cdx;
             }
             var starLutTex = new THREE.DataTexture(lutBytes, 64, 2, THREE.RGBAFormat, THREE.UnsignedByteType);
             starLutTex.minFilter = THREE.NearestFilter;
@@ -1262,10 +1374,8 @@
             starLutTex.generateMipmaps = false;
             starLutTex.needsUpdate = true;
 
-            // 2. 256x128 O(1) Spatial Star-Candidate Cell Grid (eliminates all 64-star loops & varying-branch texture2D in GLSL!)
-            var SG_W = 256, SG_H = 128;
-            var EL_MIN = -0.24, EL_SPAN = 1.805; // -0.24 .. +1.565
-            var TWO_PI = Math.PI * 2.0;
+            // 2. 256x256 Dome-Disk O(1) Spatial Star-Candidate Cell Grid (zero pole pinch, covers zenith 90 deg seamlessly!)
+            var SG_W = 256, SG_H = 256;
             var sgBest0 = new Float32Array(SG_W * SG_H);
             var sgBest1 = new Float32Array(SG_W * SG_H);
             var sgBytes = new Uint8Array(SG_W * SG_H * 4);
@@ -1273,45 +1383,41 @@
                 sgBest0[gi] = 99.0;
                 sgBest1[gi] = 99.0;
                 var go = gi * 4;
-                sgBytes[go]     = 255; // 255 = no star0
-                sgBytes[go + 1] = 255; // 255 = no star1
+                sgBytes[go]     = 255;
+                sgBytes[go + 1] = 255;
                 sgBytes[go + 2] = 0;
                 sgBytes[go + 3] = 255;
             }
             for (var si = 0; si < starDefs.length; si++) {
-                var saz0 = starDefs[si][0], sel0 = starDefs[si][1], srad0 = starDefs[si][2];
-                var cazS = Math.cos(saz0), sazS = Math.sin(saz0);
-                var celS = Math.cos(sel0), selS = Math.sin(sel0);
-                var cDirX = sazS * celS, cDirY = selS, cDirZ = -cazS * celS;
-                // Right = normalize(cross(cDir, (0,1,0))) = normalize((-cDirZ, 0, cDirX))
-                var rLen = hypot2(cDirZ, cDirX) || 1.0;
-                var cRightX = -cDirZ / rLen, cRightZ = cDirX / rLen;
-                // Up = cross(cRight, cDir)
-                var cUpX = -cRightZ * cDirY;
-                var cUpY = cRightZ * cDirX - cRightX * cDirZ;
-                var cUpZ = cRightX * cDirY;
+                var cdxS = starDirX[si], cdyS = starDirY[si], cdzS = starDirZ[si];
+                var srad0 = starDefs[si][2];
+                var dDen = Math.sqrt(Math.max(0.08, 1.0 + cdyS));
+                var cxDisk = (cdxS / dDen) / DOME_DISK_EXTENT;
+                var cyDisk = (cdzS / dDen) / DOME_DISK_EXTENT;
+                // Bounding radius in normalized [-1,1] dome-disk coords (generous margin near horizon & zenith)
+                var diskRad = (srad0 * 1.85) / Math.max(0.32, dDen * 0.72);
+                var ix0 = Math.max(0, Math.floor(((cxDisk - diskRad) * 0.5 + 0.5) * SG_W) - 2);
+                var ix1 = Math.min(SG_W - 1, Math.ceil(((cxDisk + diskRad) * 0.5 + 0.5) * SG_W) + 2);
+                var iy0 = Math.max(0, Math.floor(((cyDisk - diskRad) * 0.5 + 0.5) * SG_H) - 2);
+                var iy1 = Math.min(SG_H - 1, Math.ceil(((cyDisk + diskRad) * 0.5 + 0.5) * SG_H) + 2);
 
-                var maxAng = srad0 * 1.65;
-                var iyMin = Math.max(0, Math.floor(((sel0 - maxAng - EL_MIN) / EL_SPAN) * SG_H) - 1);
-                var iyMax = Math.min(SG_H - 1, Math.ceil(((sel0 + maxAng - EL_MIN) / EL_SPAN) * SG_H) + 1);
-                var azHalf = (sel0 > 1.15) ? Math.PI : Math.min(Math.PI, maxAng / Math.max(0.18, Math.cos(sel0)) + 0.06);
-                var ixSpan = Math.min(SG_W, Math.ceil((azHalf * 2.0 / TWO_PI) * SG_W) + 3);
-                var ixCenter = Math.floor(((saz0 / TWO_PI) + 0.5) * SG_W);
-                var ixStart = ixCenter - Math.floor(ixSpan * 0.5);
+                for (var iy = iy0; iy <= iy1; iy++) {
+                    var dkY = (((iy + 0.5) / SG_H) * 2.0 - 1.0) * DOME_DISK_EXTENT;
+                    for (var ix = ix0; ix <= ix1; ix++) {
+                        var dkX = (((ix + 0.5) / SG_W) * 2.0 - 1.0) * DOME_DISK_EXTENT;
+                        var r2d = Math.min(1.32, dkX * dkX + dkY * dkY);
+                        var ry = 1.0 - r2d;
+                        var sFac = Math.sqrt(Math.max(0.0, 2.0 - r2d));
+                        var rx = dkX * sFac, rz = dkY * sFac;
+                        var rl3 = hypot3(rx, ry, rz) || 1.0;
+                        rx /= rl3; ry /= rl3; rz /= rl3;
 
-                for (var iy = iyMin; iy <= iyMax; iy++) {
-                    var elC = EL_MIN + ((iy + 0.5) / SG_H) * EL_SPAN;
-                    var celC = Math.cos(elC), selC = Math.sin(elC);
-                    for (var dxI = 0; dxI <= ixSpan; dxI++) {
-                        var ix = ((ixStart + dxI) % SG_W + SG_W) % SG_W;
-                        var azC = (((ix + 0.5) / SG_W) - 0.5) * TWO_PI;
-                        var rx = Math.sin(azC) * celC, ry = selC, rz = -Math.cos(azC) * celC;
-                        var dotC = rx * cDirX + ry * cDirY + rz * cDirZ;
-                        if (dotC > 0.945) {
-                            var tx = rx * cRightX + rz * cRightZ;
-                            var ty = rx * cUpX + ry * cUpY + rz * cUpZ;
+                        var dotC = rx * cdxS + ry * cdyS + rz * cdzS;
+                        if (dotC > 0.940) {
+                            var tx = rx * starRgtX[si] + ry * starRgtY[si] + rz * starRgtZ[si];
+                            var ty = rx * starUpX[si]  + ry * starUpY[si]  + rz * starUpZ[si];
                             var rNorm = hypot2(tx, ty) / (srad0 * 1.045);
-                            if (rNorm < 1.58) {
+                            if (rNorm < 1.60) {
                                 var cellIdx = iy * SG_W + ix;
                                 var bo = cellIdx * 4;
                                 if (sgBytes[bo] === si || sgBytes[bo + 1] === si) continue;
@@ -1332,242 +1438,292 @@
             var starCellGridTex = new THREE.DataTexture(sgBytes, SG_W, SG_H, THREE.RGBAFormat, THREE.UnsignedByteType);
             starCellGridTex.minFilter = THREE.NearestFilter;
             starCellGridTex.magFilter = THREE.NearestFilter;
-            starCellGridTex.wrapS = THREE.RepeatWrapping;
+            starCellGridTex.wrapS = THREE.ClampToEdgeWrapping;
             starCellGridTex.wrapT = THREE.ClampToEdgeWrapping;
             starCellGridTex.flipY = false;
             starCellGridTex.generateMipmaps = false;
             starCellGridTex.needsUpdate = true;
 
-            // 3. 1024x512 Bilinear Pre-Baked Base Sky Flow Field (eliminates 9,280 unrolled HLSL loop bodies in Chrome ANGLE!)
-            var BF_W = 512, BF_H = 256;
+            // 3. 512x512 Dome-Disk Unified 3D Sphere-Tangent Flow Field (RGB = 3D unit tangent V, A = ceiling swirl/MW weight)
+            //    Eliminates 100% of polar spoke pinching, 11.5-deg clamp discs, and ±pi seams while keeping MoMA el<0.54 exact!
+            var BF_W = 256, BF_H = 256;
             var flowVX = new Float32Array(BF_W * BF_H);
             var flowVY = new Float32Array(BF_W * BF_H);
-
-            function smoothstepJS(e0, e1, x) {
-                var t = Math.max(0.0, Math.min(1.0, (x - e0) / (e1 - e0)));
-                return t * t * (3.0 - 2.0 * t);
-            }
-            function mistCenterJS(azVal) {
-                var fw = Math.exp(-(azVal / 0.72) * (azVal / 0.72));
-                var fd = 0.180 + 0.242 * Math.max(-0.55, Math.min(0.65, azVal));
-                var sb = 0.195 + 0.068 * Math.sin(azVal + 0.35) + 0.028 * Math.cos(azVal * 2.0 - 0.4);
-                var wv = 0.017 * Math.sin(azVal * 12.0 + 0.6) + 0.010 * Math.cos(azVal * 22.0 - 0.8);
-                return sb + (fd - sb) * fw + wv;
-            }
-            function wrapAzDelta(a, b) {
-                var d = (a - b + Math.PI) % TWO_PI;
-                if (d < 0.0) d += TWO_PI;
-                return d - Math.PI;
-            }
-
-            // Precompute 1D azimuth tables so the 524K-texel loop runs in ~6ms with zero inner trig calls!
-            var azTab       = new Float32Array(BF_W);
-            var baseDirXTab = new Float32Array(BF_W);
-            var baseDirYTab = new Float32Array(BF_W);
-            var mistYTab    = new Float32Array(BF_W);
-            var mistDirXTab = new Float32Array(BF_W);
-            var mistDirYTab = new Float32Array(BF_W);
-            var rivYTab     = new Float32Array(BF_W);
-            var rivDirXTab  = new Float32Array(BF_W);
-            var rivDirYTab  = new Float32Array(BF_W);
-            var mwYTab      = new Float32Array(BF_W);
-            var mwDirXTab   = new Float32Array(BF_W);
-            var mwDirYTab   = new Float32Array(BF_W);
-
-            for (var x = 0; x < BF_W; x++) {
-                var azV = (((x + 0.5) / BF_W) - 0.5) * TWO_PI;
-                azTab[x] = azV;
-                var by = 0.17 * Math.cos(azV * 5.0 + 0.7) + 0.10 * Math.sin(azV * 2.0);
-                var bL = hypot2(1.0, by);
-                baseDirXTab[x] = 1.0 / bL; baseDirYTab[x] = by / bL;
-
-                var mY = mistCenterJS(azV);
-                var mS = (mistCenterJS(azV + 0.02) - mY) / 0.02;
-                var mL = hypot2(1.0, mS);
-                mistYTab[x] = mY; mistDirXTab[x] = 1.0 / mL; mistDirYTab[x] = mS / mL;
-
-                var rY = 0.368 + 0.076 * Math.sin(azV * 4.0 + 1.55);
-                var rS = 0.076 * 4.0 * Math.cos(azV * 4.0 + 1.55);
-                var rL = hypot2(1.0, rS);
-                rivYTab[x] = rY; rivDirXTab[x] = 1.0 / rL; rivDirYTab[x] = rS / rL;
-
-                var mwY = 0.80 + 0.18 * Math.sin(azV - 0.45) + 0.05 * Math.cos(azV * 3.0);
-                var mwS = 0.18 * Math.cos(azV - 0.45) - 0.15 * Math.sin(azV * 3.0);
-                var mwL = hypot2(1.0, mwS);
-                mwYTab[x] = mwY; mwDirXTab[x] = 1.0 / mwL; mwDirYTab[x] = mwS / mwL;
-            }
+            var flowVZ = new Float32Array(BF_W * BF_H);
+            var flowZW = new Float32Array(BF_W * BF_H);
 
             var cosMoon = Math.cos(0.455);
-            var cosZ1   = Math.cos(0.80);
-            var cosZ2   = Math.cos(0.88);
-            // normalize(0.76, -0.65) & normalize(0.82, 0.57)
             var v1CoreX = 0.7599, v1CoreY = -0.6500;
             var v2CoreX = 0.8211, v2CoreY =  0.5708;
 
-            for (var y = 0; y < BF_H; y++) {
-                var py = EL_MIN + ((y + 0.5) / BF_H) * EL_SPAN;
-                var mwGate = py > 0.50 ? smoothstepJS(0.50, 0.64, py) : 0.0;
-                var rowOff = y * BF_W;
+            for (var fy = 0; fy < BF_H; fy++) {
+                var dkY2 = (((fy + 0.5) / BF_H) * 2.0 - 1.0) * DOME_DISK_EXTENT;
+                var rowOff = fy * BF_W;
+                for (var fx = 0; fx < BF_W; fx++) {
+                    var dkX2 = (((fx + 0.5) / BF_W) * 2.0 - 1.0) * DOME_DISK_EXTENT;
+                    var r2 = dkX2 * dkX2 + dkY2 * dkY2;
+                    var r2Clamp = Math.min(1.32, r2);
+                    var dy3 = 1.0 - r2Clamp;
+                    var sFac2 = Math.sqrt(Math.max(0.0001, 2.0 - r2Clamp));
+                    var dx3 = dkX2 * sFac2;
+                    var dz3 = dkY2 * sFac2;
+                    var dLen3 = hypot3(dx3, dy3, dz3) || 1.0;
+                    dx3 /= dLen3; dy3 /= dLen3; dz3 /= dLen3;
 
-                for (var x2 = 0; x2 < BF_W; x2++) {
-                    var px = azTab[x2];
-                    var vx = baseDirXTab[x2], vy = baseDirYTab[x2];
+                    var horizR = hypot2(dx3, dz3);
+                    var px = Math.atan2(dx3, -dz3 + 1e-7);
+                    var py = Math.atan2(dy3, Math.max(horizR, 1e-7));
 
-                    var dm = (py - mistYTab[x2]) / 0.082;
+                    // --- A. Lower & Mid-Sky Flow in (az, el) (100% identical to 1889 MoMA Masterpiece for el < 0.54!) ---
+                    var by = 0.17 * Math.cos(px * 5.0 + 0.7) + 0.10 * Math.sin(px * 2.0);
+                    var bL = hypot2(1.0, by);
+                    var vx2 = 1.0 / bL, vy2 = by / bL;
+
+                    var mY = mistCenterJS(px);
+                    var dm = (py - mY) / 0.082;
                     if (Math.abs(dm) < 3.0) {
+                        var mS = (mistCenterJS(px + 0.02) - mY) / 0.02;
+                        var mL = hypot2(1.0, mS);
                         var wMist = Math.exp(-dm * dm) * 0.86;
-                        vx += (mistDirXTab[x2] - vx) * wMist;
-                        vy += (mistDirYTab[x2] - vy) * wMist;
+                        vx2 += (1.0 / mL - vx2) * wMist;
+                        vy2 += (mS / mL - vy2) * wMist;
                     }
 
-                    var dr = (py - rivYTab[x2]) / 0.092;
+                    var rY = 0.368 + 0.076 * Math.sin(px * 4.0 + 1.55);
+                    var dr = (py - rY) / 0.092;
                     if (Math.abs(dr) < 3.0) {
+                        var rS = 0.076 * 4.0 * Math.cos(px * 4.0 + 1.55);
+                        var rL = hypot2(1.0, rS);
                         var wRiv = Math.exp(-dr * dr) * 0.62;
-                        vx += (rivDirXTab[x2] - vx) * wRiv;
-                        vy += (rivDirYTab[x2] - vy) * wRiv;
-                    }
-
-                    if (mwGate > 0.0) {
-                        var dmw = (py - mwYTab[x2]) / 0.18;
-                        if (Math.abs(dmw) < 3.0) {
-                            var wMW = Math.exp(-dmw * dmw) * mwGate * 0.74;
-                            vx += (mwDirXTab[x2] - vx) * wMW;
-                            vy += (mwDirYTab[x2] - vy) * wMW;
-                        }
+                        vx2 += (1.0 / rL - vx2) * wRiv;
+                        vy2 += (rS / rL - vy2) * wRiv;
                     }
 
                     if (Math.abs(px) < 0.75 && py < 0.68) {
                         var dx1 = wrapAzDelta(px, -0.015), dy1 = py - 0.355;
-                        var r1 = hypot2(dx1, dy1);
-                        if (r1 < 0.44) {
+                        var rad1 = hypot2(dx1, dy1);
+                        if (rad1 < 0.44) {
                             var tx1 = dy1 - dx1 * 0.17 + 0.0001, ty1 = -dx1 - dy1 * 0.17 + 0.0001;
                             var tl1 = hypot2(tx1, ty1) || 1.0;
                             tx1 /= tl1; ty1 /= tl1;
-                            var s1 = smoothstepJS(0.008, 0.030, r1);
+                            var s1 = smoothstepJS(0.008, 0.030, rad1);
                             var mx1 = v1CoreX + (tx1 - v1CoreX) * s1;
                             var my1 = v1CoreY + (ty1 - v1CoreY) * s1;
-                            var w1 = Math.exp(-(r1 / 0.145) * (r1 / 0.145)) * 0.95;
-                            vx += (mx1 - vx) * w1; vy += (my1 - vy) * w1;
+                            var w1 = Math.exp(-(rad1 / 0.145) * (rad1 / 0.145)) * 0.95;
+                            vx2 += (mx1 - vx2) * w1; vy2 += (my1 - vy2) * w1;
                         }
 
                         var dx2 = wrapAzDelta(px, 0.145), dy2 = py - 0.278;
-                        var r2 = hypot2(dx2, dy2);
-                        if (r2 < 0.28) {
+                        var rad2 = hypot2(dx2, dy2);
+                        if (rad2 < 0.28) {
                             var tx2 = -dy2 - dx2 * 0.19 + 0.0001, ty2 = dx2 - dy2 * 0.19 + 0.0001;
                             var tl2 = hypot2(tx2, ty2) || 1.0;
                             tx2 /= tl2; ty2 /= tl2;
-                            var s2 = smoothstepJS(0.006, 0.024, r2);
+                            var s2 = smoothstepJS(0.006, 0.024, rad2);
                             var mx2 = v2CoreX + (tx2 - v2CoreX) * s2;
                             var my2 = v2CoreY + (ty2 - v2CoreY) * s2;
-                            var w2 = Math.exp(-(r2 / 0.086) * (r2 / 0.086)) * 0.95;
-                            vx += (mx2 - vx) * w2; vy += (my2 - vy) * w2;
+                            var w2 = Math.exp(-(rad2 / 0.086) * (rad2 / 0.086)) * 0.95;
+                            vx2 += (mx2 - vx2) * w2; vy2 += (my2 - vy2) * w2;
                         }
 
                         var dxM = wrapAzDelta(px, 0.355) * cosMoon, dyM = py - 0.455;
-                        var rM = hypot2(dxM, dyM);
-                        if (rM < 0.52) {
-                            var mTx = (rM > 0.004) ? (-dyM / rM) : -0.56;
-                            var mTy = (rM > 0.004) ? ( dxM / rM) :  0.83;
-                            var sM = smoothstepJS(0.018, 0.055, rM);
+                        var radM = hypot2(dxM, dyM);
+                        if (radM < 0.52) {
+                            var mTx = (radM > 0.004) ? (-dyM / radM) : -0.56;
+                            var mTy = (radM > 0.004) ? ( dxM / radM) :  0.83;
+                            var sM = smoothstepJS(0.018, 0.055, radM);
                             var mxM = -0.56 + (mTx + 0.56) * sM;
                             var myM =  0.83 + (mTy - 0.83) * sM;
-                            var wM = Math.exp(-(rM / 0.176) * (rM / 0.176)) * 0.94;
-                            vx += (mxM - vx) * wM; vy += (myM - vy) * wM;
+                            var wM = Math.exp(-(radM / 0.176) * (radM / 0.176)) * 0.94;
+                            vx2 += (mxM - vx2) * wM; vy2 += (myM - vy2) * wM;
                         }
                     }
 
-                    if (Math.abs(px) > 0.58 || py > 0.58) {
+                    if (Math.abs(px) > 0.58 && py < 0.82) {
                         var dxE = wrapAzDelta(px, 1.320), dyE = py - 0.355;
-                        var rE = hypot2(dxE, dyE);
-                        if (rE < 0.38) {
+                        var radE = hypot2(dxE, dyE);
+                        if (radE < 0.38) {
                             var txE = dyE - dxE * 0.16 + 0.0001, tyE = -dxE - dyE * 0.16 + 0.0001;
                             var tlE = hypot2(txE, tyE) || 1.0;
                             txE /= tlE; tyE /= tlE;
-                            var sE = smoothstepJS(0.008, 0.032, rE);
-                            var wE = Math.exp(-(rE / 0.145) * (rE / 0.145)) * 0.92;
-                            vx += ((0.8 + (txE - 0.8) * sE) - vx) * wE;
-                            vy += ((-0.6 + (tyE + 0.6) * sE) - vy) * wE;
+                            var sE = smoothstepJS(0.008, 0.032, radE);
+                            var wE = Math.exp(-(radE / 0.145) * (radE / 0.145)) * 0.92;
+                            vx2 += ((0.8 + (txE - 0.8) * sE) - vx2) * wE;
+                            vy2 += ((-0.6 + (tyE + 0.6) * sE) - vy2) * wE;
                         }
 
                         var dxS = wrapAzDelta(px, 2.820), dyS = py - 0.385;
-                        var rS = hypot2(dxS, dyS);
-                        if (rS < 0.40) {
+                        var radS = hypot2(dxS, dyS);
+                        if (radS < 0.40) {
                             var txS = -dyS - dxS * 0.16 + 0.0001, tyS = dxS - dyS * 0.16 + 0.0001;
                             var tlS = hypot2(txS, tyS) || 1.0;
                             txS /= tlS; tyS /= tlS;
-                            var sS = smoothstepJS(0.008, 0.032, rS);
-                            var wS = Math.exp(-(rS / 0.155) * (rS / 0.155)) * 0.92;
-                            vx += ((0.8 + (txS - 0.8) * sS) - vx) * wS;
-                            vy += ((0.6 + (tyS - 0.6) * sS) - vy) * wS;
+                            var sS = smoothstepJS(0.008, 0.032, radS);
+                            var wS = Math.exp(-(radS / 0.155) * (radS / 0.155)) * 0.92;
+                            vx2 += ((0.8 + (txS - 0.8) * sS) - vx2) * wS;
+                            vy2 += ((0.6 + (tyS - 0.6) * sS) - vy2) * wS;
                         }
 
                         var dxW = wrapAzDelta(px, -1.460), dyW = py - 0.365;
-                        var rW = hypot2(dxW, dyW);
-                        if (rW < 0.38) {
+                        var radW = hypot2(dxW, dyW);
+                        if (radW < 0.38) {
                             var txW = dyW - dxW * 0.16 + 0.0001, tyW = -dxW - dyW * 0.16 + 0.0001;
                             var tlW = hypot2(txW, tyW) || 1.0;
                             txW /= tlW; tyW /= tlW;
-                            var sW = smoothstepJS(0.008, 0.032, rW);
-                            var wW = Math.exp(-(rW / 0.142) * (rW / 0.142)) * 0.92;
-                            vx += ((0.8 + (txW - 0.8) * sW) - vx) * wW;
-                            vy += ((-0.6 + (tyW + 0.6) * sW) - vy) * wW;
-                        }
-
-                        var dxZ1 = wrapAzDelta(px, -0.620) * cosZ1, dyZ1 = py - 0.800;
-                        var rZ1 = hypot2(dxZ1, dyZ1);
-                        if (rZ1 < 0.34) {
-                            var txZ1 = -dyZ1 - dxZ1 * 0.15 + 0.0001, tyZ1 = dxZ1 - dyZ1 * 0.15 + 0.0001;
-                            var tlZ1 = hypot2(txZ1, tyZ1) || 1.0;
-                            var wZ1 = Math.exp(-(rZ1 / 0.145) * (rZ1 / 0.145)) * 0.88;
-                            vx += ((txZ1 / tlZ1) - vx) * wZ1;
-                            vy += ((tyZ1 / tlZ1) - vy) * wZ1;
-                        }
-
-                        var dxZ2 = wrapAzDelta(px, 1.050) * cosZ2, dyZ2 = py - 0.880;
-                        var rZ2 = hypot2(dxZ2, dyZ2);
-                        if (rZ2 < 0.34) {
-                            var txZ2 = dyZ2 - dxZ2 * 0.15 + 0.0001, tyZ2 = -dxZ2 - dyZ2 * 0.15 + 0.0001;
-                            var tlZ2 = hypot2(txZ2, tyZ2) || 1.0;
-                            var wZ2 = Math.exp(-(rZ2 / 0.145) * (rZ2 / 0.145)) * 0.86;
-                            vx += ((txZ2 / tlZ2) - vx) * wZ2;
-                            vy += ((tyZ2 / tlZ2) - vy) * wZ2;
+                            var sW = smoothstepJS(0.008, 0.032, radW);
+                            var wW = Math.exp(-(radW / 0.142) * (radW / 0.142)) * 0.92;
+                            vx2 += ((0.8 + (txW - 0.8) * sW) - vx2) * wW;
+                            vy2 += ((-0.6 + (tyW + 0.6) * sW) - vy2) * wW;
                         }
                     }
 
-                    flowVX[rowOff + x2] = vx;
-                    flowVY[rowOff + x2] = vy;
+                    var v2Len = hypot2(vx2, vy2) || 1.0;
+                    vx2 /= v2Len; vy2 /= v2Len;
+
+                    // Lift (vx2, vy2) onto 3D sphere tangent basis (e_az, e_el) with zero trig calls:
+                    var invHR = horizR > 1e-6 ? (1.0 / horizR) : 0.0;
+                    var sazP = horizR > 1e-6 ? (dx3 * invHR) : 0.0;
+                    var cazP = horizR > 1e-6 ? (-dz3 * invHR) : 1.0;
+                    var celP = horizR, selP = dy3;
+                    var lowVx = vx2 * cazP + vy2 * (-sazP * selP);
+                    var lowVy = vy2 * celP;
+                    var lowVz = vx2 * sazP + vy2 * ( cazP * selP);
+
+                    // --- B. Seamless Trans-Zenith Canopy Flow (Great-Circle Milky Way + Overhead Yin-Yang Swirls!) ---
+                    var qDen = Math.sqrt(Math.max(0.15, (1.0 + dy3) * 0.5));
+                    var qx = dx3 / qDen, qy = dz3 / qDen;
+
+                    var thF = 0.42 + 0.34 * Math.sin(qx * 2.8 - qy * 1.9 + 0.4) + 0.18 * Math.cos(qy * 3.5 + 0.6);
+                    var zvX = Math.cos(thF), zvY = Math.sin(thF);
+
+                    var mwSpineY = 0.08 - 0.18 * qx + 0.13 * Math.sin(qx * 3.4 + 0.3);
+                    var mwSlope  = -0.18 + 0.13 * 3.4 * Math.cos(qx * 3.4 + 0.3);
+                    var mwl = hypot2(1.0, mwSlope);
+                    var dmw = (qy - mwSpineY) / 0.19;
+                    if (Math.abs(dmw) < 3.0) {
+                        var wMW = Math.exp(-dmw * dmw) * 0.76;
+                        zvX += (1.0 / mwl - zvX) * wMW;
+                        zvY += (mwSlope / mwl - zvY) * wMW;
+                    }
+
+                    // Overhead Yin-Yang Vortex 1 at (-0.09, 0.04)
+                    var zv1x = qx - (-0.09), zv1y = qy - 0.04;
+                    var zr1 = hypot2(zv1x, zv1y);
+                    if (zr1 < 0.48) {
+                        var zt1x = zv1y - zv1x * 0.17 + 0.0001, zt1y = -zv1x - zv1y * 0.17 + 0.0001;
+                        var ztl1 = hypot2(zt1x, zt1y) || 1.0;
+                        zt1x /= ztl1; zt1y /= ztl1;
+                        var zs1 = smoothstepJS(0.010, 0.038, zr1);
+                        var zm1x = v1CoreX + (zt1x - v1CoreX) * zs1;
+                        var zm1y = v1CoreY + (zt1y - v1CoreY) * zs1;
+                        var zw1 = Math.exp(-(zr1 / 0.195) * (zr1 / 0.195)) * 0.94;
+                        zvX += (zm1x - zvX) * zw1;
+                        zvY += (zm1y - zvY) * zw1;
+                    }
+
+                    // Companion Overhead Vortex 2 at (0.18, 0.15)
+                    var zv2x = qx - 0.18, zv2y = qy - 0.15;
+                    var zr2 = hypot2(zv2x, zv2y);
+                    if (zr2 < 0.36) {
+                        var zt2x = -zv2y - zv2x * 0.18 + 0.0001, zt2y = zv2x - zv2y * 0.18 + 0.0001;
+                        var ztl2 = hypot2(zt2x, zt2y) || 1.0;
+                        zt2x /= ztl2; zt2y /= ztl2;
+                        var zs2 = smoothstepJS(0.008, 0.032, zr2);
+                        var zm2x = v2CoreX + (zt2x - v2CoreX) * zs2;
+                        var zm2y = v2CoreY + (zt2y - v2CoreY) * zs2;
+                        var zw2 = Math.exp(-(zr2 / 0.130) * (zr2 / 0.130)) * 0.92;
+                        zvX += (zm2x - zvX) * zw2;
+                        zvY += (zm2y - zvY) * zw2;
+                    }
+
+                    // Lift 2D dome-cap tangent (zvX, zvY) onto exact sphere tangent via dome-disk Jacobian:
+                    var r2j = Math.min(1.32, dkX2 * dkX2 + dkY2 * dkY2);
+                    var sj  = Math.sqrt(Math.max(0.04, 2.0 - r2j));
+                    var eDxX = sj - (dkX2 * dkX2) / sj, eDxY = -2.0 * dkX2, eDxZ = -(dkX2 * dkY2) / sj;
+                    var eDyX = -(dkX2 * dkY2) / sj,     eDyY = -2.0 * dkY2, eDyZ = sj - (dkY2 * dkY2) / sj;
+                    var hiVx = zvX * eDxX + zvY * eDyX;
+                    var hiVy = zvX * eDxY + zvY * eDyY;
+                    var hiVz = zvX * eDxZ + zvY * eDyZ;
+                    var hiDot = hiVx * dx3 + hiVy * dy3 + hiVz * dz3;
+                    hiVx -= hiDot * dx3; hiVy -= hiDot * dy3; hiVz -= hiDot * dz3;
+                    var hiLen = hypot3(hiVx, hiVy, hiVz) || 1.0;
+                    hiVx /= hiLen; hiVy /= hiLen; hiVz /= hiLen;
+
+                    // Blend strictly above el = 0.54 (MoMA 1889 frame is el <= 0.52 -> 0% modified!)
+                    var zMix = smoothstepJS(0.54, 0.88, py);
+                    var ux = lowVx + (hiVx - lowVx) * zMix;
+                    var uy = lowVy + (hiVy - lowVy) * zMix;
+                    var uz = lowVz + (hiVz - lowVz) * zMix;
+                    var uDot = ux * dx3 + uy * dy3 + uz * dz3;
+                    ux -= uDot * dx3; uy -= uDot * dy3; uz -= uDot * dz3;
+                    var uLen = hypot3(ux, uy, uz) || 1.0;
+
+                    var fIdx = rowOff + fx;
+                    flowVX[fIdx] = ux / uLen;
+                    flowVY[fIdx] = uy / uLen;
+                    flowVZ[fIdx] = uz / uLen;
+
+                    // Pre-bake overhead Milky Way + Yin-Yang ceiling swirl pigment probability!
+                    var capGate = smoothstepJS(0.50, 0.68, py);
+                    var mwEnvZ = Math.exp(-((qy - mwSpineY) / 0.135) * ((qy - mwSpineY) / 0.135)) * 0.78 * capGate;
+                    var armZ1 = Math.sin(Math.atan2(zv1y, zv1x + 1e-5) * 2.0 + zr1 * 42.0);
+                    var swZ1  = Math.max(1.0 - smoothstepJS(0.0, 0.030, zr1), smoothstepJS(-0.15, 0.48, armZ1)) * smoothstepJS(0.205, 0.020, zr1) * capGate;
+                    var armZ2 = Math.sin(-Math.atan2(zv2y, zv2x + 1e-5) * 2.0 + zr2 * 48.0 + 1.1);
+                    var swZ2  = Math.max(1.0 - smoothstepJS(0.0, 0.022, zr2), smoothstepJS(-0.15, 0.48, armZ2)) * smoothstepJS(0.135, 0.016, zr2) * capGate;
+                    flowZW[fIdx] = Math.min(1.0, Math.max(mwEnvZ, Math.max(swZ1, swZ2)));
                 }
             }
 
-            // Splat all 64 star whirlpools onto their local bounding boxes in ~1ms!
+            // Splat all 64 star 3D whirlpools cleanly onto their local Dome-Disk bounding boxes!
             for (var stIdx = 0; stIdx < starDefs.length; stIdx++) {
-                var stAz = starDefs[stIdx][0], stEl = starDefs[stIdx][1], stR = starDefs[stIdx][2];
-                var cosStEl = Math.cos(Math.max(-1.25, Math.min(1.25, stEl)));
+                var cdx0 = starDirX[stIdx], cdy0 = starDirY[stIdx], cdz0 = starDirZ[stIdx];
+                var stR = starDefs[stIdx][2];
                 var maxR = stR * 2.2;
-                var y0 = Math.max(0, Math.floor(((stEl - 0.14 - EL_MIN) / EL_SPAN) * BF_H));
-                var y1 = Math.min(BF_H - 1, Math.ceil(((stEl + 0.14 - EL_MIN) / EL_SPAN) * BF_H));
-                var azSpan = Math.min(Math.PI, maxR / Math.max(0.18, cosStEl) + 0.02);
-                var xCount = Math.min(BF_W, Math.ceil((azSpan * 2.0 / TWO_PI) * BF_W) + 2);
-                var xStart = Math.floor(((stAz / TWO_PI) + 0.5) * BF_W) - Math.floor(xCount * 0.5);
+                var dDen0 = Math.sqrt(Math.max(0.08, 1.0 + cdy0));
+                var cxD0 = (cdx0 / dDen0) / DOME_DISK_EXTENT;
+                var cyD0 = (cdz0 / dDen0) / DOME_DISK_EXTENT;
+                var boxR = (maxR * 1.25) / Math.max(0.32, dDen0 * 0.72);
+                var sx0 = Math.max(0, Math.floor(((cxD0 - boxR) * 0.5 + 0.5) * BF_W) - 1);
+                var sx1 = Math.min(BF_W - 1, Math.ceil(((cxD0 + boxR) * 0.5 + 0.5) * BF_W) + 1);
+                var sy0 = Math.max(0, Math.floor(((cyD0 - boxR) * 0.5 + 0.5) * BF_H) - 1);
+                var sy1 = Math.min(BF_H - 1, Math.ceil(((cyD0 + boxR) * 0.5 + 0.5) * BF_H) + 1);
 
-                for (var sy = y0; sy <= y1; sy++) {
-                    var pEl = EL_MIN + ((sy + 0.5) / BF_H) * EL_SPAN;
-                    var dEl = pEl - stEl;
-                    if (Math.abs(dEl) < 0.14) {
-                        var rOff = sy * BF_W;
-                        for (var sxStep = 0; sxStep <= xCount; sxStep++) {
-                            var sx = ((xStart + sxStep) % BF_W + BF_W) % BF_W;
-                            var dAz = wrapAzDelta(azTab[sx], stAz) * cosStEl;
-                            var dist = hypot2(dAz, dEl);
+                for (var sy = sy0; sy <= sy1; sy++) {
+                    var dkYs = (((sy + 0.5) / BF_H) * 2.0 - 1.0) * DOME_DISK_EXTENT;
+                    var rOffS = sy * BF_W;
+                    for (var sx = sx0; sx <= sx1; sx++) {
+                        var dkXs = (((sx + 0.5) / BF_W) * 2.0 - 1.0) * DOME_DISK_EXTENT;
+                        var r2s = Math.min(1.32, dkXs * dkXs + dkYs * dkYs);
+                        var rys = 1.0 - r2s;
+                        var sFs = Math.sqrt(Math.max(0.0001, 2.0 - r2s));
+                        var rxs = dkXs * sFs, rzs = dkYs * sFs;
+                        var rls = hypot3(rxs, rys, rzs) || 1.0;
+                        rxs /= rls; rys /= rls; rzs /= rls;
+
+                        if (rxs * cdx0 + rys * cdy0 + rzs * cdz0 > 0.94) {
+                            var locX = rxs * starRgtX[stIdx] + rys * starRgtY[stIdx] + rzs * starRgtZ[stIdx];
+                            var locY = rxs * starUpX[stIdx]  + rys * starUpY[stIdx]  + rzs * starUpZ[stIdx];
+                            var dist = hypot2(locX, locY);
                             if (dist < maxR) {
-                                var sTx = (dist > 0.003) ? (-dEl / dist) : 1.0;
-                                var sTy = (dist > 0.003) ? ( dAz / dist) : 0.0;
+                                var sTx = (dist > 0.003) ? (-locY / dist) : 1.0;
+                                var sTy = (dist > 0.003) ? ( locX / dist) : 0.0;
+                                // 3D whirlpool tangent = sTx * cRight + sTy * cUp
+                                var w3x = sTx * starRgtX[stIdx] + sTy * starUpX[stIdx];
+                                var w3y = sTx * starRgtY[stIdx] + sTy * starUpY[stIdx];
+                                var w3z = sTx * starRgtZ[stIdx] + sTy * starUpZ[stIdx];
                                 var denom = Math.max(0.01, stR * 1.46);
                                 var falloff = Math.exp(-(dist / denom) * (dist / denom));
                                 var wSt = smoothstepJS(0.008, 0.025, dist) * falloff * 0.91;
-                                var fIdx = rOff + sx;
-                                flowVX[fIdx] += (sTx - flowVX[fIdx]) * wSt;
-                                flowVY[fIdx] += (sTy - flowVY[fIdx]) * wSt;
+                                var fiS = rOffS + sx;
+                                var nxS = flowVX[fiS] + (w3x - flowVX[fiS]) * wSt;
+                                var nyS = flowVY[fiS] + (w3y - flowVY[fiS]) * wSt;
+                                var nzS = flowVZ[fiS] + (w3z - flowVZ[fiS]) * wSt;
+                                var dotR = nxS * rxs + nyS * rys + nzS * rzs;
+                                nxS -= dotR * rxs; nyS -= dotR * rys; nzS -= dotR * rzs;
+                                var nlS = hypot3(nxS, nyS, nzS) || 1.0;
+                                flowVX[fiS] = nxS / nlS;
+                                flowVY[fiS] = nyS / nlS;
+                                flowVZ[fiS] = nzS / nlS;
                             }
                         }
                     }
@@ -1576,18 +1732,16 @@
 
             var flowBytes = new Uint8Array(BF_W * BF_H * 4);
             for (var fi = 0; fi < BF_W * BF_H; fi++) {
-                var fx = flowVX[fi] + 0.0001, fy = flowVY[fi] + 0.0001;
-                var fl = hypot2(fx, fy) || 1.0;
                 var fo = fi * 4;
-                flowBytes[fo]     = Math.max(0, Math.min(255, Math.round(((fx / fl) * 0.5 + 0.5) * 255.0)));
-                flowBytes[fo + 1] = Math.max(0, Math.min(255, Math.round(((fy / fl) * 0.5 + 0.5) * 255.0)));
-                flowBytes[fo + 2] = 0;
-                flowBytes[fo + 3] = 255;
+                flowBytes[fo]     = Math.max(0, Math.min(255, Math.round((flowVX[fi] * 0.5 + 0.5) * 255.0)));
+                flowBytes[fo + 1] = Math.max(0, Math.min(255, Math.round((flowVY[fi] * 0.5 + 0.5) * 255.0)));
+                flowBytes[fo + 2] = Math.max(0, Math.min(255, Math.round((flowVZ[fi] * 0.5 + 0.5) * 255.0)));
+                flowBytes[fo + 3] = Math.max(0, Math.min(255, Math.round(flowZW[fi] * 255.0)));
             }
             var baseSkyFlowTex = new THREE.DataTexture(flowBytes, BF_W, BF_H, THREE.RGBAFormat, THREE.UnsignedByteType);
             baseSkyFlowTex.minFilter = THREE.LinearFilter;
             baseSkyFlowTex.magFilter = THREE.LinearFilter;
-            baseSkyFlowTex.wrapS = THREE.RepeatWrapping;
+            baseSkyFlowTex.wrapS = THREE.ClampToEdgeWrapping;
             baseSkyFlowTex.wrapT = THREE.ClampToEdgeWrapping;
             baseSkyFlowTex.flipY = false;
             baseSkyFlowTex.generateMipmaps = false;
@@ -1621,10 +1775,10 @@
                 uDaylight: uDaylight
             };
 
-            // ANGLE / Direct3D 11 HLSL fxc-Safe GLSL 100 Sky Shader:
-            //   - O(1) tBaseSkyFlow & tStarCellGrid texture reads (ZERO 64-star loops in GLSL!)
-            //   - ZERO `continue`, ZERO `break`, and ZERO `texture2D` calls inside varying branches!
-            //   - Compiles in <25ms on Windows school PCs while delivering native Retina crispness on phones!
+            // Seamless 360° + 90° Zenith Ceiling Impasto Sky Shader (ANGLE / Direct3D 11 HLSL Safe):
+            //   - Lambert Azimuthal Equal-Area Dome-Disk UVs eliminate 100% of polar spoke pinching & ±pi seams
+            //   - Unified 3D Sphere-Tangent ribbon projection + opaque probability handoff across el 0.62..0.98
+            //   - ZERO `continue`, ZERO `break`, and ZERO varying-branch `texture2D` calls!
             var SKY_CORE_GLSL = [
                 'uniform sampler2D tStarLut;',
                 'uniform sampler2D tStarCellGrid;',
@@ -1643,10 +1797,45 @@
                 '',
                 GLSL_RIBBON_LIBRARY,
                 '',
-                'vec2 skyToBrushUv(vec2 p) {',
-                '    float u = fract(p.x / 6.2831853 + 0.5);',
-                '    float v = clamp((p.y + 0.24) / 1.805, 0.0, 1.0);',
-                '    return vec2(u, v);',
+                'vec2 dirToDomeDisk(vec3 d) {',
+                '    float den = sqrt(max(0.08, 1.0 + d.y));',
+                '    return d.xz / (den * 1.14);',
+                '}',
+                '',
+                'vec2 dirToDomeUv(vec3 d) {',
+                '    return clamp(dirToDomeDisk(d) * 0.5 + 0.5, 0.001, 0.999);',
+                '}',
+                '',
+                'vec3 domeDiskToDir(vec2 rawDisk) {',
+                '    vec2 dk = rawDisk * 1.14;',
+                '    float r2 = min(1.32, dot(dk, dk));',
+                '    float dy = 1.0 - r2;',
+                '    float s  = sqrt(max(0.0001, 2.0 - r2));',
+                '    return normalize(vec3(dk.x * s, dy, dk.y * s));',
+                '}',
+                '',
+                'vec3 skyAzElToDir(vec2 p) {',
+                '    float cel = cos(p.y);',
+                '    return vec3(sin(p.x) * cel, sin(p.y), -cos(p.x) * cel);',
+                '}',
+                '',
+                'vec3 zenithCapToDir(vec2 q) {',
+                '    float r2 = min(1.94, dot(q, q));',
+                '    float dy = 1.0 - 0.5 * r2;',
+                '    float sc = sqrt(max(0.01, 1.0 - 0.25 * r2));',
+                '    return normalize(vec3(q.x * sc, dy, q.y * sc));',
+                '}',
+                '',
+                'vec3 liftDiskTangentToSphere(vec3 cDir, vec2 bDir) {',
+                '    float den = sqrt(max(0.08, 1.0 + cDir.y));',
+                '    vec2 dk = cDir.xz / den;',
+                '    float r2 = min(1.32, dot(dk, dk));',
+                '    float sj = sqrt(max(0.04, 2.0 - r2));',
+                '    vec3 eX = vec3(sj - (dk.x * dk.x) / sj, -2.0 * dk.x, -(dk.x * dk.y) / sj);',
+                '    vec3 eY = vec3(-(dk.x * dk.y) / sj, -2.0 * dk.y, sj - (dk.y * dk.y) / sj);',
+                '    vec3 v = eX * bDir.x + eY * bDir.y;',
+                '    v -= cDir * dot(v, cDir);',
+                '    return normalize(v + vec3(0.00001));',
                 '}',
                 '',
                 'vec4 fetchStarByFloatIdx(float fIdx) {',
@@ -1663,11 +1852,11 @@
                 '    return vec4(az, el, (p1.r * 0.10) * validMask - (1.0 - validMask), stype + p1.b * 0.90);',
                 '}',
                 '',
-                '// Unconditional gradient-safe brush field sample (zero branching around texture2D!)',
-                'vec4 sampleBrushField(vec2 p) {',
-                '    vec2 buv = skyToBrushUv(p);',
+                '// Unconditional gradient-safe Dome-Disk brush field sample (zero branching around texture2D!)',
+                'vec4 sampleBrushField3D(vec3 cDir) {',
+                '    vec2 buv = dirToDomeUv(cDir);',
                 '    vec4 lin = texture2D(tBrushMap, buv);',
-                '    vec2 nearestUv = (floor(buv * vec2(256.0, 128.0)) + 0.5) / vec2(256.0, 128.0);',
+                '    vec2 nearestUv = (floor(buv * 256.0) + 0.5) / 256.0;',
                 '    float exactPal = texture2D(tBrushMap, nearestUv).a;',
                 '    vec2 dir = lin.rg * 2.0 - 1.0;',
                 '    float dLen = length(dir);',
@@ -1687,7 +1876,8 @@
                 '    float cel = cos(skyCenter.y);',
                 '    float sel = sin(skyCenter.y);',
                 '    vec3 cDir   = vec3(saz * cel, sel, -caz * cel);',
-                '    vec3 cRight = normalize(cross(cDir, vec3(0.0, 1.0, 0.0)));',
+                '    vec3 upRef  = (abs(sel) > 0.985) ? vec3(1.0, 0.0, 0.0) : vec3(0.0, 1.0, 0.0);',
+                '    vec3 cRight = normalize(cross(cDir, upRef));',
                 '    vec3 cUp    = cross(cRight, cDir);',
                 '    return vec2(dot(rayDir, cRight), dot(rayDir, cUp));',
                 '}',
@@ -1700,46 +1890,51 @@
                 '    return mix(surroundBand, frontDiag, frontWeight) + wave;',
                 '}',
                 '',
-                'vec2 getBaseSkyFlow(vec2 p) {',
-                '    vec2 enc = texture2D(tBaseSkyFlow, skyToBrushUv(p)).rg * 2.0 - 1.0;',
-                '    return normalize(enc + vec2(0.0001));',
+                '// Unconditional O(1) 3D Sphere-Tangent Sky Flow Sample (RGB = 3D tangent, A = zenith swirl weight)',
+                'vec4 sampleBaseSkyFlow3D(vec3 cDir) {',
+                '    vec4 raw = texture2D(tBaseSkyFlow, dirToDomeUv(cDir));',
+                '    vec3 v = raw.rgb * 2.0 - 1.0;',
+                '    v -= cDir * dot(v, cDir);',
+                '    return vec4(normalize(v + vec3(0.00001)), raw.a);',
                 '}',
                 '',
-                '// Unconditional gradient-safe flow sample (safe inside all 3x3 HLSL loops!)',
-                'vec2 getSkyFlow(vec2 p) {',
-                '    vec2 v = getBaseSkyFlow(p);',
-                '    vec4 brushTap = texture2D(tBrushMap, skyToBrushUv(p));',
+                'vec4 getSkyFlow3D(vec3 cDir) {',
+                '    vec4 baseSample = sampleBaseSkyFlow3D(cDir);',
+                '    vec3 v = baseSample.xyz;',
+                '    vec4 brushTap = texture2D(tBrushMap, dirToDomeUv(cDir));',
                 '    float bStr = brushTap.b * step(0.005, uBrushAnyActive);',
                 '    if (bStr > 0.008) {',
-                '        vec2 bDir = brushTap.rg * 2.0 - 1.0;',
-                '        float bLen = length(bDir);',
-                '        bDir = (bLen > 0.02) ? (bDir / bLen) : vec2(1.0, 0.0);',
-                '        v = mix(v, bDir, clamp(bStr * 0.94, 0.0, 0.96));',
+                '        vec2 bDir2 = brushTap.rg * 2.0 - 1.0;',
+                '        float bLen = length(bDir2);',
+                '        bDir2 = (bLen > 0.02) ? (bDir2 / bLen) : vec2(1.0, 0.0);',
+                '        vec3 bTang3 = liftDiskTangentToSphere(cDir, bDir2);',
+                '        v = normalize(mix(v, bTang3, clamp(bStr * 0.94, 0.0, 0.96)) + vec3(0.00001));',
                 '    }',
                 '    if (uBrushAnyActive > 0.005 && uBrushCursor.z > 0.01) {',
-                '        vec2 dc = skyDelta(p, uBrushCursor.xy);',
-                '        dc.x *= cos(clamp(p.y, -0.85, 1.25));',
+                '        vec2 dc = dirToDomeDisk(cDir) - uBrushCursor.xy;',
                 '        float rc = length(dc);',
-                '        if (rc < 0.18) {',
-                '            vec2 cTan = (rc > 0.004) ? (vec2(-dc.y, dc.x) / rc * uBrushCursor.w) : v;',
-                '            v = mix(v, cTan, clamp(uBrushCursor.z * exp(-sqf(rc / 0.075)) * 0.48, 0.0, 0.68));',
+                '        if (rc < 0.16) {',
+                '            vec2 cTan2 = (rc > 0.003) ? (vec2(-dc.y, dc.x) / rc * uBrushCursor.w) : vec2(1.0, 0.0);',
+                '            vec3 cTan3 = liftDiskTangentToSphere(cDir, cTan2);',
+                '            v = normalize(mix(v, cTan3, clamp(uBrushCursor.z * exp(-sqf(rc / 0.068)) * 0.48, 0.0, 0.68)) + vec3(0.00001));',
                 '        }',
                 '    }',
-                '    return normalize(v + vec2(0.0001));',
+                '    v -= cDir * dot(v, cDir);',
+                '    return vec4(normalize(v + vec3(0.00001)), baseSample.w);',
                 '}',
                 '',
-                'float getSkyBlackShearWeight(vec2 pos) {',
+                'float getSkyBlackShearWeight(vec3 cDir, vec2 pos) {',
                 '    vec2 dTrough = skyDelta(pos, vec2(-0.02, 0.235));',
                 '    float underSwirl = exp(-sqf(length(dTrough * vec2(0.65, 1.9)) / 0.11)) * 0.85;',
                 '    vec2 dLeftWave = skyDelta(pos, vec2(-0.27, 0.34));',
                 '    float leftShear = exp(-sqf(length(dLeftWave * vec2(0.8, 1.2)) / 0.13)) * 0.80;',
-                '    float upperWave = smoothstep(0.36, 0.58, pos.y) * (0.5 + 0.5 * sin(pos.x * 8.0 - pos.y * 11.0)) * 0.65;',
+                '    float upperWave = smoothstep(0.36, 0.58, pos.y) * (0.5 + 0.5 * sin(cDir.x * 9.0 - cDir.z * 9.0 + cDir.y * 6.0)) * 0.62;',
                 '    float mistY = getMistCenterY(pos.x);',
                 '    float belowMist = exp(-sqf((pos.y - (mistY - 0.058)) / 0.042)) * 0.72;',
                 '    return clamp(max(max(underSwirl, leftShear), max(upperWave, belowMist)), 0.08, 0.95);',
                 '}',
                 '',
-                'void pickSkyMarbledPigments(vec2 centerSky, vec3 rnd, out vec3 pigA, out vec3 pigB) {',
+                'void pickSkyMarbledPigments3D(vec3 cDir, vec2 centerSky, float zenithSwirlW, vec3 rnd, out vec3 pigA, out vec3 pigB) {',
                 '    vec3 charcoalBlk = vec3(0.024, 0.038, 0.082);',
                 '    vec3 prussianBlk = vec3(0.038, 0.068, 0.155);',
                 '    vec3 prussian    = vec3(0.052, 0.114, 0.285);',
@@ -1752,10 +1947,9 @@
                 '    vec3 zincYellow  = vec3(0.955, 0.890, 0.315);',
                 '    vec3 chartreuse  = vec3(0.812, 0.858, 0.365);',
                 '',
+                '    float lowMask = 1.0 - smoothstep(0.56, 0.80, centerSky.y);',
                 '    float sSpine = 0.374 + 0.070 * sin(centerSky.x * 4.0 + 1.62);',
-                '    float riverEnv = exp(-sqf((centerSky.y - sSpine) / 0.052)) * (0.45 + 0.55 * cos(centerSky.x * 2.0 + 0.8));',
-                '    float mwSpine = 0.80 + 0.18 * sin(centerSky.x * 1.0 - 0.45) + 0.05 * cos(centerSky.x * 3.0);',
-                '    float mwEnv = exp(-sqf((centerSky.y - mwSpine) / 0.125)) * smoothstep(0.53, 0.66, centerSky.y) * 0.82;',
+                '    float riverEnv = exp(-sqf((centerSky.y - sSpine) / 0.052)) * (0.45 + 0.55 * cos(centerSky.x * 2.0 + 0.8)) * lowMask;',
                 '',
                 '    vec2 dV1 = skyDelta(centerSky, vec2(-0.015, 0.355));',
                 '    float r1 = length(dV1);',
@@ -1772,25 +1966,26 @@
                 '',
                 '    vec2 dVE = skyDelta(centerSky, vec2(1.320, 0.355));',
                 '    float rE = length(dVE);',
-                '    float swirlE = smoothstep(-0.15, 0.48, sin(atan(dVE.y, dVE.x + 0.00001) * 2.0 + rE * 46.0)) * smoothstep(0.145, 0.016, rE);',
+                '    float swirlE = smoothstep(-0.15, 0.48, sin(atan(dVE.y, dVE.x + 0.00001) * 2.0 + rE * 46.0)) * smoothstep(0.145, 0.016, rE) * lowMask;',
                 '',
                 '    vec2 dVS = skyDelta(centerSky, vec2(2.820, 0.385));',
                 '    float rS = length(dVS);',
-                '    float swirlS = smoothstep(-0.15, 0.48, sin(-atan(dVS.y, dVS.x + 0.00001) * 2.0 + rS * 46.0)) * smoothstep(0.155, 0.016, rS);',
+                '    float swirlS = smoothstep(-0.15, 0.48, sin(-atan(dVS.y, dVS.x + 0.00001) * 2.0 + rS * 46.0)) * smoothstep(0.155, 0.016, rS) * lowMask;',
                 '',
                 '    vec2 dVW = skyDelta(centerSky, vec2(-1.460, 0.365));',
                 '    float rW = length(dVW);',
-                '    float swirlW = smoothstep(-0.15, 0.48, sin(atan(dVW.y, dVW.x + 0.00001) * 2.0 + rW * 46.0)) * smoothstep(0.142, 0.016, rW);',
+                '    float swirlW = smoothstep(-0.15, 0.48, sin(atan(dVW.y, dVW.x + 0.00001) * 2.0 + rW * 46.0)) * smoothstep(0.142, 0.016, rW) * lowMask;',
                 '',
-                '    float surroundSwirl = max(max(swirlE, mwEnv), max(swirlS, swirlW));',
+                '    float surroundSwirl = max(max(swirlE, zenithSwirlW), max(swirlS, swirlW));',
                 '    float vortexProb = clamp(max(max(riverEnv * 0.78, swirl1), max(max(swirl2, bridge), surroundSwirl)), 0.0, 1.0);',
                 '',
                 '    float mistY = getMistCenterY(centerSky.x);',
                 '    float surroundMod = mix(0.76 + 0.24 * cos(centerSky.x * 3.0), 1.0, exp(-sqf(centerSky.x / 0.65)));',
-                '    float mistProb = exp(-sqf((centerSky.y - mistY) / 0.038)) * surroundMod;',
+                '    float mistProb = exp(-sqf((centerSky.y - mistY) / 0.038)) * surroundMod * lowMask;',
                 '    float yBoost = clamp(uYellowBoost, 0.2, 2.0);',
-                '    float blackProb = getSkyBlackShearWeight(centerSky) * 0.23 * uBlackInk;',
-                '    float macroZone = vnoise(vec2(sin(centerSky.x) * 3.5, cos(centerSky.x) * 3.5 + centerSky.y * 5.8));',
+                '    float blackProb = getSkyBlackShearWeight(cDir, centerSky) * 0.23 * uBlackInk;',
+                '    // 3D pole-free macroZone noise (zero atan seam at zenith!)',
+                '    float macroZone = vnoise(vec2(cDir.x * 3.8 + cDir.y * 2.1, cDir.z * 3.8 - cDir.y * 2.7));',
                 '',
                 '    if (mistProb > 0.24 && rnd.x < mistProb * 1.22) {',
                 '        float yellowCut = clamp(0.58 * yBoost, 0.15, 0.88);',
@@ -1798,7 +1993,7 @@
                 '        else if (rnd.y < yellowCut)        { pigA = chartreuse; pigB = milkyTurq; }',
                 '        else if (rnd.y < 0.82)             { pigA = leadWhite;  pigB = chartreuse; }',
                 '        else                               { pigA = milkyTurq;  pigB = cobalt; }',
-                '    } else if (vortexProb > 0.24 && rnd.x < vortexProb * 1.14) {',
+                '    } else if (vortexProb > 0.22 && rnd.x < vortexProb * 1.15) {',
                 '        if (rnd.z < 0.06 * uBlackInk)      { pigA = prussianBlk; pigB = cobalt; }',
                 '        else if (rnd.y < 0.26 * yBoost)    { pigA = zincYellow;  pigB = leadWhite; }',
                 '        else if (rnd.y < 0.42 * yBoost)    { pigA = chartreuse;  pigB = milkyTurq; }',
@@ -1822,13 +2017,116 @@
                 '    }',
                 '}',
                 '',
-                'void splatSkyRibbonLayer(vec2 p, float baseFreq, vec2 phaseOff, float layerSeed, inout vec3 canvasCol, inout float heightAccum) {',
+                '// Part A: Per-Latitude-Adaptive 3D Cylindrical Sky Ribbons (100% locked to MoMA below el=0.64; zero spoke pinch!)',
+                'void splatSkyRibbonLayer(vec3 d, vec2 p, float baseFreq, vec2 phaseOff, float layerSeed, inout vec3 canvasCol, inout float heightAccum) {',
                 '    float gridFreqY = baseFreq * uThinness;',
-                '    float circumCells = max(24.0, floor(6.2831853 * gridFreqY * 0.90 + 0.5));',
-                '    float azFreq = circumCells / 6.2831853;',
-                '    float cosScaleX = mix(1.0, cos(clamp(p.y, -0.82, 0.82)), 0.68) * (gridFreqY / azFreq);',
+                '    float gy = p.y * gridFreqY + phaseOff.y;',
+                '    float baseRow = floor(gy);',
+                '    bool isBaseBed = (layerSeed < 1.5);',
+                '    float widthScale = (layerSeed < 0.8) ? 1.72 : (1.16 - uLinenGap * 0.10);',
                 '',
-                '    vec2 g = vec2((p.x + 3.14159265) * azFreq, p.y * gridFreqY) + phaseOff;',
+                '    for (int dy = -1; dy <= 1; dy++) {',
+                '        float rawRow = baseRow + float(dy);',
+                '        float rowEl = (rawRow + 0.5 - phaseOff.y) / gridFreqY;',
+                '        float circumCells = max(12.0, floor(6.2831853 * gridFreqY * cos(clamp(rowEl, -0.85, 1.18)) * 0.90 + 0.5));',
+                '        float azFreq = circumCells / 6.2831853;',
+                '        float gx = (p.x + 3.14159265) * azFreq + phaseOff.x + rawRow * 0.37;',
+                '        float baseCol = floor(gx);',
+                '        float keepCyl = 1.0 - smoothstep(0.64, 0.98, rowEl);',
+                '',
+                '        for (int dx = -1; dx <= 1; dx++) {',
+                '            float rawCol = baseCol + float(dx);',
+                '            vec2 hashCell = vec2(mod(rawCol, circumCells), rawRow);',
+                '            vec3 rnd = hash23(hashCell + vec2(layerSeed * 17.3, layerSeed * 31.7));',
+                '',
+                '            float jitScale = isBaseBed ? 0.42 : (0.34 + 0.14 * min(uChaos, 2.2));',
+                '            vec2 cGrid = vec2(rawCol, rawRow) + vec2(0.5) + (rnd.xy - 0.5) * jitScale;',
+                '            vec2 centerSky = vec2((cGrid.x - phaseOff.x - rawRow * 0.37) / azFreq - 3.14159265, (cGrid.y - phaseOff.y) / gridFreqY);',
+                '            vec3 cDir = skyAzElToDir(centerSky);',
+                '',
+                '            // Unconditional O(1) 3D flow texture taps keep HLSL quad derivatives 100% uniform!',
+                '            vec4 flowSample = getSkyFlow3D(cDir);',
+                '            vec3 rawT = flowSample.xyz;',
+                '            vec3 rawN = normalize(cross(cDir, rawT));',
+                '            float handWobble = (rnd.z - 0.5) * (isBaseBed ? 0.14 : 0.24) * min(uChaos, 2.2);',
+                '            vec3 T = rawT * cos(handWobble) + rawN * sin(handWobble);',
+                '            vec3 N = cross(cDir, T);',
+                '            vec3 aheadDir = normalize(cDir + T * (0.82 / gridFreqY));',
+                '            vec3 T2 = sampleBaseSkyFlow3D(aheadDir).xyz;',
+                '',
+                '            bool keepStroke = (rnd.z < keepCyl) || (layerSeed < 0.8 && rowEl < 0.86);',
+                '            if (keepStroke && p.y < 1.08) {',
+                '                float life = fract(uFlowPhase * 0.28 + rnd.x * 0.93 + rnd.y * 0.37 + layerSeed * 0.21);',
+                '                float travel = isBaseBed ? (sin(uFlowPhase * 1.5 + rnd.x * 6.2831853) * 0.20) : ((life - 0.5) * 0.74);',
+                '                float lifeEnv = isBaseBed ? 1.0 : (smoothstep(0.0, 0.22, life) * (1.0 - smoothstep(0.78, 1.0, life)));',
+                '',
+                '                vec3 rel3 = (d - cDir) * gridFreqY - T * travel;',
+                '                float sAlong  = dot(rel3, T);',
+                '                float sAcross = dot(rel3, N);',
+                '                if (abs(sAlong) <= 1.48 && abs(sAcross) <= 0.65) {',
+                '                    float bend = dot(T2 - rawT, N) * 0.48 * step(0.55, uQuality);',
+                '                    sAcross -= bend * sAlong * sAlong;',
+                '',
+                '                    bool isComma = (!isBaseBed && rnd.y > 0.86 && layerSeed > 3.0);',
+                '                    float halfLen = (layerSeed < 0.8) ? (0.94 + rnd.x * 0.26) : (isComma ? (0.48 + rnd.x * 0.20) : (0.68 + rnd.x * 0.22));',
+                '                    float halfWid = (isComma ? 0.165 : (0.120 + rnd.y * 0.048)) * widthScale;',
+                '',
+                '                    vec4 stroke = evalSlenderBristleStroke(sAlong / halfLen, sAcross / halfWid, rnd.x + layerSeed);',
+                '                    float finalAlpha = stroke.x * lifeEnv;',
+                '                    if (finalAlpha > 0.01) {',
+                '                        vec3 pigA; vec3 pigB;',
+                '                        pickSkyMarbledPigments3D(cDir, centerSky, flowSample.w, rnd, pigA, pigB);',
+                '                        vec3 pig = mix(pigA, pigB, stroke.w * 0.55) * (1.0 + stroke.y);',
+                '                        canvasCol = mix(canvasCol, pig, finalAlpha);',
+                '                        heightAccum = mix(heightAccum, stroke.z, finalAlpha * 0.88) + finalAlpha * 0.05;',
+                '                    }',
+                '                }',
+                '            }',
+                '        }',
+                '    }',
+                '}',
+                '',
+                '// Analytic Zero-Texture Zenith Flow & Swirl Weight (100% ANGLE D3D11 safe inside d.y > 0.50!)',
+                'vec4 evalAnalyticZenithFlow3D(vec3 cDir, vec2 cq, vec4 localBrush) {',
+                '    float thF = 0.42 + 0.34 * sin(cq.x * 2.8 - cq.y * 1.9 + 0.4) + 0.18 * cos(cq.y * 3.5 + 0.6);',
+                '    vec2 zv = vec2(cos(thF), sin(thF));',
+                '    float mwSpineY = 0.08 - 0.18 * cq.x + 0.13 * sin(cq.x * 3.4 + 0.3);',
+                '    float mwSlope  = -0.18 + 0.442 * cos(cq.x * 3.4 + 0.3);',
+                '    vec2 mwDir = normalize(vec2(1.0, mwSlope));',
+                '    float wMW = exp(-sqf((cq.y - mwSpineY) / 0.19)) * 0.76;',
+                '    zv = mix(zv, mwDir, wMW);',
+                '',
+                '    vec2 zv1 = cq - vec2(-0.09, 0.04);',
+                '    float zr1 = length(zv1);',
+                '    if (zr1 < 0.48) {',
+                '        vec2 zt1 = normalize(vec2(zv1.y - zv1.x * 0.17 + 0.0001, -zv1.x - zv1.y * 0.17 + 0.0001));',
+                '        vec2 zm1 = mix(vec2(0.7599, -0.6500), zt1, smoothstep(0.010, 0.038, zr1));',
+                '        zv = mix(zv, zm1, exp(-sqf(zr1 / 0.195)) * 0.94);',
+                '    }',
+                '    vec2 zv2 = cq - vec2(0.18, 0.15);',
+                '    float zr2 = length(zv2);',
+                '    if (zr2 < 0.36) {',
+                '        vec2 zt2 = normalize(vec2(-zv2.y - zv2.x * 0.18 + 0.0001, zv2.x - zv2.y * 0.18 + 0.0001));',
+                '        vec2 zm2 = mix(vec2(0.8211, 0.5708), zt2, smoothstep(0.008, 0.032, zr2));',
+                '        zv = mix(zv, zm2, exp(-sqf(zr2 / 0.130)) * 0.92);',
+                '    }',
+                '    vec3 v3 = liftDiskTangentToSphere(cDir, normalize(zv + vec2(0.0001)));',
+                '    if (localBrush.z > 0.01) {',
+                '        vec3 b3 = liftDiskTangentToSphere(cDir, localBrush.xy);',
+                '        v3 = normalize(mix(v3, b3, clamp(localBrush.z * 0.90, 0.0, 0.94)) + vec3(0.00001));',
+                '    }',
+                '    float mwEnvZ = exp(-sqf((cq.y - mwSpineY) / 0.135)) * 0.78;',
+                '    float armZ1 = sin(atan(zv1.y, zv1.x + 0.00001) * 2.0 + zr1 * 42.0);',
+                '    float swZ1  = max(1.0 - smoothstep(0.0, 0.030, zr1), smoothstep(-0.15, 0.48, armZ1)) * smoothstep(0.205, 0.020, zr1);',
+                '    float armZ2 = sin(-atan(zv2.y, zv2.x + 0.00001) * 2.0 + zr2 * 48.0 + 1.1);',
+                '    float swZ2  = max(1.0 - smoothstep(0.0, 0.022, zr2), smoothstep(-0.15, 0.48, armZ2)) * smoothstep(0.135, 0.016, zr2);',
+                '    return vec4(v3, clamp(max(mwEnvZ, max(swZ1, swZ2)), 0.0, 1.0));',
+                '}',
+                '',
+                '// Part B: Seamless Planar Lambert-Azimuthal Zenith Canopy (zero pole singularity & zero texture2D inside loop!)',
+                'void splatZenithCapLayer(vec3 d, vec2 q, vec4 localBrush, float baseFreq, vec2 phaseOff, float layerSeed, inout vec3 canvasCol, inout float heightAccum) {',
+                '    float gridFreq = baseFreq * uThinness;',
+                '    vec2 g = q * gridFreq + phaseOff + vec2(0.41, 0.29);',
                 '    vec2 baseCell = floor(g);',
                 '    bool isBaseBed = (layerSeed < 1.5);',
                 '    float widthScale = (layerSeed < 0.8) ? 1.72 : (1.16 - uLinenGap * 0.10);',
@@ -1836,110 +2134,115 @@
                 '    for (int dy = -1; dy <= 1; dy++) {',
                 '        for (int dx = -1; dx <= 1; dx++) {',
                 '            vec2 rawCell = baseCell + vec2(float(dx), float(dy));',
-                '            vec2 hashCell = vec2(mod(rawCell.x, circumCells), rawCell.y);',
-                '            vec3 rnd = hash23(hashCell + vec2(layerSeed * 17.3, layerSeed * 31.7));',
+                '            vec3 rnd = hash23(rawCell + vec2(layerSeed * 23.1 + 150.0, layerSeed * 37.9 + 150.0));',
                 '',
                 '            float jitScale = isBaseBed ? 0.42 : (0.34 + 0.14 * min(uChaos, 2.2));',
                 '            vec2 cGrid = rawCell + vec2(0.5) + (rnd.xy - 0.5) * jitScale;',
-                '            vec2 rawDiff = g - cGrid;',
-                '            vec2 centerSky = vec2((cGrid.x - phaseOff.x) / azFreq - 3.14159265, (cGrid.y - phaseOff.y) / gridFreqY);',
+                '            vec2 cq = (cGrid - phaseOff - vec2(0.41, 0.29)) / gridFreq;',
+                '            vec3 cDir = zenithCapToDir(cq);',
+                '            float csEl = atan(cDir.y, max(length(cDir.xz), 0.00001));',
+                '            float csAz = atan(cDir.x, -cDir.z + 0.00001);',
                 '',
-                '            // Unconditional O(1) texture taps keep HLSL quad derivatives 100% uniform!',
-                '            vec2 rawT = getSkyFlow(centerSky);',
+                '            vec4 flowSample = evalAnalyticZenithFlow3D(cDir, cq, localBrush);',
+                '            vec3 rawT = flowSample.xyz;',
+                '            vec3 rawN = normalize(cross(cDir, rawT));',
                 '            float handWobble = (rnd.z - 0.5) * (isBaseBed ? 0.14 : 0.24) * min(uChaos, 2.2);',
-                '            float cw = cos(handWobble); float sw = sin(handWobble);',
-                '            vec2 T = mat2(cw, -sw, sw, cw) * rawT;',
-                '            vec2 T2 = getBaseSkyFlow(centerSky + T * (0.82 / gridFreqY));',
+                '            vec3 T = rawT * cos(handWobble) + rawN * sin(handWobble);',
+                '            vec3 N = cross(cDir, T);',
+                '            vec3 aheadDir = normalize(cDir + T * (0.82 / gridFreq));',
+                '            vec2 aheadQ = aheadDir.xz / sqrt(max(0.15, (1.0 + aheadDir.y) * 0.5));',
+                '            vec3 T2 = evalAnalyticZenithFlow3D(aheadDir, aheadQ, localBrush).xyz;',
                 '',
-                '            if (abs(rawDiff.x) <= 1.52 && abs(rawDiff.y) <= 1.52) {',
-                '                vec2 N = vec2(-T.y, T.x);',
+                '            float keepZen = smoothstep(0.62, 0.96, csEl);',
+                '            bool keepStroke = (rnd.z < keepZen) || (layerSeed < 0.8 && csEl >= 0.82);',
+                '            if (keepStroke && d.y > 0.52) {',
                 '                float life = fract(uFlowPhase * 0.28 + rnd.x * 0.93 + rnd.y * 0.37 + layerSeed * 0.21);',
                 '                float travel = isBaseBed ? (sin(uFlowPhase * 1.5 + rnd.x * 6.2831853) * 0.20) : ((life - 0.5) * 0.74);',
                 '                float lifeEnv = isBaseBed ? 1.0 : (smoothstep(0.0, 0.22, life) * (1.0 - smoothstep(0.78, 1.0, life)));',
                 '',
-                '                vec2 rel = vec2(rawDiff.x * cosScaleX, rawDiff.y) - T * travel;',
-                '                float sAlong  = dot(rel, T);',
-                '                float sAcross = dot(rel, N);',
-                '                float bend = dot(T2 - rawT, N) * 0.48 * step(0.55, uQuality);',
-                '                sAcross -= bend * sAlong * sAlong;',
+                '                vec3 rel3 = (d - cDir) * gridFreq - T * travel;',
+                '                float sAlong  = dot(rel3, T);',
+                '                float sAcross = dot(rel3, N);',
+                '                if (abs(sAlong) <= 1.48 && abs(sAcross) <= 0.65) {',
+                '                    float bend = dot(T2 - rawT, N) * 0.48 * step(0.55, uQuality);',
+                '                    sAcross -= bend * sAlong * sAlong;',
                 '',
-                '                bool isComma = (!isBaseBed && rnd.y > 0.86 && layerSeed > 3.0);',
-                '                float halfLen = (layerSeed < 0.8) ? (0.92 + rnd.x * 0.26) : (isComma ? (0.48 + rnd.x * 0.20) : (0.66 + rnd.x * 0.22));',
-                '                float halfWid = (isComma ? 0.165 : (0.118 + rnd.y * 0.048)) * widthScale;',
+                '                    bool isComma = (!isBaseBed && rnd.y > 0.86 && layerSeed > 3.0);',
+                '                    float halfLen = (layerSeed < 0.8) ? (0.94 + rnd.x * 0.26) : (isComma ? (0.48 + rnd.x * 0.20) : (0.68 + rnd.x * 0.22));',
+                '                    float halfWid = (isComma ? 0.165 : (0.120 + rnd.y * 0.048)) * widthScale;',
                 '',
-                '                vec4 stroke = evalSlenderBristleStroke(sAlong / halfLen, sAcross / halfWid, rnd.x + layerSeed);',
-                '                float finalAlpha = stroke.x * lifeEnv;',
-                '                if (finalAlpha > 0.01) {',
-                '                    vec3 pigA; vec3 pigB;',
-                '                    pickSkyMarbledPigments(centerSky, rnd, pigA, pigB);',
-                '                    vec3 pig = mix(pigA, pigB, stroke.w * 0.55) * (1.0 + stroke.y);',
-                '                    canvasCol = mix(canvasCol, pig, finalAlpha);',
-                '                    heightAccum = mix(heightAccum, stroke.z, finalAlpha * 0.88) + finalAlpha * 0.05;',
+                '                    vec4 stroke = evalSlenderBristleStroke(sAlong / halfLen, sAcross / halfWid, rnd.x + layerSeed + 9.0);',
+                '                    float finalAlpha = stroke.x * lifeEnv;',
+                '                    if (finalAlpha > 0.01) {',
+                '                        vec3 pigA; vec3 pigB;',
+                '                        pickSkyMarbledPigments3D(cDir, vec2(csAz, csEl), flowSample.w, rnd, pigA, pigB);',
+                '                        vec3 pig = mix(pigA, pigB, stroke.w * 0.55) * (1.0 + stroke.y);',
+                '                        canvasCol = mix(canvasCol, pig, finalAlpha);',
+                '                        heightAccum = mix(heightAccum, stroke.z, finalAlpha * 0.88) + finalAlpha * 0.05;',
+                '                    }',
                 '                }',
                 '            }',
                 '        }',
                 '    }',
                 '}',
                 '',
-                'void splatPaintedBrushLayer(vec2 p, float baseFreq, vec2 phaseOff, float layerSeed, float coreShield, inout vec3 canvasCol, inout float heightAccum) {',
-                '    vec4 localB = sampleBrushField(p);',
-                '    float gridFreqY = baseFreq * max(0.76, uThinness);',
-                '    float circumCells = max(32.0, floor(6.2831853 * gridFreqY * 0.90 + 0.5));',
-                '    float azFreq = circumCells / 6.2831853;',
-                '    float cosScaleX = mix(1.0, cos(clamp(p.y, -0.82, 0.82)), 0.68) * (gridFreqY / azFreq);',
-                '',
-                '    vec2 g = vec2((p.x + 3.14159265) * azFreq, p.y * gridFreqY) + phaseOff;',
+                '// Pole-Free Dome-Disk Living Sky Brush Layer (paints seamlessly across 360° horizon AND 90° ceiling!)',
+                'void splatPaintedBrushLayer3D(vec3 d, float baseFreq, vec2 phaseOff, float layerSeed, float coreShield, inout vec3 canvasCol, inout float heightAccum) {',
+                '    vec4 localB = sampleBrushField3D(d);',
+                '    float gridFreq = baseFreq * max(0.76, uThinness);',
+                '    vec2 diskPos = dirToDomeDisk(d) * 1.38;',
+                '    vec2 g = diskPos * gridFreq + phaseOff;',
                 '    vec2 baseCell = floor(g);',
                 '',
                 '    for (int dy = -1; dy <= 1; dy++) {',
                 '        for (int dx = -1; dx <= 1; dx++) {',
                 '            vec2 rawCell = baseCell + vec2(float(dx), float(dy));',
-                '            vec2 hashCell = vec2(mod(rawCell.x, circumCells), rawCell.y);',
-                '            vec3 rnd = hash23(hashCell + vec2(layerSeed * 23.1, layerSeed * 41.9));',
-                '',
+                '            vec3 rnd = hash23(rawCell + vec2(layerSeed * 23.1, layerSeed * 41.9));',
                 '            vec2 cGrid = rawCell + vec2(0.5) + (rnd.xy - 0.5) * 0.46;',
-                '            vec2 rawDiff = g - cGrid;',
-                '            vec2 centerSky = vec2((cGrid.x - phaseOff.x) / azFreq - 3.14159265, (cGrid.y - phaseOff.y) / gridFreqY);',
+                '            vec2 cellDisk = (cGrid - phaseOff) / (gridFreq * 1.38);',
+                '            vec3 cDir = domeDiskToDir(cellDisk);',
                 '',
-                '            vec4 cellB = sampleBrushField(centerSky);',
-                '            vec2 rawT = getSkyFlow(centerSky);',
+                '            vec4 cellB = sampleBrushField3D(cDir);',
+                '            vec3 rawT = getSkyFlow3D(cDir).xyz;',
+                '            vec3 rawN = normalize(cross(cDir, rawT));',
                 '            float wristTilt = (rnd.z - 0.5) * 0.56;',
-                '            float cw = cos(wristTilt); float sw = sin(wristTilt);',
-                '            vec2 T = mat2(cw, -sw, sw, cw) * rawT;',
-                '            vec2 T2 = getSkyFlow(centerSky + T * (0.90 / gridFreqY));',
+                '            vec3 T = rawT * cos(wristTilt) + rawN * sin(wristTilt);',
+                '            vec3 N = cross(cDir, T);',
+                '            vec3 T2 = getSkyFlow3D(normalize(cDir + T * (0.90 / gridFreq))).xyz;',
                 '',
                 '            float keepProb = smoothstep(0.03, 0.52, cellB.z) * 0.92;',
-                '            if (localB.z >= 0.025 && localB.w >= 0.16 && abs(rawDiff.x) <= 1.38 && abs(rawDiff.y) <= 1.38 && cellB.w >= 0.16 && rnd.x <= keepProb) {',
-                '                vec2 N = vec2(-T.y, T.x);',
+                '            if (localB.z >= 0.025 && localB.w >= 0.16 && cellB.w >= 0.16 && rnd.x <= keepProb) {',
                 '                float drift = sin(uFlowPhase * 1.9 + rnd.x * 6.2831853) * 0.16;',
-                '                vec2 rel = vec2(rawDiff.x * cosScaleX, rawDiff.y) - T * drift;',
-                '                float sAlong  = dot(rel, T);',
-                '                float sAcross = dot(rel, N);',
-                '                float bend = clamp(dot(T2 - rawT, N) * 0.68, -0.55, 0.55);',
-                '                sAcross -= bend * sAlong * sAlong;',
+                '                vec3 rel3 = (d - cDir) * gridFreq - T * drift;',
+                '                float sAlong  = dot(rel3, T);',
+                '                float sAcross = dot(rel3, N);',
+                '                if (abs(sAlong) <= 1.45 && abs(sAcross) <= 0.62) {',
+                '                    float bend = clamp(dot(T2 - rawT, N) * 0.68, -0.55, 0.55);',
+                '                    sAcross -= bend * sAlong * sAlong;',
                 '',
-                '                float halfLen = 0.58 + rnd.y * 0.28;',
-                '                float halfWid = 0.135 + rnd.z * 0.055;',
-                '                vec4 bst = evalSlenderBristleStroke(sAlong / halfLen, sAcross / halfWid, rnd.y + layerSeed);',
-                '                float bAlpha = bst.x * clamp(cellB.z * 1.05, 0.0, 0.90) * (1.0 - coreShield * 0.88);',
-                '                if (bAlpha > 0.01) {',
-                '                    vec3 pigA; vec3 pigB;',
-                '                    if (cellB.w < 0.50) {',
-                '                        if (rnd.y > 0.54)      { pigA = vec3(0.985, 0.910, 0.315); pigB = vec3(0.985, 0.970, 0.855); }',
-                '                        else if (rnd.y > 0.22) { pigA = vec3(0.825, 0.878, 0.385); pigB = vec3(0.965, 0.925, 0.565); }',
-                '                        else                   { pigA = vec3(0.645, 0.845, 0.875); pigB = vec3(0.985, 0.910, 0.315); }',
-                '                    } else if (cellB.w < 0.84) {',
-                '                        if (rnd.y > 0.52)      { pigA = vec3(0.655, 0.855, 0.885); pigB = vec3(0.955, 0.955, 0.865); }',
-                '                        else if (rnd.y > 0.20) { pigA = vec3(0.295, 0.555, 0.775); pigB = vec3(0.655, 0.855, 0.885); }',
-                '                        else                   { pigA = vec3(0.805, 0.868, 0.405); pigB = vec3(0.315, 0.565, 0.765); }',
-                '                    } else {',
-                '                        if (rnd.y > 0.58)      { pigA = vec3(0.145, 0.315, 0.625); pigB = vec3(0.315, 0.560, 0.755); }',
-                '                        else if (rnd.y > 0.24) { pigA = vec3(0.075, 0.168, 0.435); pigB = vec3(0.185, 0.235, 0.505); }',
-                '                        else                   { pigA = vec3(0.028, 0.048, 0.118); pigB = vec3(0.075, 0.168, 0.435); }',
+                '                    float halfLen = 0.58 + rnd.y * 0.28;',
+                '                    float halfWid = 0.135 + rnd.z * 0.055;',
+                '                    vec4 bst = evalSlenderBristleStroke(sAlong / halfLen, sAcross / halfWid, rnd.y + layerSeed);',
+                '                    float bAlpha = bst.x * clamp(cellB.z * 1.05, 0.0, 0.90) * (1.0 - coreShield * 0.88);',
+                '                    if (bAlpha > 0.01) {',
+                '                        vec3 pigA; vec3 pigB;',
+                '                        if (cellB.w < 0.50) {',
+                '                            if (rnd.y > 0.54)      { pigA = vec3(0.985, 0.910, 0.315); pigB = vec3(0.985, 0.970, 0.855); }',
+                '                            else if (rnd.y > 0.22) { pigA = vec3(0.825, 0.878, 0.385); pigB = vec3(0.965, 0.925, 0.565); }',
+                '                            else                   { pigA = vec3(0.645, 0.845, 0.875); pigB = vec3(0.985, 0.910, 0.315); }',
+                '                        } else if (cellB.w < 0.84) {',
+                '                            if (rnd.y > 0.52)      { pigA = vec3(0.655, 0.855, 0.885); pigB = vec3(0.955, 0.955, 0.865); }',
+                '                            else if (rnd.y > 0.20) { pigA = vec3(0.295, 0.555, 0.775); pigB = vec3(0.655, 0.855, 0.885); }',
+                '                            else                   { pigA = vec3(0.805, 0.868, 0.405); pigB = vec3(0.315, 0.565, 0.765); }',
+                '                        } else {',
+                '                            if (rnd.y > 0.58)      { pigA = vec3(0.145, 0.315, 0.625); pigB = vec3(0.315, 0.560, 0.755); }',
+                '                            else if (rnd.y > 0.24) { pigA = vec3(0.075, 0.168, 0.435); pigB = vec3(0.185, 0.235, 0.505); }',
+                '                            else                   { pigA = vec3(0.028, 0.048, 0.118); pigB = vec3(0.075, 0.168, 0.435); }',
+                '                        }',
+                '                        vec3 wPig = mix(pigA, pigB, bst.w * 0.54) * (1.0 + bst.y);',
+                '                        canvasCol = mix(canvasCol, wPig, bAlpha);',
+                '                        heightAccum = mix(heightAccum, max(0.70, bst.z + 0.20), bAlpha * 0.92);',
                 '                    }',
-                '                    vec3 wPig = mix(pigA, pigB, bst.w * 0.54) * (1.0 + bst.y);',
-                '                    canvasCol = mix(canvasCol, wPig, bAlpha);',
-                '                    heightAccum = mix(heightAccum, max(0.70, bst.z + 0.20), bAlpha * 0.92);',
                 '                }',
                 '            }',
                 '        }',
@@ -2154,7 +2457,7 @@
                 '    }',
                 '}',
                 '',
-                'void paintWetOnWetStar(vec3 rayDir, vec4 starInfo, vec2 streamTan, float brushExcite, inout vec3 canvasCol, inout float heightAccum) {',
+                'void paintWetOnWetStar(vec3 rayDir, vec4 starInfo, vec3 flow3D, float brushExcite, inout vec3 canvasCol, inout float heightAccum) {',
                 '    vec2 center = starInfo.xy;',
                 '    float starType = floor(starInfo.w);',
                 '    float twinklePhase = fract(starInfo.w) * 6.98;',
@@ -2163,6 +2466,14 @@
                 '    vec2 d = celestialTangentDelta(rayDir, center);',
                 '    float r = length(d);',
                 '    if (starInfo.z > 0.0 && r <= outerR * 1.30) {',
+                '        float caz = cos(center.x); float saz = sin(center.x);',
+                '        float cel = cos(center.y); float sel = sin(center.y);',
+                '        vec3 cDir   = vec3(saz * cel, sel, -caz * cel);',
+                '        vec3 upRef  = (abs(sel) > 0.985) ? vec3(1.0, 0.0, 0.0) : vec3(0.0, 1.0, 0.0);',
+                '        vec3 cRight = normalize(cross(cDir, upRef));',
+                '        vec3 cUp    = cross(cRight, cDir);',
+                '        vec2 streamTan = normalize(vec2(dot(flow3D, cRight), dot(flow3D, cUp)) + vec2(0.0001));',
+                '',
                 '        vec3 indianYellow   = vec3(0.972, 0.695, 0.125);',
                 '        vec3 zincYellow     = vec3(0.985, 0.895, 0.265);',
                 '        vec3 sulfurCream    = vec3(0.992, 0.948, 0.555);',
@@ -2247,49 +2558,64 @@
                 '}',
                 '',
                 'vec4 evaluateCompleteSkyColor(vec3 d, vec2 p) {',
-                '    // Unconditional O(1) top-level texture reads (100% uniform control flow for ANGLE D3D11 HLSL!)',
-                '    vec2 skyUv = skyToBrushUv(p);',
-                '    vec4 starCell = texture2D(tStarCellGrid, skyUv);',
+                '    // Unconditional O(1) Dome-Disk texture reads (100% uniform control flow for ANGLE D3D11 HLSL!)',
+                '    vec2 domeUv = dirToDomeUv(d);',
+                '    vec4 starCell = texture2D(tStarCellGrid, domeUv);',
                 '    float idx0 = floor(starCell.r * 255.0 + 0.5);',
                 '    float idx1 = floor(starCell.g * 255.0 + 0.5);',
                 '    vec4 star0 = fetchStarByFloatIdx(idx0);',
                 '    vec4 star1 = fetchStarByFloatIdx(idx1);',
                 '    float bAct = step(0.005, uBrushAnyActive);',
-                '    float moonExcite  = texture2D(tBrushMap, skyToBrushUv(vec2(0.355, 0.455))).b * bAct;',
-                '    float star0Excite = texture2D(tBrushMap, skyToBrushUv(star0.xy)).b * bAct;',
-                '    float star1Excite = texture2D(tBrushMap, skyToBrushUv(star1.xy)).b * bAct;',
+                '    float moonExcite  = texture2D(tBrushMap, dirToDomeUv(skyAzElToDir(vec2(0.355, 0.455)))).b * bAct;',
+                '    float star0Excite = texture2D(tBrushMap, dirToDomeUv(skyAzElToDir(star0.xy))).b * bAct;',
+                '    float star1Excite = texture2D(tBrushMap, dirToDomeUv(skyAzElToDir(star1.xy))).b * bAct;',
                 '',
+                '    vec4 localBrushTop = sampleBrushField3D(d);',
                 '    float baseGrad = smoothstep(-0.05, 0.72, p.y);',
                 '    vec3 canvasCol = mix(vec3(0.062, 0.142, 0.355), vec3(0.032, 0.074, 0.210), baseGrad);',
                 '    float heightAccum = 0.34;',
+                '    vec2 q = d.xz / sqrt(max(0.15, (1.0 + d.y) * 0.5));',
                 '',
-                '    splatSkyRibbonLayer(p, 44.0, vec2(0.11, 0.47), 0.4, canvasCol, heightAccum);',
-                '    splatSkyRibbonLayer(p, 58.0, vec2(0.00, 0.00), 1.1, canvasCol, heightAccum);',
-                '    splatSkyRibbonLayer(p, 70.0, vec2(0.37, 0.61), 2.3, canvasCol, heightAccum);',
+                '    // Interleave Cylindrical + Zero-Texture Planar Zenith Canopy (zero cost below d.y=0.50!)',
+                '    splatSkyRibbonLayer(d, p, 44.0, vec2(0.11, 0.47), 0.4, canvasCol, heightAccum);',
+                '    if (d.y > 0.50) { splatZenithCapLayer(d, q, localBrushTop, 44.0, vec2(0.11, 0.47), 0.4, canvasCol, heightAccum); }',
+                '',
+                '    splatSkyRibbonLayer(d, p, 58.0, vec2(0.00, 0.00), 1.1, canvasCol, heightAccum);',
+                '    if (d.y > 0.50) { splatZenithCapLayer(d, q, localBrushTop, 58.0, vec2(0.00, 0.00), 1.1, canvasCol, heightAccum); }',
+                '',
+                '    splatSkyRibbonLayer(d, p, 70.0, vec2(0.37, 0.61), 2.3, canvasCol, heightAccum);',
+                '    if (d.y > 0.50) { splatZenithCapLayer(d, q, localBrushTop, 70.0, vec2(0.37, 0.61), 2.3, canvasCol, heightAccum); }',
+                '',
                 '    if (uQuality > 0.45) {',
-                '        splatSkyRibbonLayer(p, 78.0, vec2(0.73, 0.29), 3.7, canvasCol, heightAccum);',
+                '        splatSkyRibbonLayer(d, p, 78.0, vec2(0.73, 0.29), 3.7, canvasCol, heightAccum);',
+                '        if (d.y > 0.50) { splatZenithCapLayer(d, q, localBrushTop, 78.0, vec2(0.73, 0.29), 3.7, canvasCol, heightAccum); }',
                 '    }',
                 '    if (uQuality > 0.80) {',
-                '        splatSkyRibbonLayer(p, 86.0, vec2(0.19, 0.83), 5.1, canvasCol, heightAccum);',
+                '        splatSkyRibbonLayer(d, p, 86.0, vec2(0.19, 0.83), 5.1, canvasCol, heightAccum);',
+                '        if (d.y > 0.50) { splatZenithCapLayer(d, q, localBrushTop, 86.0, vec2(0.19, 0.83), 5.1, canvasCol, heightAccum); }',
                 '    }',
                 '',
-                '    vec2 rawLocalFlow = getSkyFlow(p);',
-                '    vec2 streamTan = normalize(vec2(rawLocalFlow.x * cos(clamp(p.y, -1.25, 1.25)), rawLocalFlow.y) + vec2(0.0001));',
+                '    vec3 localFlow3D = getSkyFlow3D(d).xyz;',
                 '    float coreShield = max(evalStarShield(d, star0), evalStarShield(d, star1));',
                 '',
                 '    if (abs(p.x - 0.355) < 0.28 && abs(p.y - 0.455) < 0.24) {',
                 '        float rm = length(celestialTangentDelta(d, vec2(0.355, 0.455))) / 0.142;',
                 '        coreShield = max(coreShield, 1.0 - smoothstep(0.68, 1.08, rm));',
-                '        paintWetOnWetMoon(d, streamTan, moonExcite, canvasCol, heightAccum);',
+                '        vec3 mDir = skyAzElToDir(vec2(0.355, 0.455));',
+                '        vec3 mRgt = normalize(cross(mDir, vec3(0.0, 1.0, 0.0)));',
+                '        vec3 mUp  = cross(mRgt, mDir);',
+                '        vec2 moonStreamTan = normalize(vec2(dot(localFlow3D, mRgt), dot(localFlow3D, mUp)) + vec2(0.0001));',
+                '        paintWetOnWetMoon(d, moonStreamTan, moonExcite, canvasCol, heightAccum);',
                 '    }',
                 '',
-                '    if (star1.z > 0.0) { paintWetOnWetStar(d, star1, streamTan, star1Excite, canvasCol, heightAccum); }',
-                '    if (star0.z > 0.0) { paintWetOnWetStar(d, star0, streamTan, star0Excite, canvasCol, heightAccum); }',
+                '    if (star1.z > 0.0) { paintWetOnWetStar(d, star1, localFlow3D, star1Excite, canvasCol, heightAccum); }',
+                '    if (star0.z > 0.0) { paintWetOnWetStar(d, star0, localFlow3D, star0Excite, canvasCol, heightAccum); }',
                 '',
                 '    if (uQuality > 0.45) {',
                 '        vec3 weaveCol = canvasCol;',
                 '        float weaveHgt = heightAccum;',
-                '        splatSkyRibbonLayer(p, 94.0, vec2(0.53, 0.41), 6.9, weaveCol, weaveHgt);',
+                '        splatSkyRibbonLayer(d, p, 94.0, vec2(0.53, 0.41), 6.9, weaveCol, weaveHgt);',
+                '        if (d.y > 0.50) { splatZenithCapLayer(d, q, localBrushTop, 94.0, vec2(0.53, 0.41), 6.9, weaveCol, weaveHgt); }',
                 '        float weaveLum = dot(weaveCol, vec3(0.299, 0.587, 0.114));',
                 '        float rimSafe = (coreShield >= 0.96 || (coreShield > 0.05 && weaveLum < 0.09)) ? 0.0 : (1.0 - coreShield);',
                 '        canvasCol = mix(canvasCol, weaveCol, rimSafe);',
@@ -2299,9 +2625,9 @@
                 '    if (uBrushAnyActive > 0.005) {',
                 '        vec3 brCol = canvasCol;',
                 '        float brHgt = heightAccum;',
-                '        splatPaintedBrushLayer(p, 62.0, vec2(0.23, 0.71), 11.4, coreShield, brCol, brHgt);',
+                '        splatPaintedBrushLayer3D(d, 62.0, vec2(0.23, 0.71), 11.4, coreShield, brCol, brHgt);',
                 '        if (uQuality > 0.40) {',
-                '            splatPaintedBrushLayer(p, 84.0, vec2(0.67, 0.19), 17.8, coreShield, brCol, brHgt);',
+                '            splatPaintedBrushLayer3D(d, 84.0, vec2(0.67, 0.19), 17.8, coreShield, brCol, brHgt);',
                 '        }',
                 '        float brKeep = step(coreShield, 0.92);',
                 '        canvasCol = mix(canvasCol, brCol, brKeep);',
@@ -2309,8 +2635,10 @@
                 '    }',
                 '',
                 '    if (uLinenGap > 0.02) {',
-                '        float mistBand = exp(-sqf((p.y - getMistCenterY(p.x)) / 0.055));',
-                '        float fleckNoise = vnoise(vec2(sin(p.x) * 85.0, cos(p.x) * 85.0 + p.y * 165.0)) * 0.65 + vnoise(p * 390.0) * 0.35;',
+                '        float mistBand = exp(-sqf((p.y - getMistCenterY(p.x)) / 0.055)) * (1.0 - smoothstep(0.55, 0.80, p.y));',
+                '        // 3D pole-free linen fleck noise (zero polar pinch at ceiling!)',
+                '        vec2 dDisk = dirToDomeDisk(d);',
+                '        float fleckNoise = vnoise(dDisk * 145.0) * 0.65 + vnoise(dDisk * 360.0 + vec2(d.y * 41.0)) * 0.35;',
                 '        float fleckThresh = 0.92 - uLinenGap * 0.22 * (0.35 + 0.65 * mistBand);',
                 '        float fleckMask = smoothstep(fleckThresh, fleckThresh + 0.035, fleckNoise) * (1.0 - coreShield) * 0.72;',
                 '        canvasCol = mix(canvasCol, vec3(0.845, 0.758, 0.545), fleckMask);',
@@ -2335,7 +2663,7 @@
                 '}'
             ].join('\n');
 
-            // 1. Panoramic Sky Bake Material (used in Lite / Software fallback mode)
+            // 1. Lambert Azimuthal Dome-Disk Sky Bake Material (Lite / Software fallback — zero pole pinch & zero ±pi seam!)
             var skyBakeMat = new THREE.ShaderMaterial({
                 depthTest: false,
                 depthWrite: false,
@@ -2346,16 +2674,14 @@
                     'varying vec2 vUv;',
                     SKY_CORE_GLSL,
                     'void main() {',
-                    '    float az = (vUv.x * 2.0 - 1.0) * 3.14159265;',
-                    '    float el = mix(-0.24, 1.565, vUv.y);',
-                    '    float cel = cos(el);',
-                    '    vec3 d = normalize(vec3(sin(az) * cel, sin(el), -cos(az) * cel));',
-                    '    gl_FragColor = evaluateCompleteSkyColor(d, vec2(az, el));',
+                    '    vec3 d = domeDiskToDir(vUv * 2.0 - 1.0);',
+                    '    vec2 p = vec2(atan(d.x, -d.z + 0.000001), atan(d.y, max(length(d.xz), 0.000001)));',
+                    '    gl_FragColor = evaluateCompleteSkyColor(d, p);',
                     '}'
                 ].join('\n')
             });
 
-            // 2. Direct Crisp Per-Pixel Sky Dome Material (native Retina sharpness + GPU Early-Z occlusion!)
+            // 2. Direct Crisp Per-Pixel Sky Dome Material (native Retina sharpness + exact 90° zenith!)
             skyCacheState.ensureProcDomeMat = function () {
                 if (!skyCacheState.procDomeMat) {
                     skyCacheState.procDomeMat = new THREE.ShaderMaterial({
@@ -2367,7 +2693,7 @@
                             'precision highp float;',
                             'varying vec3 vWorldDir;',
                             'void main() {',
-                            '    vWorldDir = normalize(position);',
+                            '    vWorldDir = position;',
                             '    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);',
                             '}'
                         ].join('\n'),
@@ -2377,7 +2703,7 @@
                             SKY_CORE_GLSL,
                             'void main() {',
                             '    vec3 d = normalize(vWorldDir);',
-                            '    vec2 p = vec2(atan(d.x, -d.z + 0.000001), asin(clamp(d.y, -0.995, 0.995)));',
+                            '    vec2 p = vec2(atan(d.x, -d.z + 0.000001), atan(d.y, max(length(d.xz), 0.000001)));',
                             '    gl_FragColor = evaluateCompleteSkyColor(d, p);',
                             '}'
                         ].join('\n')
@@ -2386,7 +2712,7 @@
                 return skyCacheState.procDomeMat;
             };
 
-            // 3. Cached Sky Dome Material (1 texture lookup per pixel for Lite / low-power mode)
+            // 3. Cached Dome-Disk Sky Material (1 pole-free texture lookup per pixel for Lite / low-power mode!)
             var cachedDomeMat = new THREE.ShaderMaterial({
                 side: THREE.BackSide,
                 depthTest: true,
@@ -2398,7 +2724,7 @@
                     'precision highp float;',
                     'varying vec3 vWorldDir;',
                     'void main() {',
-                    '    vWorldDir = normalize(position);',
+                    '    vWorldDir = position;',
                     '    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);',
                     '}'
                 ].join('\n'),
@@ -2408,9 +2734,8 @@
                     'varying vec3 vWorldDir;',
                     'void main() {',
                     '    vec3 d = normalize(vWorldDir);',
-                    '    float az = atan(d.x, -d.z + 0.000001);',
-                    '    float el = asin(clamp(d.y, -0.995, 0.995));',
-                    '    vec2 uv = vec2(az / 6.2831853 + 0.5, clamp((el + 0.24) / (1.565 + 0.24), 0.0, 1.0));',
+                    '    float den = sqrt(max(0.08, 1.0 + d.y));',
+                    '    vec2 uv = clamp((d.xz / (den * 1.14)) * 0.5 + 0.5, 0.001, 0.999);',
                     '    gl_FragColor = texture2D(tSkyCache, uv);',
                     '}'
                 ].join('\n')
@@ -2424,7 +2749,6 @@
             skyCacheState.scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), skyBakeMat));
 
             var skyMesh = new THREE.Mesh(skyGeo, cachedDomeMat);
-            // Render after opaque terrain/buildings (renderOrder 2) so hardware Early-Z skips ~60% occluded sky pixels!
             skyMesh.renderOrder = 2;
             skyMesh.frustumCulled = false;
             skyCacheState.skyMesh = skyMesh;
@@ -2437,7 +2761,7 @@
             skyCacheState.height = h;
             if (skyCacheState.rt) skyCacheState.rt.dispose();
             skyCacheState.rt = new THREE.WebGLRenderTarget(w, h, {
-                wrapS: THREE.RepeatWrapping,
+                wrapS: THREE.ClampToEdgeWrapping,
                 wrapT: THREE.ClampToEdgeWrapping,
                 minFilter: THREE.LinearFilter,
                 magFilter: THREE.LinearFilter,
@@ -6544,18 +6868,296 @@
         }
 
         // ========================================================================
-        // 12. PROCEDURAL WEB AUDIO: WIND, CRICKETS, FOUNTAIN & CHURCH BELL
+        // 12. IMMERSIVE 1889 CLASSICAL MUSIC HALL & SAINT-RÉMY NIGHT SOUNDSCAPE
+        //     - Polyphonic Felt Grand Piano + Velvet Bowed Cello/Strings
+        //     - Stereo Saint-Paul Stone Cloister Convolution Reverb (2.85s IR)
+        //     - 3 Curated Nocturnes: Satie (1888), Debussy (1890), Chopin (1832)
         // ========================================================================
+        var CLASSICAL_REPERTOIRE = (function () {
+            function buildGymnopedieNo1() {
+                // Erik Satie — Gymnopédie No. 1 (Paris, 1888) · 3/4 Lent et douloureux (D Major / Gmaj7-Dmaj7)
+                var ev = [];
+                var beat = 0.88; // ~68 BPM
+                function barTime(b, bt) { return ((b - 1) * 3.0 + bt) * beat; }
+                function addLH(bar, bassMidi, chordMidis, celloMidi) {
+                    var t0 = barTime(bar, 0.0);
+                    ev.push({ t: t0, m: bassMidi, d: 2.85 * beat, v: 0.42, k: 'bass' });
+                    var t1 = barTime(bar, 1.0);
+                    for (var i = 0; i < chordMidis.length; i++) {
+                        ev.push({ t: t1 + i * 0.026, m: chordMidis[i], d: 1.95 * beat, v: 0.28, k: 'chord' });
+                    }
+                    if (celloMidi) {
+                        ev.push({ t: t0 + 0.06, m: celloMidi, d: 2.90 * beat, v: 0.22, k: 'str' });
+                    }
+                }
+                function addMel(bar, bt, midi, durBeats, vel) {
+                    ev.push({ t: barTime(bar, bt), m: midi, d: durBeats * beat, v: vel || 0.56, k: 'mel' });
+                }
+
+                // Bars 1..16: Alternating Gmaj7 (G2 + B3-D4-F#4) & Dmaj7 (D2 + A3-C#4-F#4)
+                for (var b = 1; b <= 16; b++) {
+                    if (b % 2 === 1) addLH(b, 43, [59, 62, 66], (b >= 5 && b % 4 === 1) ? 55 : 0);
+                    else             addLH(b, 38, [57, 61, 66], (b >= 6 && b % 4 === 2) ? 50 : 0);
+                }
+                // Phrase 1 (Bars 5..12)
+                addMel(5, 1.0, 78, 1.05, 0.54); addMel(5, 2.0, 81, 1.05, 0.60);
+                addMel(6, 0.0, 79, 1.05, 0.57); addMel(6, 1.0, 78, 1.05, 0.54); addMel(6, 2.0, 73, 1.05, 0.50);
+                addMel(7, 0.0, 71, 1.05, 0.50); addMel(7, 1.0, 73, 1.05, 0.53); addMel(7, 2.0, 74, 1.05, 0.56);
+                addMel(8, 0.0, 69, 3.10, 0.52);
+                addMel(9, 0.0, 66, 6.20, 0.48);
+
+                // Phrase 2 (Bars 13..16)
+                addMel(13, 1.0, 78, 1.05, 0.55); addMel(13, 2.0, 81, 1.05, 0.62);
+                addMel(14, 0.0, 79, 1.05, 0.58); addMel(14, 1.0, 78, 1.05, 0.54); addMel(14, 2.0, 73, 1.05, 0.50);
+                addMel(15, 0.0, 71, 1.05, 0.51); addMel(15, 1.0, 73, 1.05, 0.54); addMel(15, 2.0, 74, 1.05, 0.57);
+                addMel(16, 0.0, 69, 3.05, 0.53);
+
+                // Bars 17..30: Modal development & luminous D-major / D-minor resolution
+                addLH(17, 42, [57, 61, 66], 54); addMel(17, 0.0, 73, 3.05, 0.56);
+                addLH(18, 35, [59, 62, 66], 47); addMel(18, 0.0, 78, 3.05, 0.60);
+                addLH(19, 40, [55, 59, 64], 52); addMel(19, 0.0, 64, 3.10, 0.50);
+                addLH(20, 40, [59, 62, 67], 0);  addMel(20, 0.0, 69, 1.05, 0.50); addMel(20, 1.0, 71, 1.05, 0.53); addMel(20, 2.0, 72, 1.05, 0.56);
+                addLH(21, 38, [57, 60, 64, 67], 50); addMel(21, 0.0, 76, 1.05, 0.59); addMel(21, 1.0, 74, 1.05, 0.55); addMel(21, 2.0, 71, 1.05, 0.52);
+                addLH(22, 38, [54, 57, 60, 64], 0);  addMel(22, 0.0, 74, 1.05, 0.55); addMel(22, 1.0, 72, 1.05, 0.52); addMel(22, 2.0, 71, 1.05, 0.49);
+                addLH(23, 38, [54, 57, 60, 62], 50); addMel(23, 0.0, 74, 5.00, 0.54);
+                addLH(24, 38, [54, 57, 60, 64], 0);  addMel(24, 2.0, 74, 1.05, 0.50);
+                addLH(25, 40, [57, 60, 64], 52); addMel(25, 0.0, 76, 1.05, 0.56); addMel(25, 1.0, 77, 1.05, 0.58); addMel(25, 2.0, 79, 1.05, 0.61);
+                addLH(26, 40, [57, 60, 65], 53); addMel(26, 0.0, 81, 1.05, 0.63); addMel(26, 1.0, 72, 1.05, 0.52); addMel(26, 2.0, 74, 1.05, 0.54);
+                addLH(27, 38, [54, 57, 60, 64], 50); addMel(27, 0.0, 76, 1.05, 0.57); addMel(27, 1.0, 74, 1.05, 0.54); addMel(27, 2.0, 71, 1.05, 0.50);
+                addLH(28, 38, [54, 57, 60, 62], 0);  addMel(28, 0.0, 74, 3.00, 0.53);
+                addLH(29, 45, [55, 57, 61, 64], 45); addMel(29, 1.0, 67, 1.00, 0.49); addMel(29, 2.0, 66, 1.15, 0.52);
+                addLH(30, 38, [54, 57, 62, 66], 50); addMel(30, 0.0, 74, 5.20, 0.55);
+                addLH(31, 43, [59, 62, 66], 0);
+                addLH(32, 38, [57, 61, 66], 50);
+
+                ev.sort(function (a, b2) { return a.t - b2.t; });
+                return {
+                    title: 'Satie — Gymnopédie No. 1',
+                    shortLabel: '♫ Satie',
+                    subtitle: 'Paris, 1888 · Felt Piano & Strings',
+                    totalDur: barTime(33, 0.0),
+                    events: ev
+                };
+            }
+
+            function buildClairDeLune() {
+                // Claude Debussy — Clair de Lune (1890, Suite bergamasque) · 9/8 Andante très expressif (D-flat Major)
+                var ev = [];
+                var pulse = 0.46; // eighth-note pulse in 9/8 (~1.38s per dotted-quarter, 4.14s per bar)
+                function bt(bar, eighth) { return ((bar - 1) * 9.0 + eighth) * pulse; }
+                function rollChord(bar, eighth, notes, durE, vel, kind) {
+                    var t0 = bt(bar, eighth);
+                    for (var i = 0; i < notes.length; i++) {
+                        ev.push({ t: t0 + i * 0.028, m: notes[i], d: durE * pulse, v: vel, k: kind || 'chord' });
+                    }
+                }
+                function strPad(bar, midi, durBars, vel) {
+                    ev.push({ t: bt(bar, 0.1), m: midi, d: durBars * 8.8 * pulse, v: vel || 0.21, k: 'str' });
+                }
+
+                // Bar 1: Dbmaj shimmering opening thirds
+                rollChord(1, 0.0, [49, 65, 68], 8.5, 0.34, 'bass');
+                strPad(1, 49, 2.0, 0.20);
+                rollChord(1, 2.0, [77, 80], 3.2, 0.56, 'mel');
+                rollChord(1, 5.0, [73, 77], 4.2, 0.53, 'mel');
+
+                // Bar 2: Gb6/Db poignant sigh
+                rollChord(2, 0.0, [49, 66, 70], 8.5, 0.33, 'bass');
+                rollChord(2, 0.5, [75, 78], 1.6, 0.52, 'mel');
+                rollChord(2, 2.0, [77, 80], 1.6, 0.56, 'mel');
+                rollChord(2, 3.5, [75, 78], 5.4, 0.50, 'mel');
+
+                // Bar 3: Dbmaj7 descending lyrical line
+                rollChord(3, 0.0, [49, 65, 68], 8.5, 0.33, 'bass');
+                strPad(3, 53, 2.0, 0.19);
+                rollChord(3, 0.5, [73, 77], 1.6, 0.52, 'mel');
+                rollChord(3, 2.0, [72, 75], 1.6, 0.50, 'mel');
+                rollChord(3, 3.5, [73, 77], 2.5, 0.53, 'mel');
+                ev.push({ t: bt(3, 6.0), m: 70, d: 6.5 * pulse, v: 0.51, k: 'mel' });
+
+                // Bar 4: Ebm7/Db -> Ab7/Db
+                rollChord(4, 0.0, [49, 63, 66], 4.5, 0.31, 'chord');
+                rollChord(4, 4.5, [49, 60, 66, 68], 4.5, 0.31, 'chord');
+
+                // Bar 5: Db/F -> Gbmaj7
+                rollChord(5, 0.0, [53, 61, 68], 4.5, 0.34, 'bass');
+                strPad(5, 54, 2.0, 0.21);
+                ev.push({ t: bt(5, 1.5), m: 73, d: 1.6 * pulse, v: 0.52, k: 'mel' });
+                ev.push({ t: bt(5, 3.0), m: 70, d: 1.6 * pulse, v: 0.49, k: 'mel' });
+                rollChord(5, 4.5, [54, 61, 70], 4.5, 0.34, 'bass');
+                ev.push({ t: bt(5, 4.5), m: 75, d: 1.6 * pulse, v: 0.56, k: 'mel' });
+                ev.push({ t: bt(5, 6.0), m: 73, d: 1.6 * pulse, v: 0.53, k: 'mel' });
+                ev.push({ t: bt(5, 7.5), m: 70, d: 1.6 * pulse, v: 0.50, k: 'mel' });
+
+                // Bar 6: Ebm7 -> Ab7
+                rollChord(6, 0.0, [51, 58, 66], 4.5, 0.33, 'bass');
+                ev.push({ t: bt(6, 0.0), m: 68, d: 1.5 * pulse, v: 0.51, k: 'mel' });
+                ev.push({ t: bt(6, 1.5), m: 70, d: 1.5 * pulse, v: 0.53, k: 'mel' });
+                ev.push({ t: bt(6, 3.0), m: 68, d: 2.8 * pulse, v: 0.50, k: 'mel' });
+                rollChord(6, 4.5, [44, 56, 63, 66], 4.5, 0.33, 'bass');
+                ev.push({ t: bt(6, 6.0), m: 66, d: 1.5 * pulse, v: 0.48, k: 'mel' });
+                ev.push({ t: bt(6, 7.5), m: 65, d: 1.8 * pulse, v: 0.47, k: 'mel' });
+
+                // Bar 7: Bbm7 -> Eb7
+                rollChord(7, 0.0, [46, 53, 61], 4.5, 0.33, 'bass');
+                strPad(7, 46, 1.0, 0.20);
+                ev.push({ t: bt(7, 0.0), m: 65, d: 1.6 * pulse, v: 0.49, k: 'mel' });
+                ev.push({ t: bt(7, 1.5), m: 66, d: 1.6 * pulse, v: 0.52, k: 'mel' });
+                ev.push({ t: bt(7, 3.0), m: 65, d: 2.5 * pulse, v: 0.49, k: 'mel' });
+                rollChord(7, 4.5, [51, 58, 63, 67], 4.5, 0.32, 'bass');
+                ev.push({ t: bt(7, 6.0), m: 63, d: 3.0 * pulse, v: 0.47, k: 'mel' });
+
+                // Bar 8: Ab9sus4 -> Ab7 luminous half-cadence
+                rollChord(8, 0.0, [44, 51, 61, 66], 4.5, 0.34, 'bass');
+                strPad(8, 44, 1.0, 0.21);
+                ev.push({ t: bt(8, 1.0), m: 73, d: 2.0 * pulse, v: 0.55, k: 'mel' });
+                ev.push({ t: bt(8, 3.0), m: 72, d: 1.6 * pulse, v: 0.52, k: 'mel' });
+                rollChord(8, 4.5, [44, 51, 60, 66], 4.5, 0.32, 'bass');
+                ev.push({ t: bt(8, 4.5), m: 70, d: 2.0 * pulse, v: 0.50, k: 'mel' });
+                ev.push({ t: bt(8, 6.5), m: 68, d: 2.8 * pulse, v: 0.48, k: 'mel' });
+
+                // Bars 9..14: Un poco mosso — Harp-like moonlight arpeggios in D-flat Major!
+                var arpBars = [
+                    { b: 9,  lh: [37, 44, 53, 56, 61, 65], mel: [[0.0, 68, 3.0, 0.50], [3.0, 73, 3.0, 0.56], [6.0, 77, 3.0, 0.61]], st: 49 },
+                    { b: 10, lh: [37, 46, 54, 58, 61, 66], mel: [[0.0, 75, 4.5, 0.58], [4.5, 73, 2.2, 0.55], [6.7, 70, 2.3, 0.52]], st: 54 },
+                    { b: 11, lh: [37, 44, 53, 56, 61, 65], mel: [[0.0, 72, 3.0, 0.54], [3.0, 73, 3.0, 0.58], [6.0, 77, 3.0, 0.62]], st: 49 },
+                    { b: 12, lh: [42, 49, 54, 58, 61, 66], mel: [[0.0, 80, 4.5, 0.63], [4.5, 78, 2.2, 0.58], [6.7, 75, 2.3, 0.54]], st: 54 },
+                    { b: 13, lh: [44, 51, 56, 60, 63, 66], mel: [[0.0, 73, 3.0, 0.56], [3.0, 72, 3.0, 0.53], [6.0, 70, 3.0, 0.51]], st: 44 },
+                    { b: 14, lh: [37, 44, 53, 56, 61, 65, 68, 73, 77], mel: [[0.0, 73, 9.5, 0.58], [3.0, 85, 7.5, 0.44]], st: 49 }
+                ];
+                for (var ai = 0; ai < arpBars.length; ai++) {
+                    var ab = arpBars[ai];
+                    strPad(ab.b, ab.st, 1.05, 0.22);
+                    for (var n = 0; n < ab.lh.length; n++) {
+                        ev.push({ t: bt(ab.b, n * 0.92), m: ab.lh[n], d: 5.2 * pulse, v: n === 0 ? 0.40 : 0.27, k: n === 0 ? 'bass' : 'chord' });
+                    }
+                    for (var mi = 0; mi < ab.mel.length; mi++) {
+                        var mm = ab.mel[mi];
+                        ev.push({ t: bt(ab.b, mm[0]), m: mm[1], d: mm[2] * pulse, v: mm[3], k: 'mel' });
+                    }
+                }
+                // Gentle 1-bar moonlit resonance tail
+                rollChord(15, 0.0, [37, 49, 61, 65, 68, 73], 8.8, 0.30, 'chord');
+
+                ev.sort(function (a, b2) { return a.t - b2.t; });
+                return {
+                    title: 'Debussy — Clair de Lune',
+                    shortLabel: '♫ Debussy',
+                    subtitle: '1890 · Suite bergamasque (D♭ Major)',
+                    totalDur: bt(16, 0.0),
+                    events: ev
+                };
+            }
+
+            function buildChopinNocturneOp9No2() {
+                // Frédéric Chopin — Nocturne in E-flat Major, Op. 9, No. 2 · 12/8 Andante
+                var ev = [];
+                var e8 = 0.41; // eighth-note in 12/8 (~4.92s per bar)
+                function bt(bar, eighth) { return (bar * 12.0 + eighth) * e8; }
+                function noctGroup(bar, gIdx, bass, chord, cello) {
+                    var e0 = gIdx * 3.0;
+                    ev.push({ t: bt(bar, e0), m: bass, d: 2.9 * e8, v: 0.40, k: 'bass' });
+                    for (var c = 0; c < chord.length; c++) {
+                        ev.push({ t: bt(bar, e0 + 1.0) + c * 0.018, m: chord[c], d: 1.7 * e8, v: 0.25, k: 'chord' });
+                        ev.push({ t: bt(bar, e0 + 2.0) + c * 0.018, m: chord[c], d: 1.5 * e8, v: 0.22, k: 'chord' });
+                    }
+                    if (cello) {
+                        ev.push({ t: bt(bar, e0 + 0.08), m: cello, d: 2.85 * e8, v: 0.20, k: 'str' });
+                    }
+                }
+                function mel(bar, eighth, midi, durE, vel) {
+                    ev.push({ t: bt(bar, eighth), m: midi, d: durE * e8, v: vel || 0.58, k: 'mel' });
+                }
+
+                // Pickup eighth on B-flat4 (70)
+                ev.push({ t: 0.05, m: 70, d: 1.2 * e8, v: 0.48, k: 'mel' });
+                var off = 0.55;
+                function shiftAll(fn) { fn(); }
+                shiftAll(function () {
+                    // Bar 0: Eb -> Fm7/Eb -> Bb7/Eb -> Eb
+                    noctGroup(0, 0, 39, [55, 58, 63], 51); mel(0, 0.0, 79, 5.6, 0.62);
+                    noctGroup(0, 1, 39, [56, 60, 65], 0);
+                    noctGroup(0, 2, 39, [56, 58, 62, 65], 46); mel(0, 6.0, 77, 1.5, 0.57); mel(0, 7.5, 75, 1.5, 0.55);
+                    noctGroup(0, 3, 39, [55, 58, 63], 0);      mel(0, 9.0, 74, 1.5, 0.54); mel(0, 10.5, 75, 1.5, 0.56);
+
+                    // Bar 1: Cm/Eb -> C7 -> Fm
+                    noctGroup(1, 0, 39, [55, 60, 63], 48); mel(1, 0.0, 72, 2.8, 0.56);
+                    noctGroup(1, 1, 36, [55, 58, 64], 48); mel(1, 3.0, 70, 2.0, 0.52); mel(1, 5.0, 79, 1.2, 0.60);
+                    noctGroup(1, 2, 41, [56, 60, 65], 53); mel(1, 6.0, 72, 3.8, 0.57);
+                    noctGroup(1, 3, 41, [56, 60, 65], 0);  mel(1, 9.8, 71, 1.1, 0.50); mel(1, 10.9, 72, 1.2, 0.53);
+
+                    // Bar 2: Fm7b5/Bb -> Bb7 -> Eb -> Eb7/G
+                    noctGroup(2, 0, 34, [56, 59, 65], 46); mel(2, 0.0, 77, 2.8, 0.60);
+                    noctGroup(2, 1, 34, [56, 58, 62], 0);  mel(2, 3.0, 74, 2.0, 0.55); mel(2, 5.0, 75, 1.2, 0.57);
+                    noctGroup(2, 2, 39, [55, 58, 63], 51); mel(2, 6.0, 70, 4.8, 0.54);
+                    noctGroup(2, 3, 43, [55, 58, 63], 0);  mel(2, 11.0, 70, 1.1, 0.50);
+
+                    // Bar 3: Consequent lyrical soar (Ab -> Abm6 -> Eb/Bb -> C7 -> Fm7 -> Bb7 -> Eb)
+                    noctGroup(3, 0, 44, [56, 60, 63], 56); mel(3, 0.0, 80, 2.8, 0.63);
+                    noctGroup(3, 1, 44, [56, 59, 65], 0);  mel(3, 3.0, 79, 1.5, 0.59); mel(3, 4.5, 77, 1.5, 0.57);
+                    noctGroup(3, 2, 46, [55, 58, 63], 51); mel(3, 6.0, 75, 2.8, 0.58);
+                    noctGroup(3, 3, 36, [55, 58, 64], 48); mel(3, 9.0, 72, 2.0, 0.55); mel(3, 11.0, 70, 1.1, 0.52);
+
+                    // Bar 4: Cadential Nocturne flourish & warm E-flat resolution
+                    noctGroup(4, 0, 41, [56, 60, 65], 53); mel(4, 0.0, 68, 1.5, 0.53); mel(4, 1.5, 72, 1.5, 0.56);
+                    noctGroup(4, 1, 34, [56, 58, 62, 65], 46); mel(4, 3.0, 77, 2.0, 0.61); mel(4, 5.0, 74, 1.2, 0.56);
+                    noctGroup(4, 2, 39, [55, 58, 63], 51); mel(4, 6.0, 75, 6.2, 0.60);
+                    noctGroup(4, 3, 39, [51, 55, 58, 63], 0);
+                });
+                for (var i = 1; i < ev.length; i++) ev[i].t += off;
+                // Gentle final rolled E-flat major chord
+                var endT = bt(5, 0.0) + off;
+                var endChord = [39, 46, 55, 58, 63, 67, 75];
+                for (var ec = 0; ec < endChord.length; ec++) {
+                    ev.push({ t: endT + ec * 0.032, m: endChord[ec], d: 5.5 * e8, v: ec === 0 ? 0.38 : 0.30, k: 'chord' });
+                }
+
+                ev.sort(function (a, b2) { return a.t - b2.t; });
+                return {
+                    title: 'Chopin — Nocturne Op. 9 No. 2',
+                    shortLabel: '♫ Chopin',
+                    subtitle: '1832 · Andante in E♭ Major',
+                    totalDur: endT + 6.5 * e8,
+                    events: ev
+                };
+            }
+
+            return [
+                buildGymnopedieNo1(),
+                buildClairDeLune(),
+                buildChopinNocturneOp9No2()
+            ];
+        })();
+
         var audioSys = {
             ctx: null,
             masterGain: null,
+            ambienceBus: null,
+            musicBus: null,
+            musicToneFilter: null,
+            dryMusicGain: null,
+            wetMusicGain: null,
+            convolver: null,
+            pianoWave: null,
+            celloWave: null,
+            hammerBuf: null,
             windFilter: null,
             fountainGain: null,
             cricketTimer: 0,
-            bellTimer: 6.5,
+            bellTimer: 9.5,
             dropletTimer: 0.4,
-            brushSoundCooldown: 0
+            brushSoundCooldown: 0,
+            // Classical Scheduler State
+            pieceIdx: 0,
+            eventCursor: 0,
+            pieceStartCtxTime: 0,
+            schedulerReady: false,
+            activeVoiceGains: []
         };
+
+        function midiToHz(midi) {
+            return 440.0 * Math.pow(2.0, (midi - 69.0) / 12.0);
+        }
 
         function initWebAudioIfNeeded() {
             if (audioSys.ctx) return;
@@ -6569,6 +7171,89 @@
             master.connect(ctx.destination);
             audioSys.masterGain = master;
 
+            // 1. Separate Ambience Bus & Classical Music Hall Bus
+            var ambBus = ctx.createGain();
+            ambBus.gain.value = params.ambienceVol;
+            ambBus.connect(master);
+            audioSys.ambienceBus = ambBus;
+
+            var musTone = ctx.createBiquadFilter();
+            musTone.type = 'lowpass';
+            musTone.frequency.value = 3600;
+            musTone.Q.value = 0.55;
+            musTone.connect(master);
+            audioSys.musicToneFilter = musTone;
+
+            var musBus = ctx.createGain();
+            musBus.gain.value = params.musicVol;
+            musBus.connect(musTone);
+            audioSys.musicBus = musBus;
+
+            var dryG = ctx.createGain();
+            dryG.gain.value = 0.68;
+            dryG.connect(musBus);
+            audioSys.dryMusicGain = dryG;
+
+            // 2. Stereo 2.85s Saint-Paul Stone Cloister & Concert Hall Impulse Response!
+            var irLen = Math.floor(ctx.sampleRate * 2.85);
+            var irBuf = ctx.createBuffer(2, irLen, ctx.sampleRate);
+            var earlyTaps = [
+                [0.017, 0.28, -0.20],
+                [0.034, -0.22, 0.26],
+                [0.058, 0.19, 0.16],
+                [0.086, -0.15, 0.18],
+                [0.124, 0.12, -0.14]
+            ];
+            for (var ch = 0; ch < 2; ch++) {
+                var irData = irBuf.getChannelData(ch);
+                var lp = 0.0;
+                for (var s = 0; s < irLen; s++) {
+                    var tSec = s / ctx.sampleRate;
+                    var env = Math.exp(-tSec * 2.35) * (1.0 - Math.exp(-tSec * 38.0));
+                    var wn = (Math.random() * 2.0 - 1.0) * env;
+                    // Warm stone-wall high-frequency damping
+                    var damp = 0.22 + 0.26 * Math.exp(-tSec * 1.4);
+                    lp += (wn - lp) * damp;
+                    irData[s] = lp * 0.42;
+                }
+                for (var et = 0; et < earlyTaps.length; et++) {
+                    var tapIdx = Math.min(irLen - 1, Math.floor(earlyTaps[et][0] * ctx.sampleRate));
+                    irData[tapIdx] += earlyTaps[et][ch + 1];
+                }
+            }
+            var conv = ctx.createConvolver();
+            conv.buffer = irBuf;
+            var wetG = ctx.createGain();
+            wetG.gain.value = 0.46;
+            conv.connect(wetG);
+            wetG.connect(musBus);
+            audioSys.convolver = conv;
+            audioSys.wetMusicGain = wetG;
+
+            // 3. Custom Warm PeriodicWave Timbres (Felt Concert Piano & Velvet Bowed Cello)
+            if (ctx.createPeriodicWave) {
+                var pReal = new Float32Array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]);
+                var pImag = new Float32Array([0.0, 1.00, 0.36, 0.14, 0.055, 0.020, 0.007]);
+                audioSys.pianoWave = ctx.createPeriodicWave(pReal, pImag);
+
+                var cReal = new Float32Array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]);
+                var cImag = new Float32Array([0.0, 1.00, 0.50, 0.28, 0.15, 0.08, 0.04, 0.018]);
+                audioSys.celloWave = ctx.createPeriodicWave(cReal, cImag);
+            }
+
+            // Soft 24ms felt-hammer key touch buffer
+            var hLen = Math.floor(ctx.sampleRate * 0.024);
+            var hBuf = ctx.createBuffer(1, hLen, ctx.sampleRate);
+            var hOut = hBuf.getChannelData(0);
+            var hPrev = 0.0;
+            for (var hi = 0; hi < hLen; hi++) {
+                var hw = (Math.random() * 2.0 - 1.0) * Math.exp(-(hi / hLen) * 5.5);
+                hPrev += (hw - hPrev) * 0.16;
+                hOut[hi] = hPrev * 0.35;
+            }
+            audioSys.hammerBuf = hBuf;
+
+            // 4. Provençal Night Wind & Place de la République Fountain (routed to ambienceBus)
             var bufLen = ctx.sampleRate * 3;
             var noiseBuf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
             var out = noiseBuf.getChannelData(0);
@@ -6590,15 +7275,14 @@
             windFilter.Q.value = 1.6;
 
             var windGain = ctx.createGain();
-            windGain.gain.value = 0.40;
+            windGain.gain.value = 0.38;
 
             windSrc.connect(windFilter);
             windFilter.connect(windGain);
-            windGain.connect(master);
+            windGain.connect(ambBus);
             windSrc.start();
             audioSys.windFilter = windFilter;
 
-            // Spatial bubbling Place de la République stone fountain water stream!
             var ftnSrc = ctx.createBufferSource();
             ftnSrc.buffer = noiseBuf;
             ftnSrc.loop = true;
@@ -6611,40 +7295,293 @@
             ftnGain.gain.value = 0.0;
             ftnSrc.connect(ftnFilter);
             ftnFilter.connect(ftnGain);
-            ftnGain.connect(master);
+            ftnGain.connect(ambBus);
             ftnSrc.start();
             audioSys.fountainGain = ftnGain;
 
+            startClassicalPiece(params.musicTrack, true);
+        }
+
+        function connectStereoVoice(ctx, nodeOut, panVal) {
+            if (ctx.createStereoPanner) {
+                var panner = ctx.createStereoPanner();
+                panner.pan.value = Math.max(-0.65, Math.min(0.65, panVal));
+                nodeOut.connect(panner);
+                panner.connect(audioSys.dryMusicGain);
+                panner.connect(audioSys.convolver);
+            } else {
+                nodeOut.connect(audioSys.dryMusicGain);
+                nodeOut.connect(audioSys.convolver);
+            }
+        }
+
+        function scheduleFeltPianoNote(midi, startTime, durSec, vel, kind) {
+            var ctx = audioSys.ctx;
+            if (!ctx || params.musicVol < 0.01) return;
+            var freq = midiToHz(midi);
+            var t0 = Math.max(ctx.currentTime + 0.005, startTime);
+            // Natural sustain pedal bloom
+            var ringDur = Math.max(durSec * 1.38, kind === 'mel' ? 2.4 : 2.0);
+            var peakGain = vel * (kind === 'mel' ? 0.145 : (kind === 'bass' ? 0.125 : 0.088));
+
+            var vFilter = ctx.createBiquadFilter();
+            vFilter.type = 'lowpass';
+            var brightOpen = Math.min(6200, freq * (2.5 + vel * 3.6));
+            var warmSettle = Math.max(260, Math.min(2800, freq * 1.55));
+            vFilter.frequency.setValueAtTime(brightOpen, t0);
+            vFilter.frequency.exponentialRampToValueAtTime(warmSettle, t0 + Math.min(0.85, ringDur * 0.45));
+            vFilter.Q.value = 0.65;
+
+            var vGain = ctx.createGain();
+            vGain.gain.setValueAtTime(0.0001, t0);
+            vGain.gain.linearRampToValueAtTime(peakGain, t0 + (kind === 'bass' ? 0.022 : 0.014));
+            vGain.gain.exponentialRampToValueAtTime(peakGain * 0.42, t0 + Math.min(0.65, ringDur * 0.35));
+            vGain.gain.exponentialRampToValueAtTime(0.0001, t0 + ringDur);
+
+            var osc1 = ctx.createOscillator();
+            if (audioSys.pianoWave) osc1.setPeriodicWave(audioSys.pianoWave);
+            else osc1.type = 'triangle';
+            osc1.frequency.setValueAtTime(freq, t0);
+            osc1.connect(vFilter);
+            osc1.start(t0);
+            osc1.stop(t0 + ringDur + 0.04);
+
+            // Bichord unison string warmth on mid/upper register notes
+            if (midi >= 56) {
+                var osc2 = ctx.createOscillator();
+                osc2.type = 'sine';
+                osc2.frequency.setValueAtTime(freq * 1.0011, t0); // +1.9 cents sympathetic shimmer
+                var g2 = ctx.createGain();
+                g2.gain.value = 0.38;
+                osc2.connect(g2);
+                g2.connect(vFilter);
+                osc2.start(t0);
+                osc2.stop(t0 + ringDur + 0.04);
+            }
+
+            // Delicate felt-hammer touch on melody & bass notes
+            if (audioSys.hammerBuf && kind !== 'chord') {
+                var hSrc = ctx.createBufferSource();
+                hSrc.buffer = audioSys.hammerBuf;
+                var hGain = ctx.createGain();
+                hGain.gain.setValueAtTime(peakGain * 0.22, t0);
+                hSrc.connect(hGain);
+                hGain.connect(vFilter);
+                hSrc.start(t0);
+            }
+
+            vFilter.connect(vGain);
+            var pan = ((midi - 62.0) / 28.0) * 0.36;
+            connectStereoVoice(ctx, vGain, pan);
+            audioSys.activeVoiceGains.push({ g: vGain, end: t0 + ringDur });
+        }
+
+        function scheduleWarmCelloString(midi, startTime, durSec, vel) {
+            var ctx = audioSys.ctx;
+            if (!ctx || params.musicVol < 0.01) return;
+            var freq = midiToHz(midi);
+            var t0 = Math.max(ctx.currentTime + 0.005, startTime);
+            var totalD = Math.max(1.8, durSec * 1.12);
+            var peak = vel * 0.068;
+
+            var bodyFilter = ctx.createBiquadFilter();
+            bodyFilter.type = 'lowpass';
+            bodyFilter.frequency.value = Math.min(1150, freq * 3.4);
+            bodyFilter.Q.value = 0.85;
+
+            var sGain = ctx.createGain();
+            sGain.gain.setValueAtTime(0.0001, t0);
+            sGain.gain.linearRampToValueAtTime(peak, t0 + Math.min(0.68, totalD * 0.34));
+            sGain.gain.setValueAtTime(peak * 0.88, Math.max(t0 + 0.70, t0 + totalD * 0.68));
+            sGain.gain.exponentialRampToValueAtTime(0.0001, t0 + totalD);
+
+            var oscA = ctx.createOscillator();
+            var oscB = ctx.createOscillator();
+            if (audioSys.celloWave) {
+                oscA.setPeriodicWave(audioSys.celloWave);
+                oscB.setPeriodicWave(audioSys.celloWave);
+            } else {
+                oscA.type = 'triangle';
+                oscB.type = 'sine';
+            }
+            oscA.frequency.setValueAtTime(freq * 0.9985, t0);
+            oscB.frequency.setValueAtTime(freq * 1.0015, t0);
+
+            // Gentle delayed natural bow vibrato
+            var vib = ctx.createOscillator();
+            var vibG = ctx.createGain();
+            vib.frequency.value = 4.7;
+            vibG.gain.setValueAtTime(0.0, t0);
+            vibG.gain.linearRampToValueAtTime(freq * 0.0028, t0 + Math.min(0.85, totalD * 0.4));
+            vib.connect(vibG);
+            vibG.connect(oscA.frequency);
+            vib.start(t0);
+            vib.stop(t0 + totalD + 0.04);
+
+            oscA.connect(bodyFilter);
+            oscB.connect(bodyFilter);
+            bodyFilter.connect(sGain);
+            connectStereoVoice(ctx, sGain, -0.14);
+
+            oscA.start(t0);
+            oscB.start(t0);
+            oscA.stop(t0 + totalD + 0.04);
+            oscB.stop(t0 + totalD + 0.04);
+            audioSys.activeVoiceGains.push({ g: sGain, end: t0 + totalD });
+        }
+
+        function fadeOutActiveClassicalVoices() {
+            if (!audioSys.ctx) return;
+            var now = audioSys.ctx.currentTime;
+            for (var i = 0; i < audioSys.activeVoiceGains.length; i++) {
+                var item = audioSys.activeVoiceGains[i];
+                if (item && item.end > now) {
+                    try {
+                        item.g.gain.cancelScheduledValues(now);
+                        item.g.gain.setTargetAtTime(0.0001, now, 0.08);
+                    } catch (e) {}
+                }
+            }
+            audioSys.activeVoiceGains = [];
+        }
+
+        function syncClassicalMusicUI() {
+            var piece = CLASSICAL_REPERTOIRE[params.musicTrack] || CLASSICAL_REPERTOIRE[0];
+            var btnAudio = document.getElementById('btn-audio');
+            var lblAudio = document.getElementById('audio-btn-label');
+            var dotAudio = document.getElementById('audio-dot');
+            if (btnAudio) btnAudio.classList.toggle('active', params.audioOn);
+            if (lblAudio) {
+                lblAudio.textContent = params.audioOn
+                    ? (params.musicVol > 0.02 ? piece.shortLabel : 'Sound: On')
+                    : 'Sound: Off';
+            }
+            if (dotAudio) {
+                dotAudio.className = params.audioOn
+                    ? 'w-1.5 h-1.5 rounded-full bg-amber-300 shadow-[0_0_8px_#f8dc3b] shrink-0'
+                    : 'w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0';
+            }
+
+            var npTitle = document.getElementById('music-now-playing');
+            var npSub   = document.getElementById('music-now-sub');
+            var btnPlay = document.getElementById('btn-music-play');
+            var btnCyc  = document.getElementById('btn-music-cycle');
+            if (npTitle) npTitle.textContent = piece.title;
+            if (npSub)   npSub.textContent = piece.subtitle;
+            if (btnPlay) {
+                btnPlay.textContent = params.audioOn ? 'Playing (V)' : 'Play (V)';
+                btnPlay.classList.toggle('active', params.audioOn);
+            }
+            if (btnCyc) {
+                btnCyc.textContent = params.musicAutoCycle ? 'Cycle All 3' : 'Loop This Piece';
+                btnCyc.classList.toggle('active', params.musicAutoCycle);
+            }
+            var tBtns = document.querySelectorAll('.music-track-btn');
+            for (var ti = 0; ti < tBtns.length; ti++) {
+                var idx = parseInt(tBtns[ti].getAttribute('data-track'), 10);
+                tBtns[ti].classList.toggle('active', idx === params.musicTrack);
+            }
+        }
+
+        function startClassicalPiece(trackIdx, keepSilentIfMuted) {
+            var count = CLASSICAL_REPERTOIRE.length;
+            params.musicTrack = ((trackIdx % count) + count) % count;
+            audioSys.pieceIdx = params.musicTrack;
+            audioSys.eventCursor = 0;
+            if (audioSys.ctx) {
+                fadeOutActiveClassicalVoices();
+                audioSys.pieceStartCtxTime = audioSys.ctx.currentTime + 0.10;
+                audioSys.schedulerReady = true;
+            }
+            if (!keepSilentIfMuted && !params.audioOn) {
+                toggleAudioSoundscape(true);
+            } else {
+                syncClassicalMusicUI();
+            }
+        }
+
+        function cycleClassicalPiece(stepDir) {
+            initWebAudioIfNeeded();
+            startClassicalPiece(params.musicTrack + (stepDir || 1), false);
+        }
+
+        function stepClassicalMusicScheduler() {
+            if (!audioSys.ctx || !params.audioOn || !audioSys.schedulerReady) return;
+            var ctx = audioSys.ctx;
+            if (ctx.state === 'suspended') return;
+
+            var now = ctx.currentTime;
+            // Prune finished voice gain refs periodically
+            if (audioSys.activeVoiceGains.length > 64) {
+                var kept = [];
+                for (var k = 0; k < audioSys.activeVoiceGains.length; k++) {
+                    if (audioSys.activeVoiceGains[k].end > now) kept.push(audioSys.activeVoiceGains[k]);
+                }
+                audioSys.activeVoiceGains = kept;
+            }
+
+            var piece = CLASSICAL_REPERTOIRE[audioSys.pieceIdx] || CLASSICAL_REPERTOIRE[0];
+            var lookahead = 0.28;
+            var evs = piece.events;
+
+            while (audioSys.eventCursor < evs.length) {
+                var ev = evs[audioSys.eventCursor];
+                // Subtle human rubato breathing (+/- 0.03s expressive phrase sway)
+                var rubato = Math.sin(ev.t * 0.42) * 0.028;
+                var targetTime = audioSys.pieceStartCtxTime + ev.t + rubato;
+                if (targetTime > now + lookahead) break;
+
+                if (targetTime >= now - 0.08) {
+                    if (ev.k === 'str') {
+                        scheduleWarmCelloString(ev.m, targetTime, ev.d, ev.v);
+                    } else {
+                        scheduleFeltPianoNote(ev.m, targetTime, ev.d, ev.v, ev.k);
+                    }
+                }
+                audioSys.eventCursor++;
+            }
+
+            if (audioSys.eventCursor >= evs.length && now >= audioSys.pieceStartCtxTime + piece.totalDur) {
+                var nextIdx = params.musicAutoCycle ? ((audioSys.pieceIdx + 1) % CLASSICAL_REPERTOIRE.length) : audioSys.pieceIdx;
+                params.musicTrack = nextIdx;
+                audioSys.pieceIdx = nextIdx;
+                audioSys.eventCursor = 0;
+                audioSys.pieceStartCtxTime = now + 0.45;
+                syncClassicalMusicUI();
+            }
         }
 
         function triggerChurchBellChime(distToChurch) {
-            if (!audioSys.ctx || !params.audioOn) return;
-            var atten = THREE.MathUtils.clamp(1.0 - distToChurch / 165.0, 0.06, 0.85);
+            if (!audioSys.ctx || !params.audioOn || !audioSys.ambienceBus) return;
+            // Keep distant church chime gentle so it harmonizes delicately beneath the classical piano
+            var musicDuck = params.musicVol > 0.1 ? 0.36 : 1.0;
+            var atten = THREE.MathUtils.clamp(1.0 - distToChurch / 165.0, 0.05, 0.75) * musicDuck;
             var ctx = audioSys.ctx;
             var now = ctx.currentTime;
-            var partials = [329.63, 493.88, 659.25, 830.61];
+            // D-major / A-major harmonious partials (D4, A4, D5, F#5) so chimes blend consonantly!
+            var partials = [293.66, 440.00, 587.33, 739.99];
             for (var i = 0; i < partials.length; i++) {
                 var osc = ctx.createOscillator();
                 var g = ctx.createGain();
                 osc.type = 'sine';
                 osc.frequency.setValueAtTime(partials[i], now);
-                var amp = (0.042 / (i + 1)) * atten;
+                var amp = (0.038 / (i + 1)) * atten;
                 g.gain.setValueAtTime(0.0001, now);
-                g.gain.linearRampToValueAtTime(amp, now + 0.02);
+                g.gain.linearRampToValueAtTime(amp, now + 0.025);
                 g.gain.exponentialRampToValueAtTime(0.0001, now + 2.8 - i * 0.35);
                 osc.connect(g);
-                g.connect(audioSys.masterGain);
+                g.connect(audioSys.ambienceBus);
                 osc.start(now);
                 osc.stop(now + 2.9);
             }
         }
 
         function triggerCricketChirp() {
-            if (!audioSys.ctx || !params.audioOn) return;
+            if (!audioSys.ctx || !params.audioOn || !audioSys.ambienceBus) return;
             var ctx = audioSys.ctx;
             var now = ctx.currentTime;
             var pulses = 3 + Math.floor(Math.random() * 3);
-            var baseFreq = 4150 + Math.random() * 280;
+            var baseFreq = 4150 + Math.random() * 260;
 
             for (var p = 0; p < pulses; p++) {
                 var t0 = now + p * 0.048;
@@ -6655,18 +7592,18 @@
                 osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.96, t0 + 0.028);
 
                 g.gain.setValueAtTime(0.0001, t0);
-                g.gain.linearRampToValueAtTime(0.030, t0 + 0.006);
+                g.gain.linearRampToValueAtTime(0.022, t0 + 0.006);
                 g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.030);
 
                 osc.connect(g);
-                g.connect(audioSys.masterGain);
+                g.connect(audioSys.ambienceBus);
                 osc.start(t0);
                 osc.stop(t0 + 0.034);
             }
         }
 
         function triggerFountainDropletPlink(atten) {
-            if (!audioSys.ctx || !params.audioOn || atten < 0.04) return;
+            if (!audioSys.ctx || !params.audioOn || !audioSys.ambienceBus || atten < 0.04) return;
             var ctx = audioSys.ctx;
             var now = ctx.currentTime;
             var osc = ctx.createOscillator();
@@ -6676,33 +7613,35 @@
             osc.frequency.setValueAtTime(f0, now);
             osc.frequency.exponentialRampToValueAtTime(f0 * 1.42, now + 0.045);
             g.gain.setValueAtTime(0.0001, now);
-            g.gain.linearRampToValueAtTime(0.022 * atten, now + 0.006);
+            g.gain.linearRampToValueAtTime(0.020 * atten, now + 0.006);
             g.gain.exponentialRampToValueAtTime(0.0001, now + 0.055);
             osc.connect(g);
-            g.connect(audioSys.masterGain);
+            g.connect(audioSys.ambienceBus);
             osc.start(now);
             osc.stop(now + 0.06);
         }
 
         function triggerSkyBrushShimmer(elevationRad) {
-            if (!audioSys.ctx || !params.audioOn || audioSys.brushSoundCooldown > 0) return;
+            if (!audioSys.ctx || !params.audioOn || !audioSys.musicBus || audioSys.brushSoundCooldown > 0) return;
             audioSys.brushSoundCooldown = 0.095;
             var ctx = audioSys.ctx;
             var now = ctx.currentTime;
-            var scaleNotes = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50, 1174.66];
-            var idx = Math.max(0, Math.min(scaleNotes.length - 1, Math.floor(((elevationRad + 0.05) / 0.85) * scaleNotes.length)));
-            var freq = scaleNotes[idx] * (0.99 + Math.random() * 0.02);
+            // D-major / Lydian celestial harp harmonics matching Satie!
+            var scaleNotes = [587.33, 659.25, 739.99, 880.00, 987.77, 1174.66, 1318.51];
+            var idx = Math.max(0, Math.min(scaleNotes.length - 1, Math.floor(((elevationRad + 0.05) / 1.35) * scaleNotes.length)));
+            var freq = scaleNotes[idx] * (0.995 + Math.random() * 0.01);
             var osc = ctx.createOscillator();
             var g = ctx.createGain();
-            osc.type = 'triangle';
+            osc.type = 'sine';
             osc.frequency.setValueAtTime(freq, now);
             g.gain.setValueAtTime(0.0001, now);
-            g.gain.linearRampToValueAtTime(0.024, now + 0.018);
-            g.gain.exponentialRampToValueAtTime(0.0001, now + 0.42);
+            g.gain.linearRampToValueAtTime(0.026, now + 0.018);
+            g.gain.exponentialRampToValueAtTime(0.0001, now + 0.55);
             osc.connect(g);
-            g.connect(audioSys.masterGain);
+            g.connect(audioSys.dryMusicGain);
+            g.connect(audioSys.convolver);
             osc.start(now);
-            osc.stop(now + 0.45);
+            osc.stop(now + 0.58);
         }
 
         function toggleAudioSoundscape(forceEnable) {
@@ -6715,21 +7654,30 @@
                 } catch (e) {}
             }
 
+            var wasOn = params.audioOn;
             params.audioOn = (typeof forceEnable === 'boolean') ? forceEnable : !params.audioOn;
             params.userMuted = !params.audioOn;
             var now = audioSys.ctx.currentTime;
             audioSys.masterGain.gain.cancelScheduledValues(now);
-            audioSys.masterGain.gain.setTargetAtTime(params.audioOn ? 0.65 : 0.0, now, 0.12);
+            audioSys.masterGain.gain.setTargetAtTime(params.audioOn ? 0.82 : 0.0, now, params.audioOn ? 0.24 : 0.10);
 
-            var btn = document.getElementById('btn-audio');
-            var lbl = document.getElementById('audio-btn-label');
-            if (btn) btn.classList.toggle('active', params.audioOn);
-            if (lbl) lbl.textContent = params.audioOn ? 'Sound: On' : 'Sound: Off';
+            if (params.audioOn && !wasOn) {
+                // Resume or start classical phrase cleanly from current cursor without burst backlog
+                var curEv = (CLASSICAL_REPERTOIRE[audioSys.pieceIdx] || CLASSICAL_REPERTOIRE[0]).events[audioSys.eventCursor];
+                var offsetT = curEv ? curEv.t : 0.0;
+                audioSys.pieceStartCtxTime = now + 0.08 - offsetT;
+                audioSys.schedulerReady = true;
+            } else if (!params.audioOn && wasOn) {
+                fadeOutActiveClassicalVoices();
+            }
+            syncClassicalMusicUI();
         }
 
         function autoStartAudioOnFirstStep() {
             if (!params.audioOn && !params.userMuted) {
                 toggleAudioSoundscape(true);
+            } else if (params.audioOn && audioSys.ctx && audioSys.ctx.state === 'suspended') {
+                try { audioSys.ctx.resume(); } catch (e) {}
             }
         }
 
@@ -6785,7 +7733,7 @@
             var lv = new THREE.Vector3().subVectors(camCtrl.desiredTarget, camCtrl.desiredPos);
             var len = Math.max(0.001, lv.length());
             camCtrl.yaw = Math.atan2(lv.x, lv.z);
-            camCtrl.pitch = Math.asin(THREE.MathUtils.clamp(lv.y / len, -0.96, 0.96));
+            camCtrl.pitch = Math.asin(THREE.MathUtils.clamp(lv.y / len, -0.985, 0.996));
         }
 
         function applyYawPitchToTarget() {
@@ -6812,8 +7760,8 @@
         var skyBrush = {
             painting: false,
             hasPrev: false,
-            prevAz: 0,
-            prevEl: 0,
+            prevBx: 0,
+            prevBy: 0,
             smoothDirX: 1.0,
             smoothDirY: 0.0,
             swirlEnergy: 0.14,
@@ -6826,15 +7774,17 @@
             var ndcY = -(clientY / safeViewportH()) * 2.0 + 1.0;
             var ray = new THREE.Vector3(ndcX, ndcY, 0.5).unproject(camera).sub(camera.position).normalize();
             var az = Math.atan2(ray.x, -ray.z);
-            var el = Math.asin(THREE.MathUtils.clamp(ray.y, -0.995, 0.995));
-            return { az: az, el: el, rayY: ray.y };
+            var el = Math.atan2(ray.y, Math.max(Math.hypot(ray.x, ray.z), 1e-6));
+            var den = Math.sqrt(Math.max(0.08, 1.0 + ray.y));
+            var bx = ray.x / (den * DOME_DISK_EXTENT);
+            var by = ray.z / (den * DOME_DISK_EXTENT);
+            return { az: az, el: el, rayY: ray.y, bx: bx, by: by };
         }
 
-        function sampleNaturalSkyTangentJS(az, el) {
-            var tx = 1.0;
-            var ty = 0.17 * Math.cos(az * 5.0 + 0.7) + 0.10 * Math.sin(az * 2.0);
-            var len = Math.hypot(tx, ty) || 1.0;
-            return { x: tx / len, y: ty / len };
+        function sampleNaturalSkyTangentDiskJS(bx, by) {
+            var len = Math.hypot(bx, by);
+            if (len < 0.25) return { x: 0.89, y: 0.45 };
+            return { x: -by / len, y: bx / len };
         }
 
         function syncBrushFieldTexel(idx) {
@@ -6847,41 +7797,31 @@
             brushMapBytes[o4 + 3] = brushFieldPal[idx];
         }
 
-        function splatBrushFieldKernel(az, el, dirX, dirY, radiusRad, peakStr, swirlMix, spinSgn, palByte) {
-            var cosEl = Math.max(0.20, Math.cos(THREE.MathUtils.clamp(el, -0.85, 1.32)));
-            var dAzSpan = (radiusRad * 1.85) / cosEl;
-            var dElSpan = radiusRad * 1.85;
-
-            var uCenter = (az + Math.PI) / (Math.PI * 2.0);
-            var vCenter = (el - BRUSH_EL_MIN) / (BRUSH_EL_MAX - BRUSH_EL_MIN);
-            var ixSpan = Math.min(64, Math.ceil((dAzSpan / (Math.PI * 2.0)) * BRUSH_MAP_W) + 1);
-            var iySpan = Math.min(40, Math.ceil((dElSpan / (BRUSH_EL_MAX - BRUSH_EL_MIN)) * BRUSH_MAP_H) + 1);
-
+        function splatBrushFieldKernel(bx, by, dirX, dirY, radiusDisk, peakStr, swirlMix, spinSgn, palByte) {
+            var span = radiusDisk * 1.90;
+            var uCenter = bx * 0.5 + 0.5;
+            var vCenter = by * 0.5 + 0.5;
+            var iSpan = Math.min(48, Math.ceil(span * 0.5 * BRUSH_MAP_W) + 1);
             var cx = Math.floor(uCenter * BRUSH_MAP_W);
             var cy = Math.floor(vCenter * BRUSH_MAP_H);
-            var y0 = Math.max(0, cy - iySpan);
-            var y1 = Math.min(BRUSH_MAP_H - 1, cy + iySpan);
-            var invSig2 = 1.0 / Math.max(0.0004, radiusRad * radiusRad * 0.78);
+            var x0 = Math.max(0, cx - iSpan), x1 = Math.min(BRUSH_MAP_W - 1, cx + iSpan);
+            var y0 = Math.max(0, cy - iSpan), y1 = Math.min(BRUSH_MAP_H - 1, cy + iSpan);
+            var invSig2 = 1.0 / Math.max(0.0003, radiusDisk * radiusDisk * 0.78);
 
             for (var iy = y0; iy <= y1; iy++) {
-                var cellEl = BRUSH_EL_MIN + ((iy + 0.5) / BRUSH_MAP_H) * (BRUSH_EL_MAX - BRUSH_EL_MIN);
-                var dy = cellEl - el;
-                if (Math.abs(dy) > dElSpan) continue;
+                var cellY = ((iy + 0.5) / BRUSH_MAP_H) * 2.0 - 1.0;
+                var dy = cellY - by;
+                if (Math.abs(dy) > span) continue;
 
-                for (var dxStep = -ixSpan; dxStep <= ixSpan; dxStep++) {
-                    var ix = (cx + dxStep + BRUSH_MAP_W * 4) % BRUSH_MAP_W;
-                    var cellAz = ((ix + 0.5) / BRUSH_MAP_W) * (Math.PI * 2.0) - Math.PI;
-                    var dAz = cellAz - az;
-                    if (dAz > Math.PI) dAz -= Math.PI * 2.0;
-                    if (dAz < -Math.PI) dAz += Math.PI * 2.0;
-                    var dx = dAz * cosEl;
+                for (var ix = x0; ix <= x1; ix++) {
+                    var cellX = ((ix + 0.5) / BRUSH_MAP_W) * 2.0 - 1.0;
+                    var dx = cellX - bx;
                     var r2 = dx * dx + dy * dy;
                     var w = Math.exp(-r2 * invSig2);
                     if (w < 0.025) continue;
 
                     var r = Math.sqrt(r2);
-                    // Blend smooth drag tangent + subtle outward wake peel + true circular vortex curl!
-                    var crossSide = (-dirY * dx + dirX * dy) / Math.max(0.025, radiusRad);
+                    var crossSide = (-dirY * dx + dirX * dy) / Math.max(0.022, radiusDisk);
                     var wakeX = dirX + (-dirY) * Math.max(-0.42, Math.min(0.42, crossSide * 0.24));
                     var wakeY = dirY + ( dirX) * Math.max(-0.42, Math.min(0.42, crossSide * 0.24));
                     var wLen = Math.hypot(wakeX, wakeY) || 1.0;
@@ -6921,51 +7861,46 @@
 
         function stampSkyBrushAt(clientX, clientY, isStart) {
             var sc = screenToSkyCoords(clientX, clientY);
-            if (sc.el < -0.10) return false;
+            if (sc.el < -0.14) return false;
             var palByte = BRUSH_PALETTE_CODES[params.skyBrushPalette];
             if (palByte === undefined) palByte = 85;
 
             if (isStart || !skyBrush.hasPrev) {
                 skyBrush.spinToggle = (skyBrush.spinToggle > 0) ? -1.0 : 1.0;
-                var nat = sampleNaturalSkyTangentJS(sc.az, sc.el);
+                var nat = sampleNaturalSkyTangentDiskJS(sc.bx, sc.by);
                 skyBrush.smoothDirX = nat.x;
                 skyBrush.smoothDirY = nat.y;
                 skyBrush.swirlEnergy = 0.22;
 
-                splatBrushFieldKernel(sc.az, sc.el, nat.x, nat.y, 0.068, 0.78, 0.34, skyBrush.spinToggle, palByte);
-                uBrushCursor.value.set(sc.az, sc.el, 1.0, skyBrush.spinToggle);
+                splatBrushFieldKernel(sc.bx, sc.by, nat.x, nat.y, 0.056, 0.78, 0.34, skyBrush.spinToggle, palByte);
+                uBrushCursor.value.set(sc.bx, sc.by, 1.0, skyBrush.spinToggle);
 
-                skyBrush.prevAz = sc.az;
-                skyBrush.prevEl = sc.el;
+                skyBrush.prevBx = sc.bx;
+                skyBrush.prevBy = sc.by;
                 skyBrush.hasPrev = true;
                 triggerSkyBrushShimmer(sc.el);
                 return true;
             }
 
-            var dAz = sc.az - skyBrush.prevAz;
-            if (dAz > Math.PI) dAz -= Math.PI * 2.0;
-            if (dAz < -Math.PI) dAz += Math.PI * 2.0;
-            var dEl = sc.el - skyBrush.prevEl;
-            var cosEl = Math.max(0.22, Math.cos(sc.el));
-            var moveDist = Math.hypot(dAz * cosEl, dEl);
+            var dBx = sc.bx - skyBrush.prevBx;
+            var dBy = sc.by - skyBrush.prevBy;
+            var moveDist = Math.hypot(dBx, dBy);
 
-            if (moveDist < 0.0020) {
-                // Gentle swirling vortex build-up while dwelling/circling on a spot
+            if (moveDist < 0.0018) {
                 skyBrush.swirlEnergy = Math.min(0.95, skyBrush.swirlEnergy + 0.08);
-                splatBrushFieldKernel(sc.az, sc.el, skyBrush.smoothDirX, skyBrush.smoothDirY, 0.078, 0.88, skyBrush.swirlEnergy, skyBrush.spinToggle, palByte);
-                uBrushCursor.value.set(sc.az, sc.el, 1.0, skyBrush.spinToggle);
+                splatBrushFieldKernel(sc.bx, sc.by, skyBrush.smoothDirX, skyBrush.smoothDirY, 0.064, 0.88, skyBrush.swirlEnergy, skyBrush.spinToggle, palByte);
+                uBrushCursor.value.set(sc.bx, sc.by, 1.0, skyBrush.spinToggle);
                 return true;
             }
 
-            var rawDx = (dAz * cosEl) / moveDist;
-            var rawDy = dEl / moveDist;
+            var rawDx = dBx / moveDist;
+            var rawDy = dBy / moveDist;
             var crossTurn = skyBrush.smoothDirX * rawDy - skyBrush.smoothDirY * rawDx;
             var dotForward = skyBrush.smoothDirX * rawDx + skyBrush.smoothDirY * rawDy;
 
             if (Math.abs(crossTurn) > 0.20) {
                 skyBrush.spinToggle = (crossTurn >= 0) ? 1.0 : -1.0;
             }
-            // Tight curved turns ramp up vortex curl; broad sweeping curves stay cleanly tangent-aligned!
             if (Math.abs(crossTurn) > 0.34 || dotForward < 0.55) {
                 skyBrush.swirlEnergy = Math.min(0.92, skyBrush.swirlEnergy + 0.14);
             } else {
@@ -6978,22 +7913,27 @@
             skyBrush.smoothDirX /= sLen;
             skyBrush.smoothDirY /= sLen;
 
-            // Sub-step every ~0.012 rad (~0.7 deg) so even rapid sweeps across the sky paint a seamless, gap-free impasto ribbon!
-            var steps = Math.max(1, Math.min(28, Math.ceil(moveDist / 0.012)));
+            var steps = Math.max(1, Math.min(28, Math.ceil(moveDist / 0.010)));
             for (var st = 1; st <= steps; st++) {
                 var t = st / steps;
-                var subAz = skyBrush.prevAz + dAz * t;
-                if (subAz > Math.PI) subAz -= Math.PI * 2.0;
-                if (subAz < -Math.PI) subAz += Math.PI * 2.0;
-                var subEl = skyBrush.prevEl + dEl * t;
-                splatBrushFieldKernel(subAz, subEl, skyBrush.smoothDirX, skyBrush.smoothDirY, 0.072, 0.92, skyBrush.swirlEnergy, skyBrush.spinToggle, palByte);
+                splatBrushFieldKernel(
+                    skyBrush.prevBx + dBx * t,
+                    skyBrush.prevBy + dBy * t,
+                    skyBrush.smoothDirX,
+                    skyBrush.smoothDirY,
+                    0.060,
+                    0.92,
+                    skyBrush.swirlEnergy,
+                    skyBrush.spinToggle,
+                    palByte
+                );
             }
 
-            uBrushCursor.value.set(sc.az, sc.el, 1.0, skyBrush.spinToggle);
-            skyBrush.prevAz = sc.az;
-            skyBrush.prevEl = sc.el;
+            uBrushCursor.value.set(sc.bx, sc.by, 1.0, skyBrush.spinToggle);
+            skyBrush.prevBx = sc.bx;
+            skyBrush.prevBy = sc.by;
             skyBrush.hasPrev = true;
-            if (moveDist > 0.018) triggerSkyBrushShimmer(sc.el);
+            if (moveDist > 0.014) triggerSkyBrushShimmer(sc.el);
             return true;
         }
 
@@ -7308,10 +8248,10 @@
                 syncModePills();
             }
 
-            // In First-Person Walk mode (or when dragging from the wall), turn head 360° seamlessly!
+            // In First-Person Walk mode (or when dragging from the wall), turn head 360° + gaze straight up at the 90° sky ceiling!
             if (params.walkActive) {
                 camCtrl.yaw += dYaw;
-                camCtrl.pitch = THREE.MathUtils.clamp(camCtrl.pitch + dPitch, -1.18, 1.32);
+                camCtrl.pitch = THREE.MathUtils.clamp(camCtrl.pitch + dPitch, -1.18, 1.50);
                 applyYawPitchToTarget();
                 return;
             }
@@ -7321,8 +8261,8 @@
             var offset = new THREE.Vector3().subVectors(camCtrl.desiredPos, camCtrl.desiredTarget);
             var r = Math.max(4.0, offset.length());
             var theta = Math.atan2(offset.x, offset.z) - dYaw;
-            var phi = Math.acos(THREE.MathUtils.clamp(offset.y / r, -0.99, 0.99)) - dPitch;
-            phi = THREE.MathUtils.clamp(phi, 0.12, Math.PI * 0.85);
+            var phi = Math.acos(THREE.MathUtils.clamp(offset.y / r, -0.995, 0.995)) - dPitch;
+            phi = THREE.MathUtils.clamp(phi, 0.06, Math.PI * 0.94);
 
             offset.set(
                 r * Math.sin(phi) * Math.sin(theta),
@@ -7438,6 +8378,10 @@
                             var lift = minH - camCtrl.desiredPos.y;
                             camCtrl.desiredPos.y += lift;
                             camCtrl.desiredTarget.y += lift;
+                        } else if (camCtrl.desiredPos.y > 240.0) {
+                            var drop = camCtrl.desiredPos.y - 240.0;
+                            camCtrl.desiredPos.y -= drop;
+                            camCtrl.desiredTarget.y -= drop;
                         }
                         syncYawPitchFromLook();
                     }
@@ -7520,9 +8464,8 @@
                     setActiveStampBudget(Math.floor(stampRecords.length * (isMobileDevice ? 0.56 : 0.68)));
                 } else {
                     uQuality.value = isSoftwareWebGL ? 0.28 : 0.38;
-                    var cacheW = isSoftwareWebGL ? 1024 : Math.min(2048, maxGpuTexSize);
-                    var cacheH = Math.floor(cacheW * 0.5);
-                    resizeSkyCacheTarget(cacheW, cacheH);
+                    var cacheSide = isSoftwareWebGL ? 1024 : Math.min(2048, maxGpuTexSize);
+                    resizeSkyCacheTarget(cacheSide, cacheSide);
                     var targetDprL = isSoftwareWebGL ? 0.85 : (isMobileDevice ? Math.min(hwDpr, 1.25) : Math.min(hwDpr, 1.0));
                     applyRenderTargetSize(targetDprL);
                     setActiveStampBudget(Math.floor(stampRecords.length * (isSoftwareWebGL ? 0.25 : 0.38)));
@@ -7606,6 +8549,36 @@
                 updateMoMAMatteLayout();
             });
             document.getElementById('btn-audio').addEventListener('click', function () { toggleAudioSoundscape(); });
+            document.getElementById('btn-next-track').addEventListener('click', function () { cycleClassicalPiece(1); });
+            document.getElementById('btn-music-play').addEventListener('click', function () { toggleAudioSoundscape(); });
+            document.getElementById('btn-music-prev').addEventListener('click', function () { cycleClassicalPiece(-1); });
+            document.getElementById('btn-music-next').addEventListener('click', function () { cycleClassicalPiece(1); });
+            document.getElementById('btn-music-cycle').addEventListener('click', function () {
+                params.musicAutoCycle = !params.musicAutoCycle;
+                syncClassicalMusicUI();
+            });
+            document.querySelectorAll('.music-track-btn').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var idx = parseInt(btn.getAttribute('data-track'), 10);
+                    initWebAudioIfNeeded();
+                    startClassicalPiece(idx, false);
+                });
+            });
+            document.getElementById('slider-music-vol').addEventListener('input', function (e) {
+                params.musicVol = parseFloat(e.target.value);
+                document.getElementById('val-music-vol').textContent = Math.round(params.musicVol * 100) + '%';
+                if (audioSys.musicBus && audioSys.ctx) {
+                    audioSys.musicBus.gain.setTargetAtTime(params.musicVol, audioSys.ctx.currentTime, 0.06);
+                }
+                syncClassicalMusicUI();
+            });
+            document.getElementById('slider-amb-vol').addEventListener('input', function (e) {
+                params.ambienceVol = parseFloat(e.target.value);
+                document.getElementById('val-amb-vol').textContent = Math.round(params.ambienceVol * 100) + '%';
+                if (audioSys.ambienceBus && audioSys.ctx) {
+                    audioSys.ambienceBus.gain.setTargetAtTime(params.ambienceVol, audioSys.ctx.currentTime, 0.06);
+                }
+            });
 
             document.addEventListener('pointerlockchange', function () {
                 camCtrl.pointerLocked = (document.pointerLockElement === viewportEl);
@@ -7937,6 +8910,7 @@
                         updateMoMAMatteLayout();
                         break;
                     case 'KeyV': toggleAudioSoundscape(); break;
+                    case 'KeyN': cycleClassicalPiece(1); break;
                     case 'KeyW': case 'ArrowUp': autoStartAudioOnFirstStep(); keys.w = true; break;
                     case 'KeyS': case 'ArrowDown': autoStartAudioOnFirstStep(); keys.s = true; break;
                     case 'KeyA': case 'ArrowLeft': autoStartAudioOnFirstStep(); keys.a = true; break;
@@ -8058,6 +9032,13 @@
                 }
             })();
 
+            if (params.audioOn) {
+                stepClassicalMusicScheduler();
+                if (audioSys.musicToneFilter) {
+                    var desiredTone = params.inStudio ? 2750 : (3550 + params.daylight * 1350);
+                    audioSys.musicToneFilter.frequency.value += (desiredTone - audioSys.musicToneFilter.frequency.value) * Math.min(1.0, dt * 3.0);
+                }
+            }
             if (params.audioOn && audioSys.windFilter) {
                 var altFactor = THREE.MathUtils.clamp((camCtrl.pos.y + 4.0) / 40.0, 0.0, 1.4);
                 var runBoost = (params.walkActive && keys.shift) ? 140 : 0;
